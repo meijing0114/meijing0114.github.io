@@ -1,0 +1,673 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="之前在一次hackthon中做了基于树莓派视频采集的人脸识别打卡系统的demo，感觉挺有意思的，这里跟大家分享一下。
+听说树莓派是一次偶然的科技新闻，听过Face++人脸识别云平台同样也是。将两者结合起来，就有了这次产品的雏形了。
+整个产品的结构如下：
+
+首先将几个人的头像数据存入Face++云平台中。随后通过树莓派进行图像的摄入并且请求Face++云平台进行识别和比对。之后将识别的结果通过soc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于树莓派和Face++云平台的人脸识别打卡系统">
+<meta property="og:url" content="http://meijing0114.com/2014/12/21/6/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="之前在一次hackthon中做了基于树莓派视频采集的人脸识别打卡系统的demo，感觉挺有意思的，这里跟大家分享一下。
+听说树莓派是一次偶然的科技新闻，听过Face++人脸识别云平台同样也是。将两者结合起来，就有了这次产品的雏形了。
+整个产品的结构如下：
+
+首先将几个人的头像数据存入Face++云平台中。随后通过树莓派进行图像的摄入并且请求Face++云平台进行识别和比对。之后将识别的结果通过soc">
+<meta property="og:image" content="http://meijing0114.qiniudn.com/11无标题.png">
+<meta property="og:image" content="http://meijing0114.qiniudn.com/11屏幕快照 2014-12-21 下午3.32.14.png">
+<meta property="og:image" content="http://meijing0114.qiniudn.com/11屏幕快照 2014-12-21 下午3.36.12.png">
+<meta property="og:image" content="http://meijing0114.qiniudn.com/11屏幕快照 2014-12-21 下午3.55.11.png">
+<meta property="og:updated_time" content="2014-12-21T08:13:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于树莓派和Face++云平台的人脸识别打卡系统">
+<meta name="twitter:description" content="之前在一次hackthon中做了基于树莓派视频采集的人脸识别打卡系统的demo，感觉挺有意思的，这里跟大家分享一下。
+听说树莓派是一次偶然的科技新闻，听过Face++人脸识别云平台同样也是。将两者结合起来，就有了这次产品的雏形了。
+整个产品的结构如下：
+
+首先将几个人的头像数据存入Face++云平台中。随后通过树莓派进行图像的摄入并且请求Face++云平台进行识别和比对。之后将识别的结果通过soc">
+<meta name="twitter:image" content="http://meijing0114.qiniudn.com/11无标题.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2014/12/21/6/"/>
+
+  <title> 基于树莓派和Face++云平台的人脸识别打卡系统 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                基于树莓派和Face++云平台的人脸识别打卡系统
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-12-21T16:12:36+08:00" content="Dec 21 2014">
+              Dec 21 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/智能硬件/" itemprop="url" rel="index">
+                    <span itemprop="name">智能硬件</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/12/21/6/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/12/21/6/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>之前在一次hackthon中做了基于树莓派视频采集的人脸识别打卡系统的demo，感觉挺有意思的，这里跟大家分享一下。</p>
+<p>听说树莓派是一次偶然的科技新闻，听过Face++人脸识别云平台同样也是。将两者结合起来，就有了这次产品的雏形了。</p>
+<p>整个产品的结构如下：</p>
+<p><img src="http://meijing0114.qiniudn.com/11无标题.png" alt=""></p>
+<p>首先将几个人的头像数据存入Face++云平台中。随后通过树莓派进行图像的摄入并且请求Face++云平台进行识别和比对。之后将识别的结果通过socket发送给webserver，最终由webserver将识别的结果吐出展示在前端页面上。可能使用的用途包括人脸打卡、会议室人脸解锁等各类场景。</p>
+<p>主要分为如下几个部分：</p>
+<ul>
+<li>Face++人脸识别与训练云平台</li>
+<li>树莓派摄像头驱动开发</li>
+<li>树莓派识别请求发送与结果解析</li>
+<li>树莓派与webserver通信</li>
+<li>前端页面展示</li>
+</ul>
+<p>今天主要介绍一下前面三个部分。树莓派与webserver通信使用的只是一个简单地socket连接。</p>
+<h2 id="首先来说Face-人脸识别云平台："><a href="#首先来说Face-人脸识别云平台：" class="headerlink" title="首先来说Face++人脸识别云平台："></a>首先来说Face++人脸识别云平台：</h2><p>这是一家比较早，核心技术也比较有竞争力的初创企业。采用oAuth授权，提供了包括java、python等在内的大多数主流语言的接口。同时数据的格式是通用的json。使用起来相当的方便。</p>
+<p>它所提供的并不仅仅是简单的人脸识别。而是可以将人脸以分组的形式聚合。从而提供更丰富的可选择性和使用的场景。</p>
+<p>比如一个公司可能分为管理层、秘书、一般员工三种。那么在Face++后台中就可以定义这么三个组。同时利用api分别将不同角色人得头像指定为不同组中。下图中便是我创建的应用的管理后台。所谓Groups就是刚刚所说的分组的概念。<br><img src="http://meijing0114.qiniudn.com/11屏幕快照 2014-12-21 下午3.32.14.png" alt=""></p>
+<p>进入分组之后，每一个人脸的信息会以预定义的维度存储，从而保证能够正确的比对。<br><img src="http://meijing0114.qiniudn.com/11屏幕快照 2014-12-21 下午3.36.12.png" alt=""></p>
+<p>所以，在进行识别之前必须先把相应的人脸数据交给Face++进行训练。</p>
+<h2 id="利用树莓派实现功能模块"><a href="#利用树莓派实现功能模块" class="headerlink" title="利用树莓派实现功能模块"></a>利用树莓派实现功能模块</h2><ul>
+<li><p>一块是开发基于linux底层视频驱动库video4linux2的摄像头视频读入程序。<br>由于树莓派的底层都是linux系统，所以尽管遇到了一些坑，但是也算是顺利的实现了。但是由于拍摄好了图像之后需要发送网络请求进行识别，所以摄入图像的速度不算太快，1s两三张的样子。当然这些都是可以调整的参数。图像读取进来之后暂时放入特定的文件夹进行存储。</p>
+</li>
+<li><p>另一块就是对人脸识别的请求：</p>
+</li>
+</ul>
+<p>树莓派使用python开启了一个监听的进程，按照一定的频率去扫描这个文件夹中最新的图像文档。一旦发现了之后，立刻打包图像，并进行人脸识别的请求:</p>
+<p>调用过程如图所示：<br><img src="http://meijing0114.qiniudn.com/11屏幕快照 2014-12-21 下午3.55.11.png" alt=""></p>
+<p>除去你想识别的人物身份，api还会返回类似于性别、人种、是否在微笑以及相应的概率这些信息，不可谓不强大。</p>
+<p>完成了人物的识别之后，树莓派就通过socket将相应的结果发送给了webserver。后面就是前后端显示要做的事情了。</p>
+<p>当时由于是第一次接触树莓派，所以起步折腾了很久。很多技巧都是慢慢知道的，比如<a href="http://www.shumeipai.net/thread-256-1-1.html" target="_blank" rel="external">安装系统</a>、<a href="http://www.shumeidiy.com/thread-17-1-1.html" target="_blank" rel="external">如何释放SD卡得空间</a>、<a href="http://www.shumeipai.net/thread-18958-1-1.html" target="_blank" rel="external">如何配置无线网卡联网</a>、<a href="http://yehnan.blogspot.hk/2012/07/raspberry-pigpioled.html" target="_blank" rel="external">如何控制gpio口（简单搞了个蜂鸣器）</a>。</p>
+<p>除了树莓派本身，还配了一个SD卡，一个无线网卡、一个带电源的多usb插口（否则带不动）、一个摄像头。感觉这个小PC还是很强大的，后续如果把gpio好好用起来的话，应该可以在电路方面搞一些更好玩的东西出来。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/12/13/4/" rel="next" title="[php扩展与嵌入]php的生命周期">
+                <i class="fa fa-chevron-left"></i> [php扩展与嵌入]php的生命周期
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/12/23/7/" rel="prev" title="动态规划算法解决最长公共子序列（LCS）问题">
+                动态规划算法解决最长公共子序列（LCS）问题 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2014/12/21/6/"
+           data-title="基于树莓派和Face++云平台的人脸识别打卡系统" data-url="http://meijing0114.com/2014/12/21/6/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#首先来说Face-人脸识别云平台："><span class="nav-number">1.</span> <span class="nav-text">首先来说Face++人脸识别云平台：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#利用树莓派实现功能模块"><span class="nav-number">2.</span> <span class="nav-text">利用树莓派实现功能模块</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

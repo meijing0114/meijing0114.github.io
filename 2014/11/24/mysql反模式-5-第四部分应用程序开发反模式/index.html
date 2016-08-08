@@ -1,0 +1,766 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="MySQL反模式（5） – 第四部分 应用程序开发反模式如总纲中所说，SQL肯定是与多种编程语言构建的应用程序结合然后加以使用的。在应用程序中使用SQL的方式有好有坏，这部分内容描述了一些常见错误。主要的章节安排如下：
+
+第20章 明文密码 – 这一章主要描述在需要恢复或重置密码的场景下，如何规避不正确的密码存储方式可能带来的密码泄露的风险。
+第21章 SQL注入 – 在常见的SQL动态查询中，必">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql反模式(5)--第四部分应用程序开发反模式">
+<meta property="og:url" content="http://meijing0114.com/2014/11/24/mysql反模式-5-第四部分应用程序开发反模式/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="MySQL反模式（5） – 第四部分 应用程序开发反模式如总纲中所说，SQL肯定是与多种编程语言构建的应用程序结合然后加以使用的。在应用程序中使用SQL的方式有好有坏，这部分内容描述了一些常见错误。主要的章节安排如下：
+
+第20章 明文密码 – 这一章主要描述在需要恢复或重置密码的场景下，如何规避不正确的密码存储方式可能带来的密码泄露的风险。
+第21章 SQL注入 – 在常见的SQL动态查询中，必">
+<meta property="og:updated_time" content="2014-11-23T16:17:48.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="mysql反模式(5)--第四部分应用程序开发反模式">
+<meta name="twitter:description" content="MySQL反模式（5） – 第四部分 应用程序开发反模式如总纲中所说，SQL肯定是与多种编程语言构建的应用程序结合然后加以使用的。在应用程序中使用SQL的方式有好有坏，这部分内容描述了一些常见错误。主要的章节安排如下：
+
+第20章 明文密码 – 这一章主要描述在需要恢复或重置密码的场景下，如何规避不正确的密码存储方式可能带来的密码泄露的风险。
+第21章 SQL注入 – 在常见的SQL动态查询中，必">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2014/11/24/mysql反模式-5-第四部分应用程序开发反模式/"/>
+
+  <title> mysql反模式(5)--第四部分应用程序开发反模式 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                mysql反模式(5)--第四部分应用程序开发反模式
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-24T00:17:26+08:00" content="Nov 24 2014">
+              Nov 24 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据库/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/24/mysql反模式-5-第四部分应用程序开发反模式/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/24/mysql反模式-5-第四部分应用程序开发反模式/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="MySQL反模式（5）-–-第四部分-应用程序开发反模式"><a href="#MySQL反模式（5）-–-第四部分-应用程序开发反模式" class="headerlink" title="MySQL反模式（5） – 第四部分 应用程序开发反模式"></a>MySQL反模式（5） – 第四部分 应用程序开发反模式</h1><p>如总纲中所说，SQL肯定是与多种编程语言构建的应用程序结合然后加以使用的。在应用程序中使用SQL的方式有好有坏，这部分内容描述了一些常见错误。主要的章节安排如下：</p>
+<ol>
+<li>第20章 明文密码 – 这一章主要描述在需要恢复或重置密码的场景下，如何规避不正确的密码存储方式可能带来的密码泄露的风险。</li>
+<li>第21章 SQL注入 – 在常见的SQL动态查询中，必须找到能够有效避免SQL注入的方式。</li>
+<li>第22章 伪键洁癖 – 本章的内容不那么重要，有些人会为了主键id不连续而抓狂，这一章主要探讨了这方面的问题。</li>
+<li>第23章 非礼勿视 – 在进行sql查询的时候，经常会返回各类错误，如果正确的定位，从而提高程序健壮性是必须考虑的问题。</li>
+<li><p>第24章 外交豁免权 – 很多时候，不好的编程习惯会给我们带来沉重的技术债务。对于SQL来说更甚，因为很多人都没有把它当做一门编程语言！</p>
+</li>
+<li><p>第25章 魔豆 – 正确的理解MVC模型，有助于我们更好、更清晰的使用SQL。</p>
+</li>
+</ol>
+<h2 id="第20章-明文密码"><a href="#第20章-明文密码" class="headerlink" title="第20章 明文密码"></a>第20章 明文密码</h2><p>这一章的目标是正确合理的存储密码，从而方便的能够恢复或重置密码。</p>
+<p>主要问题:<br>一个致命的设计是，使用明文存储密码。这些信息在网络上传输的时候非常不安全。可能有几种方式能够获得密码：</p>
+<ul>
+<li>在客户端和服务器端数据库交互的网络线路上截获数据包 – wireshark</li>
+<li>在数据库服务器上搜索SQL的查询日志 – 前提是已侵入数据服务器</li>
+<li>从服务器或者备份介质上读取数据库备份文件内的数据</li>
+<li>而在验证密码的时候，最好能够区分到底是密码错了还是用户名根本就不存在这两种场景。这样程序逻辑可以显得更加用户友好一些。</li>
+</ul>
+<p>将明文密码通过e-mail发送是非常大的安全隐患，因此为了规避这一问题，使用明文存储密码的方案是完全不可行的。</p>
+<ol>
+<li>解决方案：先哈希，后存储</li>
+</ol>
+<p>哈希函数将输入的字符串转化成另一个新的不可识别的字符串，同时，哈希算法不可逆。一个号的哈希算法应该需要花上和直接猜测密码差不多的工作量才能找到原始串。</p>
+<p>SHA-1算法已经可以破解，至少使用SHA-256的加密算法还是一个比较靠谱的选择。MD5也是比较弱的加密，慎用。</p>
+<p>可以采用SQL自带的哈希函数，但这并不是标准的SQL语言。比如： INSERT </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">INTO Accounts (account_id,account_name,tmail,password_hash) VALUES (123,&apos;billkarwin&apos;,&apos;bill@example.com&apos;,SHA2(&apos;xyzzy&apos;));</div></pre></td></tr></table></figure>
+<p>为了进一步提高安全性，有必要给哈希加料。因为黑客还是有可能通过字典攻击的方法通过尝试的方式来破解现有用户的密码。加料的方式就是在进入哈希函数加密之前，通过连接一个无意义的串，来增加破解难度。</p>
+<p>作料的合理长度应该是8个字节，需要为每个密码生成作料。最好是随机生成的。</p>
+<p>同时，为了避免密码在传输过程中被截获，应该在接收请求的server逻辑中就进行密码的加密工作。而从浏览器到后端服务器之间的这段传输，则只能通过https的方式进行加密了。</p>
+<ol>
+<li>重置密码，而不是恢复密码</li>
+</ol>
+<p>尽管密码已经以一种更安全的方式被存储了，但是还需要解决最原始的问题：找回密码。</p>
+<p>第一个方案是当用户忘记他们的密码请求帮助的时候，程序发送一封带有临时生成密码的邮件给用户，而不是直接发给他们密码。同时程序应该设计成一旦用户使用临时密码登陆后，就应该被强制要求修改密码。<br>第二个方案，在数据库中记录下这个请求，并且为其分配一个唯一的令牌作为标识，而不是发送带有新密码的邮件。用户在重置密码时，必须带上这个标识。<br>如果密码对你可读，那对攻击者也是如此。</p>
+<h2 id="第21章-SQL注入"><a href="#第21章-SQL注入" class="headerlink" title="第21章 SQL注入"></a>第21章 SQL注入</h2><p>SQL动态查询是指将程序中得变量和基本SQL语句拼接成一个完整的查询语句。而如果你将未经验证的输入作为代码来执行的话，那么SQL注入就很难避免了。</p>
+<p>最常见的sql注入就是单引号，比如名字中包含单引号，那么SQL语句执行时就可能出错。</p>
+<p>下面这个例子更加高级一些：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$sql = &quot;UPDATE Accounts SET password_hash = SHA2(&apos;$password&apos;) </div><div class="line"></div><div class="line">WHERE account_id=$userid;&quot;</div></pre></td></tr></table></figure>
+<p>假如请求的url如下：</p>
+<p><a href="http://bugs.example.com/setpass?password=xyzzy$userid=123" target="_blank" rel="external">http://bugs.example.com/setpass?password=xyzzy$userid=123</a> OR TRUE</p>
+<p>那么基本上你对用户名的校验就要失效了。SQL注入是通过在SQL语句被数据库解析之前，以修改其语法的形式工作的。只要你在解析语句之前插入动态部分，就存在SQL注入的风险。</p>
+<p>解决方案：不信任任何人</p>
+<p>过滤输入内容</p>
+<p>将所有不合法字符剔除，可以使用filter扩展指定数字：</p>
+<p>$bugid = filter_input(INPUT_GET,”bug_id”,FILTER_SANITIZE_NUMBER_INT);</p>
+<p>或者简单的就直接用intval这种取数字的函数好了。</p>
+<p>同时通过正则表达式来匹配安全的子串也是不错的选择。</p>
+<p>参数化动态内容</p>
+<p>对于一些简单地类型，应该使用查询参数将其和SQL表达式分离。这对于那些字符串的类型尤其适用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line"></div><div class="line">$sql = &quot;UPDATE Accounts SET password_hash = SHA2(?) WHERE account_id = ?&quot;;</div><div class="line"></div><div class="line">$stmt = $pdo-&gt;prepare($sql);</div><div class="line"></div><div class="line">$params = array($_REQUEST[&apos;password&apos;],$_REQUEST[&apos;userid&apos;]);</div><div class="line"></div><div class="line">$stmt-&gt;execute($params);</div><div class="line"></div><div class="line">?&gt;</div></pre></td></tr></table></figure>
+<p>给动态输入的值加引号</p>
+<p>很多时候，查询参数的方式有可能会导致查询优化器无法正确选择使用哪个索引进行优化。比如某一列is_flag，可能99%的数据都是true，1%为false，那么如果使用查询参数的方式，那么优化器不知道你会传入哪个，因此很有可能选择错误的优化方案。</p>
+<ol>
+<li>将用户与代码隔离</li>
+</ol>
+<p>假如说你的界面需要用户选择排序方式，那么不要让用户直接输入怎么排列的数据。而是给用户一些状态，然后再这些状态和sql语句需要的真实值之间做一个映射关系。如果用户输入不在此范围内的话，当然要提供一些默认值了。</p>
+<p>这种做法优势颇多： </p>
+<ul>
+<li>从不将用户的输入与SQL查询语句连接，因此减少了SQL注入的风险 </li>
+<li>可以让SQL语句中得任意部分变得动态化，包括标识，SQL关键字，甚至整句表达式 </li>
+<li>使用这个方法验证用户的输入变得简单而高效 </li>
+<li>能将数据库查询的细节和用户界面解耦</li>
+</ul>
+<ol>
+<li>找个可靠的人帮你code review</li>
+</ol>
+<p>找出所有使用了程序变量、字符串链接或者替换等方法组成的SQL语句<br>跟踪在SQL语句中使用的动态内容的来源<br>假设任何外部内容都是潜在威胁<br>让用户输入内容，千万别让用户输入代码。</p>
+<h2 id="第22章-伪键洁癖"><a href="#第22章-伪键洁癖" class="headerlink" title="第22章 伪键洁癖"></a>第22章 伪键洁癖</h2><p>事实上，这一章存在的意义是为了劝服那些觉得主键一定要连续的强迫症们，这样的抵抗完全是费力二不讨好的。 所以建议就是，就这么用吧。如果真的想要连续，那就自己定义有意义的连续的自然键好了。</p>
+<h2 id="第23章-非礼勿视"><a href="#第23章-非礼勿视" class="headerlink" title="第23章 非礼勿视"></a>第23章 非礼勿视</h2><p>每个有追求的程序员都想写出优雅的代码，另一类有追求的程序员会删掉所有那些他们觉得冗余的代码。</p>
+<p>但是很多时候，删的太多容易造成两种“非礼勿视”：</p>
+<p>忽略数据库API的返回值：相信代码肯定不会出问题。<br>和程序代码混在一起阅读那些分散的SQL语句片段：不把完整的SQL打印出来，很多时候很难看出问题。<br>因此很多时候，必须让程序能够从错误中恢复，从而更加健壮：</p>
+<ul>
+<li>检查数据库API返回状态和异常</li>
+<li>使用实际的SQL查询语句来进行调试</li>
+<li>使用变量记录sql语句</li>
+<li>打印出来</li>
+<li>千万别把SQL语句当做html注释一起输出在页面上<br>所以</li>
+</ul>
+<p>发现并解决代码中得问题已经很困难了，就别再盲目的干了。。</p>
+<h2 id="第24章-外交豁免权"><a href="#第24章-外交豁免权" class="headerlink" title="第24章 外交豁免权"></a>第24章 外交豁免权</h2><p>有的时候总会遇到前人留下来要接手的项目，这些项目往往背负着虫虫的技术债务。这都是由于使用了捷径而不是最佳实践的后果。技术债务会不断给项目带来风险和额外的工作，知道你重构、测试并为代码编写文档。</p>
+<p>好的习惯大家都知道： </p>
+<ul>
+<li>将源代码使用版本控制工具管理起来，比如SVN或Git </li>
+<li>为程序编写自动化测试脚本或者功能测试脚本 </li>
+<li>编写文档，规格说明以及代码注释来记录程序的需求和实现机制</li>
+</ul>
+<p>但是问题是，很多人都不把SQL当做编程语言。有可能软件工程师和dba是分开的，有可能SQL跟别的语言差别比较大，有可能SQL没有IDE。原因众多，但是这都不是不正视SQL语言的理由。</p>
+<p>要想判断代码是不是临时，唯一标准就是使用之后能不能立刻删。</p>
+<p>质量对于大多数程序来说就是测试，但是这只是质量控制，保证质量需要：</p>
+<ul>
+<li>清晰定义项目需求，写成文档</li>
+<li>SQL文档中最好包含以下部分：</li>
+<li>实体关系图</li>
+<li>表、列及视图</li>
+<li>关系</li>
+<li>触发器</li>
+<li>存储过程</li>
+<li>SQL安全</li>
+<li>数据库基础设施</li>
+<li>设计并实现解决方案来满足需求</li>
+<li>源码必须进行版本控制</li>
+<li>数据定义脚本</li>
+<li>初始数据</li>
+<li>触发器和存储过程</li>
+<li>验证并测试解决方案符合需求</li>
+</ul>
+<p>##第25章 魔豆</p>
+<p>MVC模型在web开发中使用的如此普遍，以至于随处可见。但是很多时候，界线的模糊会导致分工不明确，反而会失去它原有的逻辑分离的优势。</p>
+<p>控制器：接受用户输入，定义响应逻辑，委托模型操作，再返回视图 模型：程序核心，输入验证、业务逻辑、数据库交互 视图：用户界面展示信息</p>
+<p>简单地程序中，模型不会被定义很多逻辑，它更多的会被作为一个数据库中某个表的映射对象来使用（ORM）。又称为活动记录。这种做法没错，但是并不适用于所有场景。</p>
+<p>有一个有趣的概念叫做抽象泄露：</p>
+<blockquote>
+<p>抽象简化了一些技术的内部工作原理并且让其更加方便调用。但当由于需要更高效的生产效率而不得不了解内部细节的时候，就称之为抽象泄露。</p>
+</blockquote>
+<p>一般出现这种情况的时候，就会产生，还不如当初不用简单模型的感慨。</p>
+<p>当太多的活动记录出现，而逻辑集中在控制器层的时候，引用关系会十分混乱。活动记录太过于低层，控制器需要关注太多这种数据操作层面的代码。而且很多冗余的情况也都会出现。 同时，想要单元测试也十分的困难，因为点太多了！</p>
+<p>唯一合理的场景是：你只需要CRUD操作。</p>
+<p>因此，模型不应该仅仅承载活动记录这一种功能。它必须：</p>
+<ul>
+<li>信息专家： 一个对象应该有所有需要的数据来满足他所负责的操作，模型和活动记录之类的DAO关系应该是HAS-A而不是IS-A的关系。</li>
+<li>创造者：一个模型如何维护数据库应该是它的内部实现细节，不许关系</li>
+<li>低耦合：必须解耦程序</li>
+<li><p>高内聚：模型接口应该反映出他所期望的调用方式，而不是数据库物理结构或者CRUD操作。<br>模型是实现程序业务逻辑的地方，将数据存储在数据库中是模型的内部实现细节。经过对模型的改造之后：</p>
+</li>
+<li><p>各类之间必将解耦</p>
+</li>
+<li>控制器代码大大简化</li>
+<li>控制器无需了解DAO数据内部细节，只关心用户输入，然后调用API。</li>
+</ul>
+<p>在与mysql相关的应用程序开发中，经常会遇到各种各样的坑，如何很好地避免这些坑，选取最合适的开发方式。并及时偿还技术债务，这一部分给出了很好地阐释。</p>
+<p>总体来看，这本书的观点更为传统，有些部分看起来可能还略显啰嗦。但是其可贵之处在于认真与严谨、用事实说话、和不拘泥思路的解决问题。从这上面得到的启发与技术上得进步，可以并驾齐驱了。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/11/24/mysql反模式-4-第三部分查询反模式/" rel="next" title="mysql反模式(4)--第三部分查询反模式">
+                <i class="fa fa-chevron-left"></i> mysql反模式(4)--第三部分查询反模式
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/11/24/c和c-面试常见问题总结/" rel="prev" title="c和c++面试常见问题总结">
+                c和c++面试常见问题总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2014/11/24/mysql反模式-5-第四部分应用程序开发反模式/"
+           data-title="mysql反模式(5)--第四部分应用程序开发反模式" data-url="http://meijing0114.com/2014/11/24/mysql反模式-5-第四部分应用程序开发反模式/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MySQL反模式（5）-–-第四部分-应用程序开发反模式"><span class="nav-number">1.</span> <span class="nav-text">MySQL反模式（5） – 第四部分 应用程序开发反模式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#第20章-明文密码"><span class="nav-number">1.1.</span> <span class="nav-text">第20章 明文密码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第21章-SQL注入"><span class="nav-number">1.2.</span> <span class="nav-text">第21章 SQL注入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第22章-伪键洁癖"><span class="nav-number">1.3.</span> <span class="nav-text">第22章 伪键洁癖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第23章-非礼勿视"><span class="nav-number">1.4.</span> <span class="nav-text">第23章 非礼勿视</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第24章-外交豁免权"><span class="nav-number">1.5.</span> <span class="nav-text">第24章 外交豁免权</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

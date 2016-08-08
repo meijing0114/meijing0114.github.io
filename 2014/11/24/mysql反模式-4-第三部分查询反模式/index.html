@@ -1,0 +1,746 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="mysql反模式(4)– 第三部分 查询反模式这一部分主要集中讨论了一下，在查询数据时应该注意的问题。
+主要章节如下：
+
+第14章 对未知的恐惧 – 必须正确意识到何时以及如何正确的使用NULL
+第15章 模棱两可的分组 – 如何使用正确的方式获取每组的最大值 
+第16章 随机选择 – 讨论如何正确的从一个大的数据集中返回一些数据样例
+第17章 可怜人的搜索引擎 – 使用SQL实现数据库搜索的需求">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql反模式(4)--第三部分查询反模式">
+<meta property="og:url" content="http://meijing0114.com/2014/11/24/mysql反模式-4-第三部分查询反模式/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="mysql反模式(4)– 第三部分 查询反模式这一部分主要集中讨论了一下，在查询数据时应该注意的问题。
+主要章节如下：
+
+第14章 对未知的恐惧 – 必须正确意识到何时以及如何正确的使用NULL
+第15章 模棱两可的分组 – 如何使用正确的方式获取每组的最大值 
+第16章 随机选择 – 讨论如何正确的从一个大的数据集中返回一些数据样例
+第17章 可怜人的搜索引擎 – 使用SQL实现数据库搜索的需求">
+<meta property="og:updated_time" content="2014-11-23T16:09:26.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="mysql反模式(4)--第三部分查询反模式">
+<meta name="twitter:description" content="mysql反模式(4)– 第三部分 查询反模式这一部分主要集中讨论了一下，在查询数据时应该注意的问题。
+主要章节如下：
+
+第14章 对未知的恐惧 – 必须正确意识到何时以及如何正确的使用NULL
+第15章 模棱两可的分组 – 如何使用正确的方式获取每组的最大值 
+第16章 随机选择 – 讨论如何正确的从一个大的数据集中返回一些数据样例
+第17章 可怜人的搜索引擎 – 使用SQL实现数据库搜索的需求">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2014/11/24/mysql反模式-4-第三部分查询反模式/"/>
+
+  <title> mysql反模式(4)--第三部分查询反模式 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                mysql反模式(4)--第三部分查询反模式
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-24T00:08:53+08:00" content="Nov 24 2014">
+              Nov 24 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据库/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/24/mysql反模式-4-第三部分查询反模式/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/24/mysql反模式-4-第三部分查询反模式/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="mysql反模式-4-–-第三部分-查询反模式"><a href="#mysql反模式-4-–-第三部分-查询反模式" class="headerlink" title="mysql反模式(4)– 第三部分 查询反模式"></a>mysql反模式(4)– 第三部分 查询反模式</h1><p>这一部分主要集中讨论了一下，在查询数据时应该注意的问题。</p>
+<p>主要章节如下：</p>
+<ol>
+<li>第14章 对未知的恐惧 – 必须正确意识到何时以及如何正确的使用NULL</li>
+<li>第15章 模棱两可的分组 – 如何使用正确的方式获取每组的最大值 </li>
+<li>第16章 随机选择 – 讨论如何正确的从一个大的数据集中返回一些数据样例</li>
+<li>第17章 可怜人的搜索引擎 – 使用SQL实现数据库搜索的需求</li>
+<li>第18章 意大利面条式查询 – 必须尽可能的减少SQL查询量从而降低复杂度</li>
+<li>第19章 隐式的列 – 如果你选择通配符这种鸵鸟战术，那么可能你select出来的到底是什么都不知道</li>
+</ol>
+<p>##第14章 对未知的恐惧<br>本章的目标是辨别悬空值。</p>
+<p>有很多在SQL的表盒查询中有效使用空值的途径：</p>
+<ul>
+<li>可以在添加一条记录时，使用NULL代替那些还不确定的值</li>
+<li>一个给定的列如果没有合适的值，可以在对应的行中适应NULL</li>
+<li>当传入的参数无效时，一个函数的返回值也可以是NULL,如DAY(2014-12-32)</li>
+<li>外联结查询中，NULL被用来当做未匹配的列的占位符<br>反模式是将NULL作为普通的值，需要注意的是，NULL与0、false或空字符串都是不同的。而在查询时，以下语句都不会返回包含NULL的列：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SELECT * FROM table_a WHERE column_a = 1;</div><div class="line">SELECT * FROM table_a WHERE NOT (column_a = 1);</div></pre></td></tr></table></figure>
+<p>同时，与NULL的直接比较都不会返回任何结果:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SELECT * FROM table_a WHERE column_a = NULL;</div><div class="line">SELECT * FROM table_a WHERE column_a &lt;&gt; NULL;</div></pre></td></tr></table></figure>
+<p>有的开发人员可能会觉得NULL非常的麻烦，试图通过声明NOT NULL的方式解决这个问题，但是事实上，你必须保证列中的每一个值都有意义才可以这么做。</p>
+<p>在将NULL视为特殊值之后，就需要利用特殊操作符：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SELECT * FROM table_a WHERE column_a IS NULL;</div><div class="line">SELECT * FROM table_a WHERE column_a IS NOT NULL;</div></pre></td></tr></table></figure>
+<p>另外一种避免NULL带来麻烦的方法就是声明默认值DEFAULT. 当然这很大程度上你的列意义中是否存在这样的一个默认值。</p>
+<p>如果想要强制让某一列或某个表达式返回非NULL的值，可以借助COALESCE()函数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SELECT  CONCAT( COALESCE(firstName,&apos; &apos;), lastName) As fullName FROM Accounts;</div></pre></td></tr></table></figure>
+<p>##第15章 模棱两可的分组<br> 很多时候都会用到查询时使用GROUP BY的场景，用来对分组多行记录使用一些聚合函数，或是每组获取一条统计记录等。它的强大之处在于，将复杂的报表生成过程简化到只用相对很少的代码。</p>
+<p>尽管group by很强大，但是针对我们想要返回每组最大值的查询，同时也能返回这个值对应的记录的其他字段。这类需求，就比较难以满足了。</p>
+<p>原因在于SQL中分组查询逻辑的特殊性：</p>
+<p>单值规则：属于每个组的行，它们的GROUP BY关键字所指定的那些列中得值都是一样的,对于每个不同的FID都会返回一条记录：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">SELECT FID, MAX(createTime) AS latest </div><div class="line">FROM table1 join table2 USING (commen_id)</div><div class="line">GROUP BY FID;</div></pre></td></tr></table></figure>
+<p>但是下面这个语句无法保证：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">SELECT FID, MAX(createTime) AS latest,common_id </div><div class="line">FROM table1 join table2 USING (common_id)</div><div class="line">GROUP BY FID;</div></pre></td></tr></table></figure></p>
+<p>因为一个FID可能对应多个common_id，这会导致数据库查询的错误。</p>
+<p>注意，distinct也能达到对查询结果去重的目的，保证最终返回的每一行都唯一,表Bugs描述了bug提出的日期和提出人等信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">SELECT DISTINCT date_reported,reported_by FROM Bugs;</div><div class="line">SELECT date_reported,reported_by FROM Bugs </div><div class="line">GROUP BY date_reported,reported_by;</div><div class="line">``` </div><div class="line"> 为了能够实现无歧义的使用列，存在几种方案：</div><div class="line"></div><div class="line">* 只查询功能依赖的列：</div><div class="line">所谓功能依赖是指一种确定的1v1 的关系，如果可以保证这一点，那就可以放心的使用GROUP BY了</div><div class="line">* 使用关联子查询：</div><div class="line">* 通过引用外联结查询，来保证返回的bug_id的唯一性：</div></pre></td></tr></table></figure>
+<p>SELECT bp1.product_id,b1.date_reported AS latest, b1.bug_id<br>FROM Bugs b1 JOIN BugsProducts bp1 USING (bug_id)<br>WHERE NOT EXISTS<br> (SELECT * FROM Bugs b2 JOIN BugsProducts bp2 USING (bug_id)<br>  WHERE bp1.product_id = bp2.product_id<br>      AND b1.date_reported &lt; b2.date_reported);<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"> 但是显然这个方法的查询性能不是最好，需要对美一条记录都执行一遍关联的子查询。</div><div class="line"></div><div class="line">使用衍生表：</div><div class="line">先得到临时结果，只包含product_id和其对应的最新的Bug报告日期。然后使用这个临时表和原表进行联结查询，然后即可得到每个产品的最新Bug信息。</div><div class="line">使用JOIN</div></pre></td></tr></table></figure></p>
+<p>SELECT bp1.product_id, b1.date_reported AS latest, b1.bug_id<br>FROM Bugs b1 JOIN BugsProducts bp1 ON (b1.bug_id = bp1.bug_id)<br>LEFT OUTER JOIN (Bugs AS b2 JOIN BugsProducts AS bp2 ON (b2.bug_id = bp2.bug_id))<br>     ON (bp1.product_id = bp2.product_id AND (b1.date_reported &lt; b2.date_reported))<br>     OR b1.date_reported = b2.date_reported AND b1.bug_id &lt; b2.bug_id))<br>WHERE b2.bug_id IS NULL;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">必须找到date_reported为最大的bug的bug_id，如果date_reported相同，就选择bug_id最小的bug. </div><div class="line">JOIN解决方案适用于针对大量数据查询并且可伸缩性比较关键时，尽管难于理解和维护，但是能比基于子查询的解决方案更好地适应数据变化，一定要对不同类型的查询的性能进行实际测量，而不是仅靠猜测来判断哪个更好。</div><div class="line">通过对额外的列使用聚合函数：</div></pre></td></tr></table></figure></p>
+<p>SELECT product_id, MAX(date_reported) AS latest<br>    MAX(bug_id) AS latest_bug_id<br>FROM Bugs JOIN BugsProducts USING (bug_id)<br>GROUP BY product_id;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">只有确定bug_id对应的bug的日期也是最新的时候，才可以使用这个方案，否则返回的结果就对不上了。 </div><div class="line"></div><div class="line">通过上述的论述可以看出，在查询，尤其是分组查询的时候，必须严格的遵守单值规则，从而避免获得模棱两可的查询结果。同时面对不同查询方法的选择，必须经过性能实际测量来确定，而非简单地猜测。</div><div class="line"></div><div class="line">## 第16章 随机选择</div><div class="line">在很多场景中，我们都需要从数据库中拉取一条随机数据，然后进行web展示。注入轮流展示的广告或是推荐的新闻、待审核记录的子集、测试数据等等。</div><div class="line"></div><div class="line">那么如何有效的获取样本数据，同时又能够保证较高的性能和较低的复杂度，是这一章主要讨论的问题。</div><div class="line"></div><div class="line">最常见的方式，是对查询记过进行随机排序，然后获取第一行：</div><div class="line"></div><div class="line">```SELECT * FROM Bugs ORDER BY RAND() LIMIT 1;</div></pre></td></tr></table></figure></p>
+<p>尽管很流行，但是弱点明显：</p>
+<ul>
+<li>注意一般的order by可以充分利用索引的好处，但是使用RAND意味着整个排序过程无法利用索引。没有索引会基于随机函数返回的值。所以性能有问题，相当于一次全表遍历。</li>
+<li>同时另一个问题是，好不容易排序好了，但绝大多数结果都浪费了。因为需要的只不过是一行而已。<br>当然，在数据量比较小得时候，这种方式毫无问题，比如随机产生中国所有省市中得一个。</li>
+</ul>
+<p>为了解决这一性能问题：</p>
+<ul>
+<li>从1到最大值之间随机选择：生成一个1到最大主键之间的随机数，但是必须保证主键连续。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">SELECT b1.*</div><div class="line">FROM Bugs AS b1</div><div class="line">JOIN (SELECT CEILT(RAND() * (SELECT MAX(bug_id) FROM Bugs)) AS rand_id) AS b2</div><div class="line">    ON (b1.bug_id = b2.bug_id);</div></pre></td></tr></table></figure>
+<ul>
+<li>选择下一个最大值：解决了1到最大值之间有间隙的情况，</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">SELECT b1.*</div><div class="line">FROM Bugs AS b1</div><div class="line">JOIN (SELECT CEIL(RAND()*(SELECT MAX(bug_id) FROM Bugs)) AS bug_id) AS b2</div><div class="line">WHERE b1.bug_id &gt;= b2.bug_id</div><div class="line">ORDER BY b1.bug_id</div><div class="line">LIMIT 1;</div></pre></td></tr></table></figure>
+<p>但在间隙后的那个值被选中的概率会增大，当队列中间隙不大并且每个值要被等概率选中的重要性不高时，可以选择折中方案</p>
+<ul>
+<li>获取所有键值，随机选择一个：<br>用程序代码获取所有键值，然后随机选择一个<br>但是列表可能过长，而且要查询两次。<br>所以适用于逻辑简单且数据量湿度的时候。它在处理非连续值时很好。</li>
+<li>使用偏移量选择随机行<br>计算总得数据行数，然后随机选择0-总行数之间的一个值。<br>当无法保证逐渐联系，而且需要每行被选中概率相同时，可以使用这个方案<br>本章中，提供了适应不同场景的诸多生成随机记录的方法，如何选择，就要视实际情况而定了。</li>
+</ul>
+<h2 id="第17章-可怜人的搜索引擎"><a href="#第17章-可怜人的搜索引擎" class="headerlink" title="第17章 可怜人的搜索引擎"></a>第17章 可怜人的搜索引擎</h2><p>SQL中，想要实现全文搜索非常困难，因为它根本就没有为此设计。sql一列中的的那个数据都是原子性的，因此比较两个值时通常都是两个整体，像like这种操作简直就是灾难。</p>
+<p>它不受益于索引，同时其简单地匹配模式也使得很多场景下并不适用。唯一的场景就是，你的需求非常小，且不在乎索引。</p>
+<p>最好的解决方案，就是让SQL做自己的事情，而把搜索交给专业的工具去做。这能够极大的减少重复的搜索开销。</p>
+<ul>
+<li>数据库扩展<br>MYSQL为MyISAM存储引擎提供了一个简单地全文索引类型。可以在一个类型为CHAR、VARCHAR或者TEXT列上定义一个全文索引。</li>
+</ul>
+<p><code>ALTER TABLE Bugs ADD FULLTEXT INDEX  bugfts</code><br>(summary,description);<br>检索时：</p>
+<p><code>SELECT * FROM Bugs WHERE MATCH(summary,description) AGAINST (‘crash’);</code></p>
+<p>Mysql 4.1之后同时还提供更精确的过滤方式：</p>
+<p><code>SELECT * FROM Bugs WHERE MATCH(summary,description)
+    AGAINST (‘+crash -save’ IN BOOLEAN MODE);</code><br> ORACLE、Microsoft SQL Server、PostgreSQL、SQLite都提供相应地搜索类型，这里不详细展开了。</p>
+<ul>
+<li>第三方搜索引擎<br>Sphinx Search<br>作为一个用于MySQL及PostgreSQL的开源搜索引擎，它构建索引和搜索都很快，并且支持分布式查询。对于数据不常更新且要求高可扩展性的程序来说是一个很好地选择。<br>通过配置sphinx的conf文件，可以指定构建索引的数据库。之后需要写一个SQL脚本获取数据从而构建索引。<br>以下给出配置文件的例子，最后一句指定从表中获取全量数据的语句：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">source bugsrc</div><div class="line">&#123;</div><div class="line">    type              = mysql</div><div class="line">    sql_user              = bugsuser</div><div class="line">    sql_pass              = password</div><div class="line">    sql_db           = database</div><div class="line">    sql_query      = \</div><div class="line">        SELECT bug_id,status,date_reported,summary,description \</div><div class="line">        FROM Bugs</div><div class="line">    sql_attr_timestamp = date_reported</div><div class="line">    sql_query_info       = SELECT * FROM Bugs WHERE bug_id=$id </div><div class="line">&#125;</div><div class="line"></div><div class="line">index bugs </div><div class="line">&#123;</div><div class="line">    source     = bugsrc</div><div class="line">    path        = /opt/local/var/db/sphinx/bugs</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p> 在shell中进行索引创建后，就可以搜索了：</p>
+<p>indexer -c sphinx.conf bugs<br>search -b “crash -save”<br>它同时也提供守护进程和对应的API常用的脚本语言，但是最主要问题是它不支持高效的增量更新。</p>
+<p>Apache Lucene<br>lucene是针对java的成熟搜索引擎。</p>
+<p>它使用独有格式为文本文档创建索引，更新数据时也需要更新索引。lucene给你的自由度非常大，它不会直接从数据库读取数据，必须手动写入集合。而检索式，就可以使用java api了。而更棒的是apache的另一个项目：solr。它是lucene索引的网关服务，可以向solr添加文档或是使用REST风格的接口提交查询请求，然后就可以使用任意语言进行调用了。</p>
+<p>看过这么多的解决搜索问题的方案，我想说的时，你完全没有必要使用SQL来解决所有的问题。</p>
+<h2 id="第18章-意大利面条式查询"><a href="#第18章-意大利面条式查询" class="headerlink" title="第18章 意大利面条式查询"></a>第18章 意大利面条式查询</h2><p> 开发人员经常遇到一个很困扰的问题，那就是“我要怎么用一个查询来完成这件事情”。这本身，就是一个怪圈。</p>
+<p>尽管sql极具表现力，可以在单个sql查询或单条语句完成很多事情，但是不意味着必须强制只使用一行代码。<br>通过一个查询来获得所有结果明显的副作用就是得到了一个笛卡尔积。这个结果往往是错误的，这也是一个最常见的错误。<br>不要尝试做一个类似于双重任务的查询，很多时候容易得到一个意料之外的笛卡尔积。<br>除了会得到错误的结果之外，这些查询也非常的难写、难以修改和难以调试。</p>
+<p>由于其实SQL并没有那么难，所以如果你和单条SQL查询纠结了很长时间，那么应该重新考虑你的实现方式。<br>在这种场景下，最好的方式是遵循简约律：</p>
+<blockquote>
+<p>当你有两个相互竞争的理论能得出同样的结论，那么简单地那个更好。</p>
+</blockquote>
+<p>必须对已有的复杂的SQL语句进行分拆。<br>拆完之后查询不会产生早先例子里地笛卡尔积，因此很简单就能确认查询给出的结果准确<br>当有新的需求加进来的时候，加上另一个简单地查询，比将更多计算整合到一个很复杂的查询中要简单很多<br>sql引擎能更容易和可靠地对简单查询进行优化和执行。即使整个工作看上去像是被分割出来的查询弄的有点重复，但可能执行的更快<br>code review也更加方便<br>如果想要一次性返回结果，那么可以通过UNION操作的方式。</p>
+<p>使用union操作之后，查询结果是每个子查询联合后得到的，但是要加上额外的一列来标识不同子查询的结果。<br>仅在两个子查询的列属性是相互兼容的情况下才能使用union，不能在查询的中间改变列的数值、名字或数据类型，需要确保所有行的所有列都是相同的。</p>
+<p>还有一种可行的方式是用sql生成sql：<br>代码生成：自动的脚本<br>不要太专注于使用单个SQL语句解决复杂的问题：脚本很多时候是很好地替代选择。<br>执行多次SQL查询或多条SQL语句可能并不是解决问题最高效的方法，但你应该在效率和解决问题之间找到平衡点。</p>
+<p>所以从本章中得出的最重要的结论就是：尽管SQL支持用一行代码解决复杂的问题，但也别做不切实际的事情。</p>
+<h2 id="第19章-隐式的列"><a href="#第19章-隐式的列" class="headerlink" title="第19章 隐式的列"></a>第19章 隐式的列</h2><p>本章的目标是在写SQL语句时减少输入，很多程序员在查询的时候都是使用通配符的。但是这种捷径很可能会让你迷失方向。</p>
+<ul>
+<li>破坏代码重构：一旦数据表结构发生变化，以前通配符写得语句都完蛋了</li>
+<li><p>隐藏的开销：在查询中使用通配符可能会影响性能和扩展性，一次查询所获取的列越多，客户端程序和数据库之间的网络传输的字节数也越多。<br>因此，解决的方案也很明显：</p>
+</li>
+<li><p>明确列出列名，而不是使用通配符或者隐式列的列表<br>这非常值得，因为：</p>
+<ul>
+<li>如果某一列位置被移动过，不会影响现有程序</li>
+<li>如果新加入一列，不出现在当前结果中</li>
+<li>如果删除，查询会得到告警的错误，这会早暴露出错误。</li>
+</ul>
+</li>
+</ul>
+<p>所以，通配符，还是少用的比较好。</p>
+<p>这一部分罗列出了数据库查询时可能遇到的各种场景，对于实际使用还是有一些借鉴意义的。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/11/23/mysql反模式-3-第二部分物理数据库设计反模式/" rel="next" title="mysql反模式(3)--第二部分物理数据库设计反模式">
+                <i class="fa fa-chevron-left"></i> mysql反模式(3)--第二部分物理数据库设计反模式
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/11/24/mysql反模式-5-第四部分应用程序开发反模式/" rel="prev" title="mysql反模式(5)--第四部分应用程序开发反模式">
+                mysql反模式(5)--第四部分应用程序开发反模式 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2014/11/24/mysql反模式-4-第三部分查询反模式/"
+           data-title="mysql反模式(4)--第三部分查询反模式" data-url="http://meijing0114.com/2014/11/24/mysql反模式-4-第三部分查询反模式/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#mysql反模式-4-–-第三部分-查询反模式"><span class="nav-number">1.</span> <span class="nav-text">mysql反模式(4)– 第三部分 查询反模式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#第17章-可怜人的搜索引擎"><span class="nav-number">1.1.</span> <span class="nav-text">第17章 可怜人的搜索引擎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第18章-意大利面条式查询"><span class="nav-number">1.2.</span> <span class="nav-text">第18章 意大利面条式查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第19章-隐式的列"><span class="nav-number">1.3.</span> <span class="nav-text">第19章 隐式的列</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

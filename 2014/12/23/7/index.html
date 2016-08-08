@@ -1,0 +1,701 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="什么是动态规划一般应用于存在最优子结构的问题中，最优子结构的意思是局部最优解能决定全局最优解。即问题能分解成子问题来解决。分为以下四个步骤：
+
+描述最优解的结构
+递归定义最优解的值
+按照自底向上的方式计算最优解的值
+由计算出的结果构造出一个最优解
+
+最优子结构：最优解所包含的子问题的解也是最优的。
+重叠子问题：在用递归算法自顶向下对问题进行求解的时候，每次产生的子问题并不总是新的问题，有些子问题会">
+<meta property="og:type" content="article">
+<meta property="og:title" content="动态规划算法解决最长公共子序列（LCS）问题">
+<meta property="og:url" content="http://meijing0114.com/2014/12/23/7/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="什么是动态规划一般应用于存在最优子结构的问题中，最优子结构的意思是局部最优解能决定全局最优解。即问题能分解成子问题来解决。分为以下四个步骤：
+
+描述最优解的结构
+递归定义最优解的值
+按照自底向上的方式计算最优解的值
+由计算出的结果构造出一个最优解
+
+最优子结构：最优解所包含的子问题的解也是最优的。
+重叠子问题：在用递归算法自顶向下对问题进行求解的时候，每次产生的子问题并不总是新的问题，有些子问题会">
+<meta property="og:updated_time" content="2014-12-23T05:13:27.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="动态规划算法解决最长公共子序列（LCS）问题">
+<meta name="twitter:description" content="什么是动态规划一般应用于存在最优子结构的问题中，最优子结构的意思是局部最优解能决定全局最优解。即问题能分解成子问题来解决。分为以下四个步骤：
+
+描述最优解的结构
+递归定义最优解的值
+按照自底向上的方式计算最优解的值
+由计算出的结果构造出一个最优解
+
+最优子结构：最优解所包含的子问题的解也是最优的。
+重叠子问题：在用递归算法自顶向下对问题进行求解的时候，每次产生的子问题并不总是新的问题，有些子问题会">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2014/12/23/7/"/>
+
+  <title> 动态规划算法解决最长公共子序列（LCS）问题 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                动态规划算法解决最长公共子序列（LCS）问题
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-12-23T13:12:47+08:00" content="Dec 23 2014">
+              Dec 23 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/算法初探/" itemprop="url" rel="index">
+                    <span itemprop="name">算法初探</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/12/23/7/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/12/23/7/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="什么是动态规划"><a href="#什么是动态规划" class="headerlink" title="什么是动态规划"></a>什么是动态规划</h2><p>一般应用于存在最优子结构的问题中，最优子结构的意思是局部最优解能决定全局最优解。即问题能分解成子问题来解决。分为以下四个步骤：</p>
+<ul>
+<li>描述最优解的结构</li>
+<li>递归定义最优解的值</li>
+<li>按照自底向上的方式计算最优解的值</li>
+<li>由计算出的结果构造出一个最优解</li>
+</ul>
+<p><strong>最优子结构：</strong><br>最优解所包含的子问题的解也是最优的。</p>
+<p><strong>重叠子问题：</strong><br>在用递归算法自顶向下对问题进行求解的时候，每次产生的子问题并不总是新的问题，有些子问题会被计算多次，动态规划算法利用这种性质，对每个子问题只计算一次，然后将计算结果保存在一个表格中。</p>
+<h2 id="动态规划解最长公共子序列问题"><a href="#动态规划解最长公共子序列问题" class="headerlink" title="动态规划解最长公共子序列问题"></a>动态规划解最长公共子序列问题</h2><blockquote>
+<p>两个字符串BDCABA和ABCBDAB，字符串BCBA和BDAB都是最长公共子序列，不要求连续。</p>
+</blockquote>
+<p>第一个字符串x，长度m，第二个y，长度n。</p>
+<ul>
+<li>如果xm == yn，那么这个字符肯定是作为公共子序列的最后一个字符，这时候只要加上它的前缀：xm-1和yn-1的最长公共子序列即可。</li>
+<li>如果不等，那么有两种可能性，要么是LCS(Xm-1,Yn), 要么是LCS(Xm,Yn-1),这时候应该取两者中更大的那一个。<br>同时，在第二种情况中，两种可能性并不相互独立，都需要求出LCS(Xm-1,Yn-1)的值。<br>故，解决问题需要：</li>
+</ul>
+<ol>
+<li>LCS（Xm-1，Yn-1）+1；</li>
+<li>LCS（Xm-1，Y），LCS（X，Yn-1）；</li>
+<li>max{LCS（Xm-1，Y），LCS（X，Yn-1）}。</li>
+</ol>
+<p>设序列X=<x1, x2,="" …,="" xm="">和Y=<y1, y2,="" …,="" yn="">的一个最长公共子序列Z=<z1, z2,="" …,="" zk="">，则：</z1,></y1,></x1,></p>
+<ul>
+<li>若xm=yn，则zk=xm=yn且Zk-1是Xm-1和Yn-1的最长公共子序列；</li>
+<li>若xm≠yn且zk≠xm ，则Z是Xm-1和Y的最长公共子序列；</li>
+<li>若xm≠yn且zk≠yn ，则Z是X和Yn-1的最长公共子序列。</li>
+</ul>
+<p>每个数组单元耗时O(1)所以一共是O（mn）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">Procedure LCS_LENGTH(X,Y);  </div><div class="line">begin  </div><div class="line">  m:=length[X];  </div><div class="line">  n:=length[Y];  </div><div class="line">  for i:=1 to m do c[i,0]:=0;  </div><div class="line">  for j:=1 to n do c[0,j]:=0;  </div><div class="line">  for i:=1 to m do  </div><div class="line">    for j:=1 to n do  </div><div class="line">      if x[i]=y[j] then  </div><div class="line">        begin  </div><div class="line">          c[i,j]:=c[i-1,j-1]+1;  </div><div class="line">          b[i,j]:=&quot;↖&quot;;  </div><div class="line">        end  </div><div class="line">      else if c[i-1,j]≥c[i,j-1] then  </div><div class="line">        begin  </div><div class="line">          c[i,j]:=c[i-1,j];  </div><div class="line">          b[i,j]:=&quot;↑&quot;;  </div><div class="line">        end  </div><div class="line">      else  </div><div class="line">        begin  </div><div class="line">          c[i,j]:=c[i,j-1];  </div><div class="line">          b[i,j]:=&quot;←&quot;  </div><div class="line">        end;  </div><div class="line">  return(c,b);  </div><div class="line">end;</div><div class="line">```  </div><div class="line"></div><div class="line">### 打印出序列X和Y的最长公共子序列： </div><div class="line"></div><div class="line">每次调用i或者j减1，所以算法计算时间是O(m+n)，这个过程就是回溯。</div></pre></td></tr></table></figure>
+<p>Procedure LCS(b,X,i,j);<br>begin<br>  if i=0 or j=0 then return;<br>  if b[i,j]=”↖” then<br>    begin<br>      LCS(b,X,i-1,j-1);<br>      print(x[i]); {打印x[i]}<br>    end<br>  else if b[i,j]=”↑” then LCS(b,X,i-1,j)<br>                      else LCS(b,X,i,j-1);<br>end;<br>```   </p>
+<h2 id="相关问题："><a href="#相关问题：" class="headerlink" title="相关问题："></a>相关问题：</h2><ol>
+<li><strong>最大子序列</strong> </li>
+<li><strong>最长公共子串</strong> </li>
+</ol>
+<h3 id="最大子序列"><a href="#最大子序列" class="headerlink" title="最大子序列"></a>最大子序列</h3><p>要找到由数组成的一维数组中和最大的连续子序列。方法是只要前i项的和还没有小于0那就一直向后扩展，否则丢弃之重新开始。</p>
+<h3 id="最长公共子串："><a href="#最长公共子串：" class="headerlink" title="最长公共子串："></a>最长公共子串：</h3><blockquote>
+<p>找两个字符串的最长公共子串，这个子串要求在原字符串中是连续的。</p>
+</blockquote>
+<p>其实这又是一个序贯决策问题，可以用动态规划来求解。我们采用一个二维矩阵来记录中间的结果。这个二维矩阵怎么构造呢？直接举个例子：</p>
+<p>“bab”和”caba”(当然我们现在一眼就可以看出来最长公共子串是”ba”或”ab”)<br>　　 b　　a　　b</p>
+<p>c　　0　　0　　0</p>
+<p>a　　0　　1　　0</p>
+<p>b　　1　　0　　1</p>
+<p>a　　0　　1　　0</p>
+<p>我们看矩阵的斜对角线最长的那个就能找出最长公共子串。<br>不过在二维矩阵上找最长的由1组成的斜对角线也是件麻烦费时的事，下面改进：当要在矩阵是填1时让它等于其左上角元素加1。</p>
+<p>　　 b　　a　　b</p>
+<p>c　　0　　0　　0</p>
+<p>a　　0　　1　　0</p>
+<p>b　　1　　0　　2</p>
+<p>a　　0　　2　　0</p>
+<p>这样矩阵中的最大元素就是最长公共子串的长度。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/12/21/6/" rel="next" title="基于树莓派和Face++云平台的人脸识别打卡系统">
+                <i class="fa fa-chevron-left"></i> 基于树莓派和Face++云平台的人脸识别打卡系统
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/01/12/book001/" rel="prev" title="读《学习之道》 - 追本溯源的好书">
+                读《学习之道》 - 追本溯源的好书 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2014/12/23/7/"
+           data-title="动态规划算法解决最长公共子序列（LCS）问题" data-url="http://meijing0114.com/2014/12/23/7/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是动态规划"><span class="nav-number">1.</span> <span class="nav-text">什么是动态规划</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#动态规划解最长公共子序列问题"><span class="nav-number">2.</span> <span class="nav-text">动态规划解最长公共子序列问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#相关问题："><span class="nav-number">3.</span> <span class="nav-text">相关问题：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#最大子序列"><span class="nav-number">3.1.</span> <span class="nav-text">最大子序列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最长公共子串："><span class="nav-number">3.2.</span> <span class="nav-text">最长公共子串：</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

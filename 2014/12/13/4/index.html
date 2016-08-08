@@ -1,0 +1,690 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="首先开始介绍php的生命周期，了解一个php程序从开始运行到最后结束究竟经过怎么样的过程，对学习php和平时php开发应该是很重要的。
+起始和关闭阶段：
+对于php的起始和关闭阶段可以分成两层，
+第一层是php解释器作为一个整体进行结构和值的初始化过程。
+第二层则是在每一个页面的请求过程中。
+
+
+
+对于每个扩展而言，都会有一个初始化MINT函数，这个过程会声明变量、类，注册资源、流和过滤处理器，这">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[php扩展与嵌入]php的生命周期">
+<meta property="og:url" content="http://meijing0114.com/2014/12/13/4/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="首先开始介绍php的生命周期，了解一个php程序从开始运行到最后结束究竟经过怎么样的过程，对学习php和平时php开发应该是很重要的。
+起始和关闭阶段：
+对于php的起始和关闭阶段可以分成两层，
+第一层是php解释器作为一个整体进行结构和值的初始化过程。
+第二层则是在每一个页面的请求过程中。
+
+
+
+对于每个扩展而言，都会有一个初始化MINT函数，这个过程会声明变量、类，注册资源、流和过滤处理器，这">
+<meta property="og:image" content="http://km.oa.com/files/post_photo/104/184104/a47a0aa0f3871f9d934086aadee624f3.jpg">
+<meta property="og:updated_time" content="2014-12-13T14:16:35.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[php扩展与嵌入]php的生命周期">
+<meta name="twitter:description" content="首先开始介绍php的生命周期，了解一个php程序从开始运行到最后结束究竟经过怎么样的过程，对学习php和平时php开发应该是很重要的。
+起始和关闭阶段：
+对于php的起始和关闭阶段可以分成两层，
+第一层是php解释器作为一个整体进行结构和值的初始化过程。
+第二层则是在每一个页面的请求过程中。
+
+
+
+对于每个扩展而言，都会有一个初始化MINT函数，这个过程会声明变量、类，注册资源、流和过滤处理器，这">
+<meta name="twitter:image" content="http://km.oa.com/files/post_photo/104/184104/a47a0aa0f3871f9d934086aadee624f3.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2014/12/13/4/"/>
+
+  <title> [php扩展与嵌入]php的生命周期 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [php扩展与嵌入]php的生命周期
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-12-13T22:15:52+08:00" content="Dec 13 2014">
+              Dec 13 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/php扩展/" itemprop="url" rel="index">
+                    <span itemprop="name">php扩展</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/12/13/4/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/12/13/4/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>首先开始介绍php的生命周期，了解一个php程序从开始运行到最后结束究竟经过怎么样的过程，对学习php和平时php开发应该是很重要的。</p>
+<h2 id="起始和关闭阶段："><a href="#起始和关闭阶段：" class="headerlink" title="起始和关闭阶段："></a>起始和关闭阶段：</h2><ul>
+<li>对于php的起始和关闭阶段可以分成两层，<ul>
+<li>第一层是php解释器作为一个整体进行结构和值的初始化过程。</li>
+<li>第二层则是在每一个页面的请求过程中。</li>
+</ul>
+</li>
+</ul>
+<p>对于每个扩展而言，都会有一个初始化MINT函数，这个过程会声明变量、类，注册资源、流和过滤处理器，这些操作在所有的请求中都是存在的，所以可以称为是Persistent的。一般进行如下的两步操作：</p>
+<ul>
+<li>REGISTER_INI_ENTRIES()</li>
+<li>初始化模块的全局变量</li>
+</ul>
+<p>而在页面发出请求了之后，PHP则会建立一个包括符号表和配置值在内的操作环境，然后这次php解释器会再次循环每一个扩展，调用每个扩展的RINIT初始化函数。一般RINT函数的操作如下：</p>
+<ul>
+<li>把globalvalue设成默认值，这些全局变量往往是每个请求都需要的，但是针对每一个请求而言都是相互独立的。</li>
+<li>那些需要用到的变量需要放到符号表中以备调用。</li>
+<li>在这个函数中还可以记录一下请求的相关信息</li>
+<li>完成了请求的处理之后，如果到达了脚本尾部或通过die() exit()推出了，那么php通过调用RSHUTDOWN()开始清理</li>
+<li>这时候每个符号表中的变量都会被unset掉</li>
+<li>而当所有的请求都被满足了之后，就开始针对于模块的MSHUTDOWN过程<br>调用UNREGISTER_INI_ENTRYES()，与MINIT函数的初始化过程相互对应。</li>
+</ul>
+<h2 id="php程序执行的生命周期："><a href="#php程序执行的生命周期：" class="headerlink" title="php程序执行的生命周期："></a>php程序执行的生命周期：</h2><p>要了解生命周期，就必须对不同的执行方式有所涉及。php可以有几种不同的执行方式，每种方式都有其特定的生命周期。</p>
+<h3 id="CLI："><a href="#CLI：" class="headerlink" title="CLI："></a>CLI：</h3><p>这个是从命令行执行php程序，它的生命周期最为简单。比如在执行test.php的时候，就经历了如下的过程</p>
+<p><img src="http://km.oa.com/files/post_photo/104/184104/a47a0aa0f3871f9d934086aadee624f3.jpg" alt=""></p>
+<p>注意到MINIT RINIT RSHUTDOWN MSHUTDOWN都只被调用过一次，这个比较类似于瀑布式的结构。</p>
+<ul>
+<li>多线程的模块方式：这是最常用的一种方式，php作为APXS的模块对apache进行配合。在apache启动的时候会fork很多的子进程。针对于多个不同的请求，配合的是多个不同的初始化与结束过程。但是对每一个线程来说，只有一个MINIT和MSHUTDOWN的调用。而每个请求都对应着自己单独的RINIT和RSHUTDOWN。</li>
+<li>多线程的模块方式：采用多线程的方法可以避免不同的线程重复的调用MINIT/MSHUTDOWN.它具有的好处是多个请求可以共享信息，但是请求之间的隔离要求比较高，不然容易出现变量的访问出错。</li>
+</ul>
+<h2 id="Zend-线程安全"><a href="#Zend-线程安全" class="headerlink" title="Zend 线程安全"></a>Zend 线程安全</h2><p>php对线程安全的处理有专门的机制，称为Thread Safe Resource Management(TSRM)。在进行线程安全和非线程安全声明的时候，明显有一些不同之处：<br>线程安全的变量声明：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">typedef struct &#123;</div><div class="line">    int sampleint;</div><div class="line">    char *samplestring;</div><div class="line">&#125; php_sample_globals;</div><div class="line">int sample_globals_id;</div><div class="line">PHP_MINIT_FUNCTION(sample)</div><div class="line">&#123;</div><div class="line">       ts_allocate_id(&amp;sample_globals_id,</div><div class="line">        sizeof(php_sample_globals),</div><div class="line">        (ts_allocate_ctor) php_sample_globals_ctor,</div><div class="line">        (ts_allocate_dtor) php_sample_globals_dtor);</div><div class="line">    return SUCCESS;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从这段代码中可以看到，在MINIT阶段，需要通过ts_allocate_id函数来通知TSRM这个程序需要多少空间，TSRM会增加当前的空间消耗，并返回一个id指向线程数据池的相应部分。<br>而当请求要访问数据的时候，就首先从TSRM层找到当前线程的资源池的指针，然后加上ts_allocate_id()返回的资源id作为offset。<br>非线程安全的变量声明：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">typedef struct &#123;</div><div class="line">    int sampleint;</div><div class="line">    char *samplestring;</div><div class="line">&#125; php_sample_globals;</div><div class="line">php_sample_globals sample_globals;</div><div class="line">PHP_MINIT_FUNCTION(sample)</div><div class="line">&#123;</div><div class="line">    php_sample_globals_ctor(&amp;sample_globals TSRMLS_CC);</div><div class="line">    return SUCCESS;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在非线程安全的情况下，只需要简单的声明变量，更加快速有效，数据的地址在编译阶段就可以确定，而不是像在线程安全的情况下需要运行时计算。同时它还有一个好处就是一段程序出了bug不会让整个webserver坏掉。因此在不需要用到线程安全的时候，还是应该尽量使用非线程安全声明方式。</p>
+<p>为了构建线程安全的php，必须在编译的时候加上–enable-maintainer-zts选项。而在程序中检测的时候可以用#ifdef ZTS，通过这种检测可以实现对全局变量声明的不同处理，入下例所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">#ifdef ZTS</div><div class="line">#define HELLO_G(v) TSRMG(hello_globals_id, zend_hello_globals *, v)</div><div class="line">#else</div><div class="line">#define HELLO_G(v) (hello_globals.v)</div><div class="line">#endif</div></pre></td></tr></table></figure>
+<p>通过判断是否启动了线程安全，对变量进行了不同的声明和访问方式指定。<br>在启用了线程安全之后，为了在不同的线程之间对数据进行区分，PHP会自动启用一个tsrm_ls指针。在这个指针的帮助下，各个线程的函数才能找到对应的符号表进行相应的变量读取操作。也正是这种机制使得多个线程一起工作的时候，数据空间不会乱掉。</p>
+<p>通过对php的起始和结束阶段、生命周期和Zend线程安全的机制的了解，有利于后续对php扩展编译的研究。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/12/13/2/" rel="next" title="[php扩展与嵌入]php内存管理">
+                <i class="fa fa-chevron-left"></i> [php扩展与嵌入]php内存管理
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/12/21/6/" rel="prev" title="基于树莓派和Face++云平台的人脸识别打卡系统">
+                基于树莓派和Face++云平台的人脸识别打卡系统 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2014/12/13/4/"
+           data-title="[php扩展与嵌入]php的生命周期" data-url="http://meijing0114.com/2014/12/13/4/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#起始和关闭阶段："><span class="nav-number">1.</span> <span class="nav-text">起始和关闭阶段：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#php程序执行的生命周期："><span class="nav-number">2.</span> <span class="nav-text">php程序执行的生命周期：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CLI："><span class="nav-number">2.1.</span> <span class="nav-text">CLI：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Zend-线程安全"><span class="nav-number">3.</span> <span class="nav-text">Zend 线程安全</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

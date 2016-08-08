@@ -1,0 +1,675 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="php内存管理php对内存的管理机制相当的详尽，它在这一点上更类似与java的垃圾回收机制。而对于c语言或者c++大部分时候都只能由程序员自己把申请的空间释放掉。在php中，由于要应对成千上万的连接，同时这些连接往往还需要保持很长的时间。这并不同于c中程序结束了相应的内存块就会被回收。
+所以仅仅依靠程序员在写程序的时候注意内存回收是不够的，php肯定要有一些自己内部的、与连接相关的内存管理机制来保">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[php扩展与嵌入]php内存管理">
+<meta property="og:url" content="http://meijing0114.com/2014/12/13/2/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="php内存管理php对内存的管理机制相当的详尽，它在这一点上更类似与java的垃圾回收机制。而对于c语言或者c++大部分时候都只能由程序员自己把申请的空间释放掉。在php中，由于要应对成千上万的连接，同时这些连接往往还需要保持很长的时间。这并不同于c中程序结束了相应的内存块就会被回收。
+所以仅仅依靠程序员在写程序的时候注意内存回收是不够的，php肯定要有一些自己内部的、与连接相关的内存管理机制来保">
+<meta property="og:image" content="http://img.blog.csdn.net/20131212155627937?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY2VkcmljbGlhbmc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:image" content="http://img.blog.csdn.net/20131212160545671?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY2VkcmljbGlhbmc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:image" content="http://img.blog.csdn.net/20131212162829500?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY2VkcmljbGlhbmc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:updated_time" content="2014-12-13T14:11:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[php扩展与嵌入]php内存管理">
+<meta name="twitter:description" content="php内存管理php对内存的管理机制相当的详尽，它在这一点上更类似与java的垃圾回收机制。而对于c语言或者c++大部分时候都只能由程序员自己把申请的空间释放掉。在php中，由于要应对成千上万的连接，同时这些连接往往还需要保持很长的时间。这并不同于c中程序结束了相应的内存块就会被回收。
+所以仅仅依靠程序员在写程序的时候注意内存回收是不够的，php肯定要有一些自己内部的、与连接相关的内存管理机制来保">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20131212155627937?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY2VkcmljbGlhbmc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2014/12/13/2/"/>
+
+  <title> [php扩展与嵌入]php内存管理 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [php扩展与嵌入]php内存管理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-12-13T22:02:40+08:00" content="Dec 13 2014">
+              Dec 13 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/php扩展/" itemprop="url" rel="index">
+                    <span itemprop="name">php扩展</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/12/13/2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/12/13/2/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="php内存管理"><a href="#php内存管理" class="headerlink" title="php内存管理"></a>php内存管理</h1><p>php对内存的管理机制相当的详尽，它在这一点上更类似与java的垃圾回收机制。而对于c语言或者c++大部分时候都只能由程序员自己把申请的空间释放掉。在php中，由于要应对成千上万的连接，同时这些连接往往还需要保持很长的时间。这并不同于c中程序结束了相应的内存块就会被回收。</p>
+<p>所以仅仅依靠程序员在写程序的时候注意内存回收是不够的，php肯定要有一些自己内部的、与连接相关的内存管理机制来保证不发生任何的内存泄露。</p>
+<p>在本文中，首先对php的内存机制进行一个介绍：<br>那些在c语言中的空间函数，比如malloc() free() strdup() realloc() calloc()，php中会有不同的形式。</p>
+<h2 id="返还申请的内存："><a href="#返还申请的内存：" class="headerlink" title="返还申请的内存："></a>返还申请的内存：</h2><p>对于程序员来说，每一块申请的内存都应该返还，如果不还就会导致内存泄漏。在那些不要求一直运行的程序中，稍许的内存泄漏在整个进程被杀掉之后就结束了。但是类似于apache这种一直运行的web server，小的内存泄漏最终会导致程序的崩溃。</p>
+<h3 id="错误处理的例子："><a href="#错误处理的例子：" class="headerlink" title="错误处理的例子："></a>错误处理的例子：</h3><p>在进行错误处理的时候，采用的机制一般是是Zend Engine会设定一个跳出地址，一旦发生exit或die或任何严重错误E_ERROR的时候，就会利用一个longjmp()跳到这个地址上面去。但是这种做法几乎都会导致内存泄漏。因为free的操作都会被跳掉。</p>
+<p>（这个问题在c++里面也同样存在，就是在设计类的时候，绝不要把错误处理或告警函数写在构造或者析构函数内，同样的原因，由于对象已经处在了销毁或创建的阶段，所以任何错误函数处理都可能打断这一过程，从而可能导致内存泄漏。）<br>下面的代码中就给出了这样的一个例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">void call_function(const char *fname, int fname_len TSRMLS_DC)</div><div class="line">&#123;</div><div class="line">    zend_function *fe;</div><div class="line">    char *lcase_fname;</div><div class="line">    /* PHP function names are case-insensitive to simplify locating them in the function tables all function names are implicitly</div><div class="line">     * translated to lowercase</div><div class="line">     */</div><div class="line">    lcase_fname = estrndup(fname, fname_len);//创造一个函数名的副本</div><div class="line">    zend_str_tolower(lcase_fname, fname_len);//都转换成小写，这样的寻找的时候很方便，这应该也是php函数表中进行函数标识的方式。</div><div class="line">    if (zend_hash_find(EG(function_table),</div><div class="line">            lcase_fname, fname_len + 1, (void **)&amp;fe) == FAILURE) &#123;？SUCCESS。这个是要在函数表里面寻找待调用的函数。</div><div class="line">        zend_execute(fe-&gt;op_array TSRMLS_CC);</div><div class="line">    &#125; else &#123;</div><div class="line">              php_error_docref(NULL TSRMLS_CC, E_ERROR,</div><div class="line">                         &quot;Call to undefined function: %s()&quot;, fname); //等同于Trigger_error() </div><div class="line">    &#125;</div><div class="line">    efree(lcase_fname);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在这个例子中，提供了一个php在调用函数时候的功能。当php调用函数时，需要到函数表也就是function_table中去寻找相应的函数，而在寻找之前要先转换到小写字母，这样在寻找的时候可以提高查找的效率。<br>而通过zend_hash_find函数如果找到了要调用的函数，就使用zend_execute进行调用。而如果没找到的haunted就要跳出报错，显示没找到。但是问题来了，注意之前为了寻找函数创建了一个小写版本的函数名字符串。这个字符串一直到用到zend_hash_find函数，一旦没找到进入了报错之后，那么这个字符串所对应的内存空间必然就找不回来了，这就造成了内存的泄露。</p>
+<p>因此，php提供了Zend内存管理，Zend memory management也称为ZendMM。</p>
+<p>php中的内存管理与操作系统的机制类似，但是对象是针对每一个请求所涉及的内存的。</p>
+<p>除此之外ZendMM还会控制ini文件里面规定的memory_limit，也就是说一旦每个请求所要求的内存超过了这个memory limit，那么也会申请失败。<br>在图中的最下面看到了它与操作系统相联系的一层。针对操作系统中的标准的内存申请和释放的方法，php中都有对应的函数。这些函数并不是一个简单的替换，它们中包含有特定的信息，在这些信息的帮助下就能够把每个请求所申请的内存块进行标识。这样就能够实现对每个请求的内存区域进行分别的管理。<br><img src="http://img.blog.csdn.net/20131212155627937?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY2VkcmljbGlhbmc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></p>
+<p>同时在图中看到了一共两种内存请求的方式：persistent和per-request，对于persistent来说差不多跟系统的请求就一样了，也就是说是独立在每一个请求之外的，不会在请求结束之后被回收。但是有时候是否persistent可能要runtime才能知道，所以在这种情况下，需要一个flag来指示这一点。对于是否是persistent，进行内存请求的方式是不一样的。下面给出对应关系：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">pemalloc(buffer_len,1) == malloc(buffer_len)</div><div class="line">permalloc(buffer_len,0) == emalloc(buffer_len)</div></pre></td></tr></table></figure>
+<p>这种联系是用宏定义的方式决定的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">#define pemalloc(size,persistent) \</div><div class="line">((persistent)?malloc(size):emalloc(size))</div></pre></td></tr></table></figure>
+<p>flag=1表示是persistent的，为0表示不是，就跟一般的附属于请求的emalloc一样了。</p>
+<p>下图中可以看到系统的内存申请函数与php中的内存申请函数的对比转换图：<br><img src="http://img.blog.csdn.net/20131212160545671?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY2VkcmljbGlhbmc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></p>
+<p>如果你对malloc、calloc和realloc这些函数还不太熟悉，请移步：<br><a href="http://www.cppblog.com/sandywin/archive/2011/09/14/155746.html" target="_blank" rel="external">malloc基本函数介绍</a></p>
+<p>除此之外，还有两个安全模式的内存函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">void *safe_emalloc(size_t size, size_t count, size_t addtl);</div><div class="line">void *safe_pemalloc(size_t size, size_t count, size_t addtl, char persistent);</div></pre></td></tr></table></figure>
+<p>他们申请的空间是size*count + addtl，存在的原因是为了避免int型的溢出。</p>
+<h2 id="接下来说一个更有趣的，php中的引用计数："><a href="#接下来说一个更有趣的，php中的引用计数：" class="headerlink" title="接下来说一个更有趣的，php中的引用计数："></a>接下来说一个更有趣的，php中的引用计数：</h2><p>很多语言中都有引用，很多时候也都会使用引用。通过引用可以节省空间，因为有时候并没有必要为每个变量都制造一个副本。</p>
+<blockquote>
+<p>所谓引用计数，就是指同一块内存空间被多少个变量引用了，从而避免可能的内存错误操作。<br>先看下面的一段代码：</p>
+</blockquote>
+<pre><code><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">* &#123;</div><div class="line">*     zval *helloval;</div><div class="line">*     MAKE_STD_ZVAL(helloval);</div><div class="line">*     ZVAL_STRING(helloval, &quot;Hello World&quot;, 1);</div><div class="line">*     zend_hash_add(EG(active_symbol_table), &quot;a&quot;, sizeof(&quot;a&quot;),</div><div class="line">*                                            &amp;helloval, sizeof(zval*), NULL);</div><div class="line">*     zend_hash_add(EG(active_symbol_table), &quot;b&quot;, sizeof(&quot;b&quot;),</div><div class="line">*                                            &amp;helloval, sizeof(zval*), NULL);</div><div class="line">* &#125;</div></pre></td></tr></table></figure>
+</code></pre><p>这段代码首先声明了一个zval变量，再用MAKE_STD_ZVAL进行了初始化，接下来用ZVAL_STRING附了初值。然后对这个变量，给出了两个变量名。第一个是a，第二个是b，毫无疑问，第二个肯定是一个引用。但是这段代码这么写肯定有问题，问题就在于你在用zend_hash_add之后并没有更新相应的引用计数。zend并不知道你多加了这么一个引用，这就导致释放内存的时候可能导致两次释放。所以经过修改之后的正确代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">	* &#123;</div><div class="line">	*     zval *helloval;</div><div class="line">	*     MAKE_STD_ZVAL(helloval);</div><div class="line">	*     ZVAL_STRING(helloval, &quot;Hello World&quot;, 1);</div><div class="line">	*     zend_hash_add(EG(active_symbol_table), &quot;a&quot;, sizeof(&quot;a&quot;),</div><div class="line">	*                                            &amp;helloval, sizeof(zval*), NULL);</div><div class="line">	*     ZVAL_ADDREF(helloval);//加上这个之后，就不会有重新释放同一块内存空间这样的错误了</div><div class="line">	*     zend_hash_add(EG(active_symbol_table), &quot;b&quot;, sizeof(&quot;b&quot;),</div><div class="line">	*                                            &amp;helloval, sizeof(zval*), NULL);</div><div class="line">	* &#125;</div><div class="line">进行了ZVAL_ADDREF之后，下一次unset变量的时候，会先查看ref_count引用计数，如果=1就释放，如果&gt;1就只是-1，并不进行内存释放。</div></pre></td></tr></table></figure>
+<h3 id="Copy-on-Write"><a href="#Copy-on-Write" class="headerlink" title="Copy on Write"></a>Copy on Write</h3><p>再来看下面的这一段php代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line">    $a = 1;</div><div class="line">    $b = $a;</div><div class="line">    $b += 5;</div><div class="line">?&gt;</div></pre></td></tr></table></figure>
+<p>很显然在第二行的时候b声明了一个a的引用，那么在执行完了第三行的代码之后，b增加了，a增不增加呢？很多时候可能并不想增加。所以这个时候当Zend检测到refCount&gt;1之后，就会执行一个变量分离的操作，把原来的一块内存变成两块内存：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">zval *get_var_and_separate(char *varname, int varname_len TSRMLS_DC)</div><div class="line">&#123;</div><div class="line">    zval **varval, *varcopy;</div><div class="line">    if (zend_hash_find(EG(active_symbol_table),</div><div class="line">                       varname, varname_len + 1, (void**)&amp;varval) == FAILURE) &#123;</div><div class="line">       /*符号表里没找到 */</div><div class="line">       return NULL;</div><div class="line">   &#125;</div><div class="line">   if ((*varval)-&gt;refcount &lt; 2) &#123;</div><div class="line">       /* varname 是唯一的引用，什么也不用做 */</div><div class="line">       return *varval;</div><div class="line">   &#125;</div><div class="line">   /* 否则的话，不是唯一的引用，给zval*做一个副本 */</div><div class="line">       MAKE_STD_ZVAL(varcopy);</div><div class="line">       varcopy = *varval;</div><div class="line">   /* Duplicate any allocated structures within the zval* */</div><div class="line">       zval_copy_ctor(varcopy); //这一块是怎么拷贝的？mark 应该已经跟varval对应的varname连起来了</div><div class="line">   /* 把varname的版本删掉，这会减少varval的引用次数 */</div><div class="line">       zend_hash_del(EG(active_symbol_table), varname, varname_len + 1);</div><div class="line">   /* 初始化新创造的值的引用次数，然后附给varname变量 */</div><div class="line">       varcopy-&gt;refcount = 1;</div><div class="line">       varcopy-&gt;is_ref = 0;</div><div class="line">       zend_hash_add(EG(active_symbol_table), varname, varname_len + 1,</div><div class="line">                                        &amp;varcopy, sizeof(zval*), NULL);</div><div class="line">   /* Return the new zval* */</div><div class="line">   return varcopy;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>首先看到了两个判断语句，第一个判断语句先在符号表里面看看有没有找到相应的变量，如果没找到也就没必要分离了。第二个判断语句是看输入的变量的引用次数是不是小于2，如果是的话那就说明输入变量*varval是唯一的，也没必要分离。</p>
+<p>否则的话肯定有引用，这个时候就要制作一个副本varcopy。这个副本会承袭varname对应的值，但是不同之处在于帮它重新申请了内存空间，重新初始化了refcount和is_ref参数。<br>以a、b为例，在$b+=5，执行之后，b作为varname去寻找是否有引用，发现还有一个引用a，这个时候就把b的值拷出来，然后重新申请一片空间，在重新注册为b。这样的话就是两块独立的内存块了。</p>
+<h3 id="Change-on-Write"><a href="#Change-on-Write" class="headerlink" title="Change on Write"></a>Change on Write</h3><p>再看一个代码片段：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line">    $a = 1;//执行完这一句之后，a变量的ref_count是1，is_ref是0</div><div class="line">    $b = &amp;$a;//这一句之后，变量（zval*）的ref_count是2，然后由于显示的&amp;，is_ref为1</div><div class="line">    $b += 5;// 这个时候在执行这一句的时候就不会有任何的分离</div><div class="line">?&gt;</div></pre></td></tr></table></figure>
+<p>如果你觉得想要a跟着b一起改变，那没有问题，只要显式的用&amp;符号进行引用声明就可以了。这样的话is_ref标志位就会被置1. 这时候也就没必要进行内存块的分离了。所以在上面的代码中要把第二个if语句的判断更改一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">if ((*varval)-&gt;is_ref || (*varval)-&gt;refcount &lt; 2) &#123;</div><div class="line">    /* varname is the only actual reference,</div><div class="line">     * or it&apos;s a full reference to other variables</div><div class="line">     * either way: no separating to be done</div><div class="line">     */</div><div class="line">    return *varval;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>再看最后一种情况，这种情况最纠结：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line">    $a = 1;</div><div class="line">    $b = $a;</div><div class="line">    $c = &amp;$a;</div><div class="line">?&gt;</div></pre></td></tr></table></figure>
+<p>既不是copy on write也不是change on wirte，那没办法了，只好分离一下。这里只好b独立出来了：</p>
+<p><img src="http://img.blog.csdn.net/20131212162829500?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY2VkcmljbGlhbmc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></p>
+<p>对php内存管理的一些机制就说到这里，感觉php确实是一门相当神奇的语言。哈哈。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/12/07/5/" rel="next" title="[php扩展与嵌入]总纲">
+                <i class="fa fa-chevron-left"></i> [php扩展与嵌入]总纲
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/12/13/4/" rel="prev" title="[php扩展与嵌入]php的生命周期">
+                [php扩展与嵌入]php的生命周期 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2014/12/13/2/"
+           data-title="[php扩展与嵌入]php内存管理" data-url="http://meijing0114.com/2014/12/13/2/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#php内存管理"><span class="nav-number">1.</span> <span class="nav-text">php内存管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#返还申请的内存："><span class="nav-number">1.1.</span> <span class="nav-text">返还申请的内存：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#错误处理的例子："><span class="nav-number">1.1.1.</span> <span class="nav-text">错误处理的例子：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#接下来说一个更有趣的，php中的引用计数："><span class="nav-number">1.2.</span> <span class="nav-text">接下来说一个更有趣的，php中的引用计数：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Copy-on-Write"><span class="nav-number">1.2.1.</span> <span class="nav-text">Copy on Write</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Change-on-Write"><span class="nav-number">1.2.2.</span> <span class="nav-text">Change on Write</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
