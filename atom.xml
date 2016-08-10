@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://meijing0114.com/"/>
-  <updated>2016-08-10T05:49:18.000Z</updated>
+  <updated>2016-08-10T15:14:18.000Z</updated>
   <id>http://meijing0114.com/</id>
   
   <author>
@@ -20,9 +20,9 @@
     <link href="http://meijing0114.com/2016/08/08/php001/"/>
     <id>http://meijing0114.com/2016/08/08/php001/</id>
     <published>2016-08-08T15:17:54.000Z</published>
-    <updated>2016-08-10T05:49:18.000Z</updated>
+    <updated>2016-08-10T15:14:18.000Z</updated>
     
-    <content type="html"><![CDATA[<p><img src="https://mmbiz.qlogo.cn/mmbiz/ricso28Q41zt7tzPibia3DGtiaDoo2pQUGiaFvG6ibzcvxYKNaSL6ULk6ys0jwFNptsjtBRiaAuibp7hPzRibRmibBUTVFEQ/0?wx_fmt=jpeg" alt="题图" title="题图"></p>
+    <content type="html"><![CDATA[<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f6p22evywlj20zk0np42f.jpg" alt="题图" title="题图"></p>
 <p>市面上常见的php框架有很多，最近因为有技术需求，所以对常见的php框架的中间件进行了一些了解。各个框架尽管在目标上对php框架的定义大同小异，但是在实现方式上却各有不同，且看下文：</p>
 <h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>首先什么是php的中间件？</p>
 <p>根据zend-framework中的定义：</p>
@@ -143,12 +143,13 @@
 <li>提供中间件自动生成与方便扩展功能。</li>
 </ul>
 <p>以上</p>
-<p><img src="https://mmbiz.qlogo.cn/mmbiz/ricso28Q41zt5lNFHAVt9TbFUlhymPQC9ALLjA6L3A1oficNVstibxGJc0ribse16mYiaOfoqqtUL4ibBdSu4n56kCSw/0?wx_fmt=jpeg" alt="小白学web" title="小白学web"></p>
+<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f6p22b5u1hj20hj09n756.jpg" alt="小白学web" title="小白学web"></p>
 ]]></content>
     
     <summary type="html">
     
-      &lt;p&gt;&lt;img src=&quot;https://mmbiz.qlogo.cn/mmbiz/ricso28Q41zt7tzPibia3DGtiaDoo2pQUGiaFvG6ibzcvxYKNaSL6ULk6ys0jwFNptsjtBRiaAuibp7hPzRibRmibBUTVFEQ/0
+      &lt;p&gt;&lt;img src=&quot;http://ww1.sinaimg.cn/mw690/67ad48bbgw1f6p22evywlj20zk0np42f.jpg&quot; alt=&quot;题图&quot; title=&quot;题图&quot;&gt;&lt;/p&gt;
+&lt;p&gt;市面上常见的php框架有很多，最近因为有技术需求，所以对常见的ph
     
     </summary>
     
@@ -865,7 +866,7 @@
 <p><strong>展示效果</strong>：</p>
 <p>还有一些其他的功能：</p>
 <ul>
-<li>邮件：An email <a href="&#x6d;&#x61;&#x69;&#108;&#x74;&#x6f;&#58;&#101;&#x78;&#97;&#109;&#112;&#108;&#x65;&#x40;&#101;&#x78;&#x61;&#x6d;&#x70;&#x6c;&#x65;&#46;&#x63;&#111;&#109;">&#101;&#x78;&#97;&#109;&#112;&#108;&#x65;&#x40;&#101;&#x78;&#x61;&#x6d;&#x70;&#x6c;&#x65;&#46;&#x63;&#111;&#109;</a> link. 点击直接呼起邮件应用。</li>
+<li>邮件：An email <a href="&#109;&#97;&#x69;&#x6c;&#x74;&#x6f;&#58;&#x65;&#x78;&#x61;&#x6d;&#112;&#108;&#101;&#64;&#101;&#120;&#97;&#109;&#x70;&#x6c;&#x65;&#46;&#99;&#111;&#x6d;">&#x65;&#x78;&#x61;&#x6d;&#112;&#108;&#101;&#64;&#101;&#120;&#97;&#109;&#x70;&#x6c;&#x65;&#46;&#99;&#111;&#x6d;</a> link. 点击直接呼起邮件应用。</li>
 <li>图片：<img src="./tumblr_mv9b2wUhDB1qz7t0xo1_1280.jpg" alt="Alt text"><ul>
 <li>支持嵌套<ul>
 <li>daf</li>
@@ -1337,61 +1338,39 @@
   </entry>
   
   <entry>
-    <title>[php扩展与嵌入]总纲</title>
-    <link href="http://meijing0114.com/2014/12/07/5/"/>
-    <id>http://meijing0114.com/2014/12/07/5/</id>
+    <title>本周回顾</title>
+    <link href="http://meijing0114.com/2014/12/07/1/"/>
+    <id>http://meijing0114.com/2014/12/07/1/</id>
     <published>2014-12-07T15:11:17.000Z</published>
-    <updated>2014-12-13T14:51:06.000Z</updated>
+    <updated>2016-08-07T08:32:36.000Z</updated>
     
-    <content type="html"><![CDATA[<p>初步接触了php开发以及php扩展的相关内容，发现extending and embeded php这本书很不错，很多问题也讲的非常透彻。这里把读到的一些书中的内容和自己的实践结合起来展示一下，既是给自己留档，也是抛砖引玉，期待php大牛的指导。</p>
-<p>extending and embeded php这本书还有一个中文版，有些东西新一些，也可以参考下：<br><a href="http://www.walu.cc/phpbook/preface.md" target="_blank" rel="external">http://www.walu.cc/phpbook/preface.md</a></p>
-<p>这本书主要讲两个方面：</p>
+    <content type="html"><![CDATA[<h1 id="本周回顾"><a href="#本周回顾" class="headerlink" title="本周回顾"></a>本周回顾</h1><p>总体来看，这周所做的事情并不多，或许是因为项目的间隙期所有些懈怠吧。这周做的事情一共有如下几类：</p>
 <ul>
-<li>如何通过添加函数、类、资源和流的方式来扩展php</li>
-<li>如何把php语言嵌入到其他应用中去</li>
+<li>上线相关</li>
+<li>老需求维护</li>
+<li>年末总结</li>
+<li>扩展开发</li>
 </ul>
-<p>那么为什么需要php扩展呢？：</p>
-<ul>
-<li>连接额外的库，并以api的形式提供给用户空间的脚本。比如被封装好的mysql</li>
-<li>是在第三方的库和php的核心之间提供一种扩展，因此php被称为是胶水语言</li>
-<li>进行特殊的内部操作，比如声明超级变量，用户空间因为安全原因是有限制的。比如php的advanced php debugger 和runkit主要就是干这个的<br>速度原因：令牌化、编译、运行，Opcode可以缩减前两步，但是执行这一步的话还是变成C code比较好。</li>
-<li>在不暴露出源码的情况下提供功能</li>
-</ul>
-<p>下图中给出了php的总体结构：<br><img src="http://km.oa.com/files/post_photo/094/184094/1a87f9799f298dabea048d786c4a0df6.jpg" alt=""></p>
-<p>其中各部分模块的功能如下：</p>
-<ul>
-<li>SAPI：是跟web server的接口层</li>
-<li>PHP Core：对于核心事件的连接层，处理类似于文件处理、错误处理这类操作</li>
-<li>Zend Engine：把脚本编译成机器语言，执行bytecode，读入写出用户空间变量，控制程序流，解析扩展。</li>
-<li>TSRM：thread safe resource management：使得一个单个的php实例具有能够同时处理很多独立的请求的能力</li>
-</ul>
-<p>这本书分成了三个部分，</p>
-<ul>
-<li>第一个部分是对php的重新介绍，主要叙述了php的解释器如何黏合在一起。</li>
-<li>第二个部分则主要在讲php的扩展，所涉及的方面如下：<ul>
-<li>PHP API 一些php内部的函数和宏</li>
-<li>如何把php脚本转换成c code：每个php的脚本的背后都牵涉到了c语言的相应处理，这种对应关系对扩展的开发十分有用</li>
-<li>执行那些用户空间不可能的操作：很多时候需要执行一些类似于超级变量这种在用户态无法完成的动作，这个时候需要利用扩展进行相应的处理。</li>
-<li>而第三个部分则是叙述如何把php嵌入到相应的应用中去：<ul>
-<li>首先是给应用加上相应的php支持</li>
-<li>其次是充分利用php相应的安全特性</li>
-<li>最后则是说明php如何同时处理多个请求</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p>由于刚刚开始学习php，所以一些错误再所难免，请一定指正。</p>
+<p>其中为了应对现有问题所做的一些临时方案上花了很长的时间，感觉投入产出比不是很高，同时还花费了很多的时间。这点在之后思考技术方案的时候一定要非常的注意。</p>
+<p>另外事情的分叉有点多，很多事情还没结束的时候就要解决另外一件。所以最好还是解耦，一件件按照优先级搞定，减少做事情的焦虑感。</p>
+<p>年末了，第一次填写自评，正好趁此机会回顾一下半年乃至自己一年的工作。能够优化的地方很多，仔细想想，能够看出哪些工作更值得做，哪些工作的投入产出比非常低。之后工作的时候一定要注意。</p>
+<p>扩展这件事情拖了较久，有一些环境部署的问题，一些暗坑要踩了才知道。不过也从另外一个方面说明对一些server编译配置的原理不够了解，否则可能也不会犯这些低级错误浪费自己的时间了。感觉在遇到问题的时候，很多时候的第一反应都是“这不可能”，“这不科学”。或者有一个更有趣的现象来描述：乒乓球运动员在打佽了得时候，第一反应都是望向自己的乒乓球拍。少一些这种情况，直面问题，解决的时候应该会更快些。</p>
+<p>不过本周运动情况还可以，一天跑步+三天的篮球。但是马医僧说我这种过度运动属于虚亢，尤其是五点半爬起来打篮球T T。我深以为然，下周还是注意一下，别一下子运动过量了，均衡到每一天去。</p>
+<p>除去工作上的事，这周想的也特别多。但是大多数都是一些无意义的纠结。不够专注于当下。太过于将已经发生的事情投射于当下的结果就是一个死循环，永远无法真正的向前进。希望下周可以更加专注一些。无论是工作还是生活上。</p>
+<p>同时，一直想尝试写个专利。想了几个主意之后都被毙了。。下周再跟相关同事讨论一下专利的技巧，为啥写过的人都跟我说很简单！可能是思考的方向还不对，找几篇专利来看看作为参考。</p>
+<p>不过，这周的饮食做的特别差，基本上很不规律。周末难得有机会煮了个粥补一下。这点上一定要反省一下自己。感觉人的情绪由很多事情决定，被很多因素所影响，每日三餐的饮食是很重要的一点。翻译成大白话应该就是：肚里有粮，心里不慌。。下周再尝试规律一点！</p>
+<p>以上。</p>
 ]]></content>
     
     <summary type="html">
     
-      &lt;p&gt;初步接触了php开发以及php扩展的相关内容，发现extending and embeded php这本书很不错，很多问题也讲的非常透彻。这里把读到的一些书中的内容和自己的实践结合起来展示一下，既是给自己留档，也是抛砖引玉，期待php大牛的指导。&lt;/p&gt;
-&lt;p&gt;extend
+      &lt;h1 id=&quot;本周回顾&quot;&gt;&lt;a href=&quot;#本周回顾&quot; class=&quot;headerlink&quot; title=&quot;本周回顾&quot;&gt;&lt;/a&gt;本周回顾&lt;/h1&gt;&lt;p&gt;总体来看，这周所做的事情并不多，或许是因为项目的间隙期所有些懈怠吧。这周做的事情一共有如下几类：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
     
     </summary>
     
-      <category term="php扩展" scheme="http://meijing0114.com/categories/php%E6%89%A9%E5%B1%95/"/>
+      <category term="生活随感" scheme="http://meijing0114.com/categories/%E7%94%9F%E6%B4%BB%E9%9A%8F%E6%84%9F/"/>
     
     
   </entry>
