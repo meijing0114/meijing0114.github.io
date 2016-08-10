@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://meijing0114.com/"/>
-  <updated>2016-08-08T00:24:16.000Z</updated>
+  <updated>2016-08-10T05:49:18.000Z</updated>
   <id>http://meijing0114.com/</id>
   
   <author>
@@ -14,6 +14,148 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>漫谈php框架之中间件</title>
+    <link href="http://meijing0114.com/2016/08/08/php001/"/>
+    <id>http://meijing0114.com/2016/08/08/php001/</id>
+    <published>2016-08-08T15:17:54.000Z</published>
+    <updated>2016-08-10T05:49:18.000Z</updated>
+    
+    <content type="html"><![CDATA[<p><img src="https://mmbiz.qlogo.cn/mmbiz/ricso28Q41zt7tzPibia3DGtiaDoo2pQUGiaFvG6ibzcvxYKNaSL6ULk6ys0jwFNptsjtBRiaAuibp7hPzRibRmibBUTVFEQ/0?wx_fmt=jpeg" alt="题图" title="题图"></p>
+<p>市面上常见的php框架有很多，最近因为有技术需求，所以对常见的php框架的中间件进行了一些了解。各个框架尽管在目标上对php框架的定义大同小异，但是在实现方式上却各有不同，且看下文：</p>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>首先什么是php的中间件？</p>
+<p>根据zend-framework中的定义：</p>
+<blockquote>
+<p>所谓中间件是指提供在请求和响应之间的，能够截获请求，并在其基础上进行逻辑处理，与此同时能够完成请求的响应或传递到下一个中间件的代码。</p>
+</blockquote>
+<p>这一介绍十分的简洁，但却略显抽象，接下来我们通过例子来一个个看。</p>
+<h2 id="处在原始时代的CI"><a href="#处在原始时代的CI" class="headerlink" title="处在原始时代的CI"></a>处在原始时代的CI</h2><p>首先来看CI框架，php star数 12830.<br>作为一款非常简洁的框架，CI被吐槽的不少，但是也有很多人喜欢。首先来看它官方给出的一张请求时序图：</p>
+<p><img src="http://7rfkw4.com1.z0.glb.clouddn.com/appflowchart.png" alt="CI框架请求时序" title="CI框架请求时序"></p>
+<p>根据上文中对中间件的定义，那么对于CI框架来说，唯一称得上是内置中间件的：Security模块</p>
+<p>Security模块是在请求进入controller之前实现的逻辑：</p>
+<ul>
+<li>请求在完成路由之后，进入controller之前；</li>
+<li>CI框架支持通过配置的方式，决定是否启用包括“URI安全、XSS过滤、CSRF保护”在内的功能模块；</li>
+<li>一旦框架初始化时探测到模块启用，那么优先进行模块逻辑；</li>
+<li>触发安全模块，请求即告终止。</li>
+</ul>
+<p>乍看起来，CI框架的中间件十分的局限，但是其实它却提供了无限的可能性。。因为CI中还提供了一个叫做Hooks的功能。即钩子。</p>
+<p>下面来看两个个hooks的例子：</p>
+<p>定义一个在controller逻辑之前的钩子，并指定钩子的参数、类名或函数名信息：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$hook[<span class="string">'pre_controller'</span>] = <span class="keyword">array</span>(</div><div class="line">    <span class="string">'class'</span>    =&gt; <span class="string">'MyClass'</span>,</div><div class="line">    <span class="string">'function'</span> =&gt; <span class="string">'Myfunction'</span>,</div><div class="line">    <span class="string">'filename'</span> =&gt; <span class="string">'Myclass.php'</span>,</div><div class="line">    <span class="string">'filepath'</span> =&gt; <span class="string">'hooks'</span>,</div><div class="line">    <span class="string">'params'</span>   =&gt; <span class="keyword">array</span>(<span class="string">'beer'</span>, <span class="string">'wine'</span>, <span class="string">'snacks'</span>)</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>定义一个在controller逻辑之后的钩子，并直接给出其实现：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$hook[<span class="string">'post_controller'</span>] = <span class="function"><span class="keyword">function</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    <span class="comment">/* do something here */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>为什么说CI没提供什么像样的中间件但是又很灵活呢，就是因为它可以在如下的多个阶段进行挂钩子的操作。细数过来有7种之多。</p>
+<p>从后文中可以看出，很多其他的框架可能也就会涵盖两三种阶段，因此，从这个角度上来说，CI的钩子组合而成的中间件的确很灵活。</p>
+<ul>
+<li><strong>pre_system</strong>阶段： 在系统执行的早期调用，这个时候只有 基准测试类 和 钩子类 被加载了， 还没有执行到路由或其他的流程；</li>
+<li><strong>pre_controller</strong>阶段： 在你的控制器调用之前执行，所有的基础类都已加载，路由和安全检查也已经完成；</li>
+<li><strong>post_controller_constructor</strong>阶段： 在你的控制器实例化之后立即执行，控制器的任何方法都还尚未调用；</li>
+<li><strong>post_controller</strong>阶段： 在你的控制器完全运行结束时执行；</li>
+<li><strong>display_override</strong>阶段： 覆盖 _display() 方法，该方法用于在系统执行结束时向浏览器发送最终的页面结果； 这可以让你有自己的显示页面的方法。注意你可能需要使用 <code>$this-&gt;CI =&amp; get_instance()</code>方法来获取 CI 超级对象，以及使用 <code>$this-&gt;CI-&gt;output-&gt;get_output()</code>方法来 获取最终的显示数据；</li>
+<li><strong>cache_override</strong>阶段： 使用你自己的方法来替代 输出类 中的 _display_cache() 方法，这让你有自己的缓存显示机制。</li>
+<li><strong>post_system</strong> 在最终的页面发送到浏览器之后、在系统的最后期被调用。</li>
+</ul>
+<p>总结来看，CI中的中间件：</p>
+<ul>
+<li>有很大的自由度</li>
+<li>同时支持在多个阶段对请求进行嵌入（对比下来是最全面的）</li>
+<li>钩子函数的使用成本高；</li>
+<li>支持各种diy：<ul>
+<li>请求来时http校验、权限校验、额外的安全策略</li>
+<li>请求去时上报数据</li>
+</ul>
+</li>
+</ul>
+<h2 id="大红大紫的Laravel"><a href="#大红大紫的Laravel" class="headerlink" title="大红大紫的Laravel"></a>大红大紫的Laravel</h2><p>github star 24997<br>作为最近两年大红大紫的Laravel，的确也是有必要对其中间件机制进行了解：</p>
+<p>首先Laravel提供了一个很好的中间件自动生成工具：<br><code>php artisan make:middleware OldMiddleware</code><br>由Laravel的命令行完成，这种看似简单的命令行工具其实可以对框架的扩展起到非常重要的作用。</p>
+<p>再来看一个Laravel中典型的请求过滤器：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line"><span class="keyword">namespace</span> <span class="title">App</span>\<span class="title">Http</span>\<span class="title">Middleware</span>;</div><div class="line"><span class="keyword">use</span> <span class="title">Closure</span>;</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">OldMiddleware</span></span></div><div class="line">&#123;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 运行请求过滤器。</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span>  \Illuminate\Http\Request  $request</div><div class="line">     * <span class="doctag">@param</span>  \Closure  $next</div><div class="line">     * <span class="doctag">@return</span> mixed</div><div class="line">     */</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">handle</span><span class="params">($request, Closure $next)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span> ($request-&gt;input(<span class="string">'age'</span>) &lt;= <span class="number">200</span>) &#123;</div><div class="line">            <span class="keyword">return</span> redirect(<span class="string">'home'</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> $next($request);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>过滤器，filter，是中间件中使用最广泛的一种，很多框架里甚至filter就等同于中间件。意如其名，即是对请求Request进行某种过滤，这个过滤可以是参数上的限制、安全策略的限制、http协议的限制，只要是请求中带来的属性，都可以据此进行过滤。</p>
+<p>同时这里也可以看到，Laravel使用闭包的方式进行请求的传递，真正践行的优雅的中间件串联的方式，只需要调用next函数，请求即可被按照预先定义的规则传递到下一个中间件中。</p>
+<p>Laravel支持全局的中间件和根据具体路由规定的中间件两种，同时优先级又以定义顺序为准。做到全局与具体情况的兼顾。同时它显示的支持前置、后置和Terminable三种中间件，覆盖了大部分的中间件场景，是一种相对不错的设计。</p>
+<p>但美中不足或者说场景覆盖不够友好的地方在于它以路由的方式组织中间件，会与controller有些脱节，每次定义controller中action行为的时候，还需要转换为路由进行配置，略有些不方便。</p>
+<p>总结来看</p>
+<ul>
+<li>Laravel践行了让controller更纯粹的思想，中间件交给路由，controller只做它该做的事；</li>
+<li>中间件与路由组灵活结合，能够满足应用场景；</li>
+<li>前置、后置与Terminable支持了现有大部分的中间件需求；</li>
+<li>自动生成十分方便扩展中间件，开发友好；</li>
+<li>但对一个controller内多个action需要统一加入或统一不加入中间件的场景，支持不友好。</li>
+</ul>
+<h2 id="老生常谈yii-2-0"><a href="#老生常谈yii-2-0" class="headerlink" title="老生常谈yii 2.0"></a>老生常谈yii 2.0</h2><p>github star 4668</p>
+<p>yii框架首先是中国人开发的，star数虽然不是很多，但是功能也算丰富。<br>yii框架从1.1到2.0，经过了一个比较大的升级，支持了很多新的特性，如果不支持，只怕是要落伍了。</p>
+<p>在yii框架1.1中，中间件干脆就叫filters了，十分的直白，分为pre-filter和post-fiter两种，即前文中说的，在进入controller之前的过滤逻辑，和完成controller处理之后的过滤逻辑。</p>
+<p>但是到了yii2.0之后，filters经过了一层升级，到了behaviors，明确了一点：重心放在了每一个controller的行为上，而不是像Laravel一样controller很傻很单纯。</p>
+<p>yii框架的behaviors可以在controller或application中配置。</p>
+<p>这里是一个访问控制的filter，具体进行什么样的访问控制由className定义，同时对controller中的action支持“only”关键字，还有“”关键字，能够支持排除法的功能，这个在一些场景下还是很有用的。同时“roles”也能够支持你预先定义好的角色的概念，比如学生无法访问教师后台，而教师无法访问学生论坛等。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">use</span> <span class="title">yii</span>\<span class="title">filters</span>\<span class="title">AccessControl</span>;</div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">behaviors</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">return</span> [</div><div class="line">        <span class="string">'access'</span> =&gt; [</div><div class="line">            <span class="string">'class'</span> =&gt; AccessControl::className(),</div><div class="line">            <span class="string">'only'</span> =&gt; [<span class="string">'create'</span>, <span class="string">'update'</span>],</div><div class="line">            <span class="string">'rules'</span> =&gt; [</div><div class="line">                <span class="comment">// allow authenticated users</span></div><div class="line">                [</div><div class="line">                    <span class="string">'allow'</span> =&gt; <span class="keyword">true</span>,</div><div class="line">                    <span class="string">'roles'</span> =&gt; [<span class="string">'@'</span>],</div><div class="line">                ],</div><div class="line">                <span class="comment">// everything else is denied by default</span></div><div class="line">            ],</div><div class="line">        ],</div><div class="line">    ];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>当然，在Yii中你也可以自定义filter：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">namespace</span> <span class="title">app</span>\<span class="title">components</span>;</div><div class="line"></div><div class="line"><span class="keyword">use</span> <span class="title">Yii</span>;</div><div class="line"><span class="keyword">use</span> <span class="title">yii</span>\<span class="title">base</span>\<span class="title">ActionFilter</span>;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ActionTimeFilter</span> <span class="keyword">extends</span> <span class="title">ActionFilter</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">private</span> $_startTime;</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">beforeAction</span><span class="params">($action)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">$this</span>-&gt;_startTime = microtime(<span class="keyword">true</span>);</div><div class="line">        <span class="keyword">return</span> <span class="keyword">parent</span>::beforeAction($action);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">afterAction</span><span class="params">($action, $result)</span></span></div><div class="line">    &#123;</div><div class="line">        $time = microtime(<span class="keyword">true</span>) - <span class="keyword">$this</span>-&gt;_startTime;</div><div class="line">        Yii::trace(<span class="string">"Action '&#123;$action-&gt;uniqueId&#125;' spent $time second."</span>);</div><div class="line">        <span class="keyword">return</span> <span class="keyword">parent</span>::afterAction($action, $result);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里明显可以看出，这个filter针对action，分别在“beforeAction”和“afterAction”两个阶段进行了逻辑处理，完成了请求的计时工作。</p>
+<p>所以总的来看，Yii框架中的中间件：</p>
+<ul>
+<li>支持前置和后置两个阶段的自定义；</li>
+<li>提供了基本的访问控制中间件；</li>
+<li>配置侵入到controller中，完成对controller行为的深度控制；</li>
+<li>无法自动生成中间件，自定义成本略高。</li>
+</ul>
+<h2 id="大家伙-ZendFramework"><a href="#大家伙-ZendFramework" class="headerlink" title="大家伙 ZendFramework"></a>大家伙 ZendFramework</h2><p>ZendFramework是由zend公司推出的php框架，其目标就是建立一套大而全的php框架。以满足企业应用开发的目标。<br>ZendFramework由很多不同的模块构成，使用者可以通过相互组合的方式来实现自己想要的功能，同时也能够不一次加载大而全的框架，十分的灵活。<br>比如有负责授权的”zend-authentication”,或者是负责验证码的”zend-captcha”等等。</p>
+<p>其中”zend-stratigility” 负责提供中间件以及中间件执行流的功能。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">use</span> <span class="title">Zend</span>\<span class="title">Stratigility</span>\<span class="title">MiddlewarePipe</span>;</div><div class="line"><span class="keyword">use</span> <span class="title">Zend</span>\<span class="title">Diactoros</span>\<span class="title">Server</span>;</div><div class="line"></div><div class="line"><span class="keyword">require</span> <span class="keyword">__DIR__</span> . <span class="string">'/../vendor/autoload.php'</span>;</div><div class="line"></div><div class="line">$app    = <span class="keyword">new</span> MiddlewarePipe();</div><div class="line">$server = Server::createServer($app, $_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);</div><div class="line"></div><div class="line"><span class="comment">// Landing page</span></div><div class="line">$app-&gt;pipe(<span class="string">'/'</span>, <span class="function"><span class="keyword">function</span> <span class="params">($req, $res, $next)</span> </span>&#123;</div><div class="line">    <span class="keyword">if</span> (! in_array($req-&gt;getUri()-&gt;getPath(), [<span class="string">'/'</span>, <span class="string">''</span>], <span class="keyword">true</span>)) &#123;</div><div class="line">        <span class="keyword">return</span> $next($req, $res);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> $res-&gt;end(<span class="string">'Hello world!'</span>);</div><div class="line">&#125;);</div><div class="line"></div><div class="line"><span class="comment">// Another page</span></div><div class="line">$app-&gt;pipe(<span class="string">'/foo'</span>, <span class="function"><span class="keyword">function</span> <span class="params">($req, $res, $next)</span> </span>&#123;</div><div class="line">    <span class="keyword">return</span> $res-&gt;end(<span class="string">'FOO!'</span>);</div><div class="line">&#125;);</div><div class="line"></div><div class="line">$server-&gt;listen();</div></pre></td></tr></table></figure>
+<p>这里的代码给出了两个中间件的例子。第一个是落地页，监听了root路径，如果命中了这一路由规则，那么请求会被提前结束，返回给用户“Hello world！”。<br>而第二个中间件去匹配foo这一路径，模糊匹配的方式，如果命中了，会返回FOO并结束请求。</p>
+<p>与Laravel类似，这里同样支持使用next（可调用的变量）的方式将请求继续向下传递。而这里中间件配置的方式也跟Laravel比较像，是统一在一个地方根据路由进行配置的，这样完全可以按照如下的方式根据不同的路由定义不同的中间件处理逻辑：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$app-&gt;pipe(<span class="string">'/api'</span>, $apiMiddleware);</div><div class="line">$app-&gt;pipe(<span class="string">'/docs'</span>, $apiDocMiddleware);</div><div class="line">$app-&gt;pipe(<span class="string">'/files'</span>, $filesMiddleware);</div></pre></td></tr></table></figure>
+<p>总结来看，ZendFramework的中间件：</p>
+<ul>
+<li>主要侧重在请求前置阶段，淡化了请求后置或其他阶段</li>
+<li>通过路由的方式统一配置中间件，支持串行</li>
+<li>并未预先定义中间件</li>
+</ul>
+<h2 id="我心目中的中间件设计"><a href="#我心目中的中间件设计" class="headerlink" title="我心目中的中间件设计"></a>我心目中的中间件设计</h2><p>首先按照不同的类别列举一下常见的中间件：</p>
+<ul>
+<li>前置中间件：<ul>
+<li>cookie验证：验证用户的cookie</li>
+<li>用户角色验证：定义不同的用户角色并验证</li>
+<li>用户权限验证：配置不同的用户权限，并验证</li>
+<li>安全相关，如CSRF校验：CSRF校验中间件</li>
+<li>http方法过滤：过滤特定的GET POST请求</li>
+<li>http或者page cache：对指定路径的页面进行缓存</li>
+<li>跨域中间件：不用在nginx配置，而是通过框架的方式，针对某些域名或某些请求，提供跨域的服务。</li>
+</ul>
+</li>
+<li>后置中间件：<ul>
+<li>共同数据输出：针对统一业务的公共数据，在后置中统一输出</li>
+</ul>
+</li>
+<li>请求返回浏览器之后的中间件：<ul>
+<li>打印日志</li>
+<li>更新session（Laravel）</li>
+</ul>
+</li>
+</ul>
+<p>所以一个php框架最好能够：</p>
+<ul>
+<li>定义核心可用中间件；</li>
+<li>提供在不同阶段扩展中间件的能力，不能太多，支持前置和后置即可覆盖大部分场景；</li>
+<li>统一配置中间件，方便管理所有的中间件，让controller单纯一些；</li>
+<li>提供中间件自动生成与方便扩展功能。</li>
+</ul>
+<p>以上</p>
+<p><img src="https://mmbiz.qlogo.cn/mmbiz/ricso28Q41zt5lNFHAVt9TbFUlhymPQC9ALLjA6L3A1oficNVstibxGJc0ribse16mYiaOfoqqtUL4ibBdSu4n56kCSw/0?wx_fmt=jpeg" alt="小白学web" title="小白学web"></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;img src=&quot;https://mmbiz.qlogo.cn/mmbiz/ricso28Q41zt7tzPibia3DGtiaDoo2pQUGiaFvG6ibzcvxYKNaSL6ULk6ys0jwFNptsjtBRiaAuibp7hPzRibRmibBUTVFEQ/0
+    
+    </summary>
+    
+    
+      <category term="中间件,框架" scheme="http://meijing0114.com/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6-%E6%A1%86%E6%9E%B6/"/>
+    
+  </entry>
   
   <entry>
     <title>读评《web全栈工程师的自我修养》</title>
@@ -723,7 +865,7 @@
 <p><strong>展示效果</strong>：</p>
 <p>还有一些其他的功能：</p>
 <ul>
-<li>邮件：An email <a href="&#x6d;&#x61;&#x69;&#108;&#116;&#x6f;&#x3a;&#x65;&#120;&#97;&#109;&#112;&#108;&#x65;&#x40;&#x65;&#x78;&#x61;&#x6d;&#x70;&#108;&#x65;&#x2e;&#x63;&#x6f;&#109;">&#x65;&#120;&#97;&#109;&#112;&#108;&#x65;&#x40;&#x65;&#x78;&#x61;&#x6d;&#x70;&#108;&#x65;&#x2e;&#x63;&#x6f;&#109;</a> link. 点击直接呼起邮件应用。</li>
+<li>邮件：An email <a href="&#x6d;&#97;&#x69;&#x6c;&#116;&#x6f;&#58;&#x65;&#x78;&#97;&#109;&#112;&#x6c;&#x65;&#64;&#x65;&#120;&#x61;&#x6d;&#112;&#108;&#x65;&#x2e;&#99;&#x6f;&#109;">&#x65;&#x78;&#97;&#109;&#112;&#x6c;&#x65;&#64;&#x65;&#120;&#x61;&#x6d;&#112;&#108;&#x65;&#x2e;&#99;&#x6f;&#109;</a> link. 点击直接呼起邮件应用。</li>
 <li>图片：<img src="./tumblr_mv9b2wUhDB1qz7t0xo1_1280.jpg" alt="Alt text"><ul>
 <li>支持嵌套<ul>
 <li>daf</li>
@@ -1190,44 +1332,6 @@
     </summary>
     
       <category term="php扩展" scheme="http://meijing0114.com/categories/php%E6%89%A9%E5%B1%95/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>本周回顾</title>
-    <link href="http://meijing0114.com/2014/12/07/1/"/>
-    <id>http://meijing0114.com/2014/12/07/1/</id>
-    <published>2014-12-07T15:11:17.000Z</published>
-    <updated>2016-08-07T08:32:36.000Z</updated>
-    
-    <content type="html"><![CDATA[<h1 id="本周回顾"><a href="#本周回顾" class="headerlink" title="本周回顾"></a>本周回顾</h1><p>总体来看，这周所做的事情并不多，或许是因为项目的间隙期所有些懈怠吧。这周做的事情一共有如下几类：</p>
-<ul>
-<li>上线相关</li>
-<li>老需求维护</li>
-<li>年末总结</li>
-<li>扩展开发</li>
-</ul>
-<p>其中为了应对现有问题所做的一些临时方案上花了很长的时间，感觉投入产出比不是很高，同时还花费了很多的时间。这点在之后思考技术方案的时候一定要非常的注意。</p>
-<p>另外事情的分叉有点多，很多事情还没结束的时候就要解决另外一件。所以最好还是解耦，一件件按照优先级搞定，减少做事情的焦虑感。</p>
-<p>年末了，第一次填写自评，正好趁此机会回顾一下半年乃至自己一年的工作。能够优化的地方很多，仔细想想，能够看出哪些工作更值得做，哪些工作的投入产出比非常低。之后工作的时候一定要注意。</p>
-<p>扩展这件事情拖了较久，有一些环境部署的问题，一些暗坑要踩了才知道。不过也从另外一个方面说明对一些server编译配置的原理不够了解，否则可能也不会犯这些低级错误浪费自己的时间了。感觉在遇到问题的时候，很多时候的第一反应都是“这不可能”，“这不科学”。或者有一个更有趣的现象来描述：乒乓球运动员在打佽了得时候，第一反应都是望向自己的乒乓球拍。少一些这种情况，直面问题，解决的时候应该会更快些。</p>
-<p>不过本周运动情况还可以，一天跑步+三天的篮球。但是马医僧说我这种过度运动属于虚亢，尤其是五点半爬起来打篮球T T。我深以为然，下周还是注意一下，别一下子运动过量了，均衡到每一天去。</p>
-<p>除去工作上的事，这周想的也特别多。但是大多数都是一些无意义的纠结。不够专注于当下。太过于将已经发生的事情投射于当下的结果就是一个死循环，永远无法真正的向前进。希望下周可以更加专注一些。无论是工作还是生活上。</p>
-<p>同时，一直想尝试写个专利。想了几个主意之后都被毙了。。下周再跟相关同事讨论一下专利的技巧，为啥写过的人都跟我说很简单！可能是思考的方向还不对，找几篇专利来看看作为参考。</p>
-<p>不过，这周的饮食做的特别差，基本上很不规律。周末难得有机会煮了个粥补一下。这点上一定要反省一下自己。感觉人的情绪由很多事情决定，被很多因素所影响，每日三餐的饮食是很重要的一点。翻译成大白话应该就是：肚里有粮，心里不慌。。下周再尝试规律一点！</p>
-<p>以上。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h1 id=&quot;本周回顾&quot;&gt;&lt;a href=&quot;#本周回顾&quot; class=&quot;headerlink&quot; title=&quot;本周回顾&quot;&gt;&lt;/a&gt;本周回顾&lt;/h1&gt;&lt;p&gt;总体来看，这周所做的事情并不多，或许是因为项目的间隙期所有些懈怠吧。这周做的事情一共有如下几类：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;
-    
-    </summary>
-    
-      <category term="生活随感" scheme="http://meijing0114.com/categories/%E7%94%9F%E6%B4%BB%E9%9A%8F%E6%84%9F/"/>
     
     
   </entry>
