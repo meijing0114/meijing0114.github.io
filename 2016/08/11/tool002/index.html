@@ -1,0 +1,748 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="程序员效率," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="对于程序员来说，开发效率是非常重要的。当程序员升级自己的机器或新入职的时候，往往要做的第一件事情就是配置开发环境。毕竟工欲善其事必先利其器。而配置开发环境，无非是指如下几个方面：
+
+系统配置
+软件配置
+shell配置
+IDE配置
+
+为什么要用dotfiles使用dotfiles的最主要原因还是快速搭建自己的开发环境，降低迁移开发环境的成本。一些你最熟悉的配置、工具的无缝贴合，能够让你在设备升级的时">
+<meta property="og:type" content="article">
+<meta property="og:title" content="dotfiles入门">
+<meta property="og:url" content="http://meijing0114.com/2016/08/11/tool002/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="对于程序员来说，开发效率是非常重要的。当程序员升级自己的机器或新入职的时候，往往要做的第一件事情就是配置开发环境。毕竟工欲善其事必先利其器。而配置开发环境，无非是指如下几个方面：
+
+系统配置
+软件配置
+shell配置
+IDE配置
+
+为什么要用dotfiles使用dotfiles的最主要原因还是快速搭建自己的开发环境，降低迁移开发环境的成本。一些你最熟悉的配置、工具的无缝贴合，能够让你在设备升级的时">
+<meta property="og:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbjw1f7wf2sxqpij21kw16o7q0.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/
+mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg">
+<meta property="og:image" content="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f6p22b5u1hj20hj09n756.jpg">
+<meta property="og:updated_time" content="2016-09-17T03:34:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="dotfiles入门">
+<meta name="twitter:description" content="对于程序员来说，开发效率是非常重要的。当程序员升级自己的机器或新入职的时候，往往要做的第一件事情就是配置开发环境。毕竟工欲善其事必先利其器。而配置开发环境，无非是指如下几个方面：
+
+系统配置
+软件配置
+shell配置
+IDE配置
+
+为什么要用dotfiles使用dotfiles的最主要原因还是快速搭建自己的开发环境，降低迁移开发环境的成本。一些你最熟悉的配置、工具的无缝贴合，能够让你在设备升级的时">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbjw1f7wf2sxqpij21kw16o7q0.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2016/08/11/tool002/"/>
+
+  <title> dotfiles入门 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                dotfiles入门
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-11T09:38:57+08:00" content="Aug 11 2016">
+              Aug 11 2016
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/程序员效率/" itemprop="url" rel="index">
+                    <span itemprop="name">程序员效率</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/11/tool002/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/08/11/tool002/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>对于程序员来说，开发效率是非常重要的。当程序员升级自己的机器或新入职的时候，往往要做的第一件事情就是配置开发环境。毕竟工欲善其事必先利其器。而配置开发环境，无非是指如下几个方面：</p>
+<ul>
+<li>系统配置</li>
+<li>软件配置</li>
+<li>shell配置</li>
+<li>IDE配置</li>
+</ul>
+<h2 id="为什么要用dotfiles"><a href="#为什么要用dotfiles" class="headerlink" title="为什么要用dotfiles"></a>为什么要用dotfiles</h2><p>使用dotfiles的最主要原因还是快速搭建自己的开发环境，降低迁移开发环境的成本。一些你最熟悉的配置、工具的无缝贴合，能够让你在设备升级的时候高枕无忧。</p>
+<p>另外，学习dotfiles能够让你对工具或配置的理解更深入。brew bundle、cask等软件管理的软件，让你从linux的层面理解mac上的桌面软件的安装。同时你也会学会精简不需要的工具，比如sublime在刚开始使用的时候会狂装各类不同的工具，但是会发现很多工具的使用率其实不高。梳理dotfiles能够让你在这一点上做到断舍离。</p>
+<p>再次，dotfiles是近距离了解和观察大牛的配置的绝佳机会。github上面有大量开源的，经验积累下来的dotfiles: <a href="https://dotfiles.github.io/" target="_blank" rel="external">https://dotfiles.github.io/</a> 通过学习和fork这些好的dotfiles，你能够有机会不断的丰富自己现有的dotfile，并把它调优到一种最佳的状态。</p>
+<p>最后，还是要再强调一下效率。dotfiles给你审视自己开发环境的机会，优化并提升效率。正所谓 工欲善其事必先利其器。对于加班繁多的程序员来说，提交效率，健康生活是非常必要的。</p>
+<h2 id="常见的dotfiles有哪些组成部分"><a href="#常见的dotfiles有哪些组成部分" class="headerlink" title="常见的dotfiles有哪些组成部分"></a>常见的dotfiles有哪些组成部分</h2><p>前面已经大致列举出了dotfiles的组成部分，我把它分为 系统配置、软件配置，shell配置，ide配置和松弛配置几个部分。下面会分别进行说明。</p>
+<p>保存dotfiles最常见的方式就是使用github进行托管了，上文中大部分的dotfiles也都是这么做的。</p>
+<ul>
+<li>首先新建github的目录</li>
+<li>将你常用的配置放入相应的文件夹</li>
+<li>建立软链</li>
+</ul>
+<p>所以每当你新装机的时候，操作顺序如下：</p>
+<ul>
+<li>从github上面拉取文件</li>
+<li>使用统一的脚本安装install.sh<ul>
+<li>脚本包括建立软链、安装软件等一系列的动作。</li>
+</ul>
+</li>
+<li>喝杯咖啡，done</li>
+</ul>
+<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbjw1f7wf2sxqpij21kw16o7q0.jpg" alt=""></p>
+<h2 id="dotfiles的常用配置"><a href="#dotfiles的常用配置" class="headerlink" title="dotfiles的常用配置"></a>dotfiles的常用配置</h2><h3 id="系统配置"><a href="#系统配置" class="headerlink" title="系统配置"></a>系统配置</h3><p>之前对mac的系统配置的了解都是在这个图标层面的。知道我发现了一个关于mac系统的配置，看了之后，惊为天人。没想到mac系统还可以让你这么玩.<a href="https://github.com/mathiasbynens/dotfiles/blob/master/.macos不过这里提醒一下，对于mac系统的专门配置，我不是特别感冒，因为跨系统鸿沟太大，同时我对这个级别的配置也并没有那么多的要求。" target="_blank" rel="external">https://github.com/mathiasbynens/dotfiles/blob/master/.macos不过这里提醒一下，对于mac系统的专门配置，我不是特别感冒，因为跨系统鸿沟太大，同时我对这个级别的配置也并没有那么多的要求。</a></p>
+<p>这里列举几个觉得还算有用的配置大家参考一下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"># 设置计算机名称</div><div class="line">sudo scutil --set ComputerName &quot;tedmac&quot;</div><div class="line"></div><div class="line"># 设置截屏保存位置</div><div class="line">defaults write com.apple.screencapture location -string &quot;$&#123;HOME&#125;/Desktop&quot;</div><div class="line"></div><div class="line"></div><div class="line"># 设置默认的触发角</div><div class="line"># Hot corners</div><div class="line"># Possible values:</div><div class="line">#  0: no-op</div><div class="line">#  2: Mission Control</div><div class="line">#  3: Show application windows</div><div class="line">#  4: Desktop</div><div class="line">#  5: Start screen saver</div><div class="line">#  6: Disable screen saver</div><div class="line">#  7: Dashboard</div><div class="line"># 10: Put display to sleep</div><div class="line"># 11: Launchpad</div><div class="line"># 12: Notification Center</div><div class="line"># Top left screen corner → sleep</div><div class="line">defaults write com.apple.dock wvous-tl-corner -int 10</div><div class="line">defaults write com.apple.dock wvous-tl-modifier -int 0</div><div class="line"># Top right screen corner → mission control</div><div class="line">defaults write com.apple.dock wvous-tr-corner -int 2</div><div class="line">defaults write com.apple.dock wvous-tr-modifier -int 0</div><div class="line"># Bottom left screen corner → lauchpad</div><div class="line">defaults write com.apple.dock wvous-bl-corner -int 11</div><div class="line">defaults write com.apple.dock wvous-bl-modifier -int 0</div><div class="line"></div><div class="line"># Bottom right screen corner → desktop</div><div class="line">defaults write com.apple.dock wvous-br-corner -int 4</div><div class="line">defaults write com.apple.dock wvous-br-modifier -int 0</div></pre></td></tr></table></figure>
+<p>其他的配置大概看了下，没有了解的欲望，所以感兴趣的话还是去看上面的这个链接吧。</p>
+<h3 id="软件配置"><a href="#软件配置" class="headerlink" title="软件配置"></a>软件配置</h3><p>说到软件配置，mac上的homebrew肯定是绕不开，它是基于ruby的类yum/apt-get 软件管理工具，如果你还没用过，非常建议你<a href="http://brew.sh/" target="_blank" rel="external">在这里</a>试用一下。</p>
+<p><img src="http://ww4.sinaimg.cn/
+mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
+<p>homebrew主要针对的是系统或者是终端软件，而针对桌面软件，则是另一个工具cask的天下。这里简单给一个demo，详细了解的话可以到<a href="https://caskroom.github.io/" target="_blank" rel="external">官网</a>。</p>
+<p>homebrew bundle提供了类似于composer或者npm一样的包管理功能，通过这个，你就能方便的管理你mac上面安装的软件了。</p>
+<p>比如我在set-up一台机器的时候，就会用到下面的brew bundle的配置Brewfile，来进行常用的软件管理：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div></pre></td><td class="code"><pre><div class="line"># Taps,指定相应的brew的源</div><div class="line">tap &apos;caskroom/cask&apos;</div><div class="line">tap &apos;caskroom/fonts&apos;</div><div class="line">tap &apos;caskroom/versions&apos;</div><div class="line">tap &apos;homebrew/bundle&apos;</div><div class="line">tap &apos;homebrew/dupes&apos;</div><div class="line">tap &apos;homebrew/php&apos;</div><div class="line"></div><div class="line"># Make sure apps get installed in system Applications dir</div><div class="line"># 确保所有的app都安装在Applications目录之下</div><div class="line">cask_args appdir: &apos;/Applications&apos;</div><div class="line"></div><div class="line"># Install ZSH</div><div class="line"># 安装 ZSH</div><div class="line">brew &apos;zsh&apos;</div><div class="line">brew &apos;zsh-completions&apos;</div><div class="line"></div><div class="line"># Install GNU core utilities (those that come with OS X are outdated)</div><div class="line"># 安装GNU的相关功能</div><div class="line">brew &apos;coreutils&apos;</div><div class="line"></div><div class="line"># Install GNU `find`, `locate`, `updatedb`, and `xargs`, g-prefixed</div><div class="line"># 安装GNX中的 `find` `locate` `updatedb` `xargs`</div><div class="line">brew &apos;findutils&apos;</div><div class="line"></div><div class="line"># Install Bash 4</div><div class="line"># 安装 BASH 4</div><div class="line">brew &apos;bash&apos;</div><div class="line"></div><div class="line"># Install more recent versions of some OS X tools</div><div class="line"># 安装OS X工具的最近版本</div><div class="line">brew &apos;homebrew/dupes/grep&apos;</div><div class="line"></div><div class="line"># Install Binaries</div><div class="line"># 安装一些常用的终端运行软件</div><div class="line">brew &apos;awscli&apos;</div><div class="line">brew &apos;git&apos;</div><div class="line">brew &apos;hub&apos;</div><div class="line">brew &apos;tree&apos;</div><div class="line">brew &apos;mackup&apos;</div><div class="line">brew &apos;node&apos;</div><div class="line">brew &apos;trash&apos;</div><div class="line">brew &apos;wget&apos;</div><div class="line">brew &apos;svn&apos;</div><div class="line">brew &apos;httpie&apos;</div><div class="line">brew &apos;autojump&apos;</div><div class="line">brew &apos;lua&apos;</div><div class="line">brew &apos;cmake&apos;</div><div class="line">brew &apos;openssl&apos;</div><div class="line">brew &apos;ctags&apos;</div><div class="line">brew &apos;curl&apos;</div><div class="line">brew &apos;python&apos;</div><div class="line">brew &apos;python3&apos;</div><div class="line"></div><div class="line"># 安装开发环境</div><div class="line">brew &apos;php70&apos;, args: [&apos;with-debug&apos;, &apos;without-apache&apos;]</div><div class="line">brew &apos;php56&apos;, args: [&apos;with-debug&apos;, &apos;without-apache&apos;]</div><div class="line">brew &apos;mariadb&apos;</div><div class="line"></div><div class="line"># cask安装桌面的软件</div><div class="line">cask &apos;aerial&apos;</div><div class="line">cask &apos;flux&apos;</div><div class="line">cask &apos;alfred&apos;</div><div class="line">cask &apos;atom&apos;</div><div class="line">cask &apos;dash&apos;</div><div class="line">cask &apos;evernote&apos;</div><div class="line">cask &apos;fluid&apos;</div><div class="line">cask &apos;goofy&apos;</div><div class="line">cask &apos;google-chrome&apos;</div><div class="line">cask &apos;google-drive&apos;</div><div class="line">cask &apos;iterm2&apos;</div><div class="line">cask &apos;mysqlworkbench&apos;</div><div class="line">cask &apos;rescuetime&apos;</div><div class="line">cask &apos;screenhero&apos;</div><div class="line">cask &apos;sequel-pro&apos;</div><div class="line">cask &apos;slack&apos;</div><div class="line">cask &apos;sublime-text3&apos;</div><div class="line">cask &apos;textual&apos;</div><div class="line">cask &apos;tower&apos;</div><div class="line">cask &apos;transmit&apos;</div><div class="line">cask &apos;vagrant&apos;</div><div class="line">cask &apos;virtualbox&apos;</div><div class="line">cask &apos;virtualbox-extension-pack&apos;</div><div class="line">cask &apos;vlc&apos;</div><div class="line">cask &apos;istat-menus&apos;</div><div class="line"></div><div class="line"># Quicklook</div><div class="line">cask &apos;qlcolorcode&apos;</div><div class="line">cask &apos;qlmarkdown&apos;</div><div class="line">cask &apos;quicklook-json&apos;</div><div class="line">cask &apos;quicklook-csv&apos;</div><div class="line">cask &apos;qlstephen&apos;</div><div class="line"></div><div class="line"># 常用字体</div><div class="line">cask &apos;font-sauce-code-powerline&apos;</div><div class="line">cask &apos;font-source-code-pro&apos;</div><div class="line">cask &apos;font-source-sans-pro&apos;</div><div class="line">cask &apos;font-source-serif-pro&apos;</div></pre></td></tr></table></figure>
+<p>如果有你需要的软件，只需要向里面添加，然后维护就可以了。在新的机器上，只需要<code>brew bundle</code>一下，就可以快速地完成所有软件的安装了。</p>
+<h4 id="Introduce-mackup"><a href="#Introduce-mackup" class="headerlink" title="Introduce mackup"></a>Introduce mackup</h4><p>在完成了软件的安装，之后需要完成的就是对于软件的配置的管理了。对我来说，最需要管理的就是ide的配置了，使用的ide就是sublime3. 在这种应用场景之下，就需要针对Mackup进行配置的管理了。</p>
+<p>Mackup主要做的就是把你在~/Library中的配置进行拷贝到同步的目录，然后通过建立软链的方式在机器之间共享。每次安装新机器的时候，只需要只需要拷贝你同步的目录，然后执行<code>mackup restore</code>.</p>
+<h3 id="shell配置"><a href="#shell配置" class="headerlink" title="shell配置"></a>shell配置</h3><p>我选用的shell是在mac厦门大名鼎鼎的zsh，它有着十分强大的特性。诸如自动填充、共享命令历史、带主题的命令行等等。</p>
+<p>但是一开始zsh并不是特别的用户友好，所以后来出现了神器oh-my-zsh，mactalk的池老师也曾经推荐过。github地址如下：</p>
+<p>oh-my-zsh把zsh进行了一些层面的抽象，使得使用起来更加方便一点。包括可以选取不同的命令行主题，可以配置各种不同的zsh插件，以及常用的alias和export。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"># 选取一个主题</div><div class="line">ZSH_THEME=&quot;agnoster&quot;</div><div class="line"></div><div class="line"># 配置powerline，这又是一个神奇的东西</div><div class="line">. /Users/liangchen/Library/Python/2.7/lib/python/site-packages/powerline/bindings/zsh/powerline.zsh</div><div class="line"></div><div class="line"># 配置神奇的插件</div><div class="line"># autojump 从此找文件夹不用cd 直接一个j命令搞定，超强联想</div><div class="line">[[ -s `brew --prefix`/etc/autojump.sh ]] &amp;&amp; . `brew --prefix`/etc/autojump.sh</div><div class="line"># 其他有用的插件</div><div class="line">plugins=(git textmate ruby autojump osx mvn gradle zsh-syntax-highlighting)</div><div class="line"></div><div class="line"># 个人专有配置</div><div class="line">alias cls=&apos;clear&apos;</div><div class="line">alias ll=&apos;ls -l&apos;</div><div class="line">alias la=&apos;ls -a&apos;</div><div class="line">alias javac=&quot;javac -J-Dfile.encoding=utf8&quot;</div><div class="line">alias grep=&quot;grep --color=auto&quot;</div><div class="line">alias dotfiles=&quot;~/dev/github/dotfiles&quot;</div><div class="line"></div><div class="line"># 指定php文件都以sublime的方式打开，非常方便，可以支持多种不同的文件后缀和打开的方式。</div><div class="line">alias -s c=vim</div><div class="line">alias -s gz=&apos;tar -xzvf&apos;</div><div class="line">alias -s tgz=&apos;tar -xzvf&apos;</div><div class="line">alias -s zip=&apos;unzip&apos;</div><div class="line">alias -s bz2=&apos;tar -xjvf&apos;</div><div class="line">alias  -s php=&apos;subl&apos;</div></pre></td></tr></table></figure>
+<h3 id="IDE配置"><a href="#IDE配置" class="headerlink" title="IDE配置"></a>IDE配置</h3><p>现在主要在用的ide是sublime，有优点也有不少缺点。优点在于：</p>
+<ul>
+<li>编辑的效率更高，比如支持vim模式。</li>
+<li>开放的插件体系，很多人贡献了很多不错的开源插件，如果你不满意，也可以自己修改</li>
+<li>很好的代码模板功能</li>
+</ul>
+<p>缺点同样也很明显，但是最致命的就是对php的语法检查， 没有一个很好的插件能够做到。最基本的尽管有，但是对$符的检查和支持就没有phpstorm那么到位了。这块之后想办法再去优化一下插件吧。</p>
+<p>针对sublime的php开发配置，可以另开一篇文章了，这里只是先列举一下我常用的sublime的插件：</p>
+<ul>
+<li>php开发专用：<ul>
+<li>codeintel：进行php专用的代码提示，可以配置不同的php执行的版本，这里选择的是php5.5；但是一直被人诟病不稳定性；</li>
+<li>sublimelinter：php基本语法依赖检查</li>
+<li>sublimePHPCS: 代码探测和PSR2校验</li>
+<li>php companion: 类的自动导入，包括对命名空间的识别和导入</li>
+<li>Bracket hightling: 语法高亮</li>
+<li>Codebug：类似PHPstrom 对xdebug的集成</li>
+<li>php completion: 代码自动补全</li>
+<li>php NinJa Manuel：热心人折腾的php中文文档，挺实用的</li>
+</ul>
+</li>
+<li>实用工具：<ul>
+<li>svn</li>
+<li>git</li>
+<li>vcs gutter: 版本控制自动识别与提示</li>
+<li>markdown preview</li>
+<li>CodeFormatter：代码美化</li>
+<li>prettyjson: json美化</li>
+<li>snippet：代码块自定义与自动生成</li>
+<li>evernote插件</li>
+</ul>
+</li>
+<li>心情愉悦：<ul>
+<li>boxy theme： 2016 sublime最佳主题之一</li>
+</ul>
+</li>
+</ul>
+<p>看了这么多的配置，不知你是否也有兴趣尝试一下？快快行动起来，提高你的工作效率吧！</p>
+<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f6p22b5u1hj20hj09n756.jpg" alt=""></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/程序员效率/" rel="tag">#程序员效率</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/08/php001/" rel="next" title="漫谈php框架之中间件">
+                <i class="fa fa-chevron-left"></i> 漫谈php框架之中间件
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/13/life001/" rel="prev" title="上海酒店之外滩茂悦">
+                上海酒店之外滩茂悦 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/08/11/tool002/"
+           data-title="dotfiles入门" data-url="http://meijing0114.com/2016/08/11/tool002/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">36</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么要用dotfiles"><span class="nav-number">1.</span> <span class="nav-text">为什么要用dotfiles</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常见的dotfiles有哪些组成部分"><span class="nav-number">2.</span> <span class="nav-text">常见的dotfiles有哪些组成部分</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dotfiles的常用配置"><span class="nav-number">3.</span> <span class="nav-text">dotfiles的常用配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#系统配置"><span class="nav-number">3.1.</span> <span class="nav-text">系统配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#软件配置"><span class="nav-number">3.2.</span> <span class="nav-text">软件配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Introduce-mackup"><span class="nav-number">3.2.1.</span> <span class="nav-text">Introduce mackup</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shell配置"><span class="nav-number">3.3.</span> <span class="nav-text">shell配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IDE配置"><span class="nav-number">3.4.</span> <span class="nav-text">IDE配置</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

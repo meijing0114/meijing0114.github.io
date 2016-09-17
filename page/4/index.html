@@ -250,6 +250,624 @@
             
               
                 
+                <a class="post-title-link" href="/2014/11/24/mysql反模式-4-第三部分查询反模式/" itemprop="url">
+                  mysql反模式(4)--第三部分查询反模式
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-24T00:08:53+08:00" content="Nov 24 2014">
+              Nov 24 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据库/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/24/mysql反模式-4-第三部分查询反模式/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/24/mysql反模式-4-第三部分查询反模式/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="mysql反模式-4-–-第三部分-查询反模式"><a href="#mysql反模式-4-–-第三部分-查询反模式" class="headerlink" title="mysql反模式(4)– 第三部分 查询反模式"></a>mysql反模式(4)– 第三部分 查询反模式</h1><p>这一部分主要集中讨论了一下，在查询数据时应该注意的问题。</p>
+<p>主要章节如下：</p>
+<ol>
+<li>第14章 对未知的恐惧 – 必须正确意识到何时以及如何正确的使用NULL</li>
+<li>第15章 模棱两可的分组 – 如何使用正确的方式获取每组的最大值 </li>
+<li>第16章 随机选择 – 讨论如何正确的从一个大的数据集中返回一些数据样例</li>
+<li>第17章 可怜人的搜索引擎 – 使用SQL实现数据库搜索的需求</li>
+<li>第18章 意大利面条式查询 – 必须尽可能的减少SQL查询量从而降低复杂度</li>
+<li>第19章 隐式的列 – 如果你选择通配符这种鸵鸟战术，那么可能你select出来的到底是什么都不知道</li>
+</ol>
+<p>##第14章 对未知的恐惧<br>本章的目标是辨别悬空值。</p>
+<p>有很多在SQL的表盒查询中有效使用空值的途径：</p>
+<ul>
+<li>可以在添加一条记录时，使用NULL代替那些还不确定的值</li>
+<li>一个给定的列如果没有合适的值，可以在对应的行中适应NULL</li>
+<li>当传入的参数无效时，一个函数的返回值也可以是NULL,如DAY(2014-12-32)</li>
+<li>外联结查询中，NULL被用来当做未匹配的列的占位符<br>反模式是将NULL作为普通的值，需要注意的是，NULL与0、false或空字符串都是不同的。而在查询时，以下语句都不会返回包含NULL的列：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SELECT * FROM table_a WHERE column_a = 1;</div><div class="line">SELECT * FROM table_a WHERE NOT (column_a = 1);</div></pre></td></tr></table></figure>
+<p>同时，与NULL的直接比较都不会返回任何结果:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SELECT * FROM table_a WHERE column_a = NULL;</div><div class="line">SELECT * FROM table_a WHERE column_a &lt;&gt; NULL;</div></pre></td></tr></table></figure>
+<p>有的开发人员可能会觉得NULL非常的麻烦，试图通过声明NOT NULL的方式解决这个问题，但是事实上，你必须保证列中的每一个值都有意义才可以这么做。</p>
+<p>在将NULL视为特殊值之后，就需要利用特殊操作符：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SELECT * FROM table_a WHERE column_a IS NULL;</div><div class="line">SELECT * FROM table_a WHERE column_a IS NOT NULL;</div></pre></td></tr></table></figure>
+<p>另外一种避免NULL带来麻烦的方法就是声明默认值DEFAULT. 当然这很大程度上你的列意义中是否存在这样的一个默认值。</p>
+<p>如果想要强制让某一列或某个表达式返回非NULL的值，可以借助COALESCE()函数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SELECT  CONCAT( COALESCE(firstName,&apos; &apos;), lastName) As fullName FROM Accounts;</div></pre></td></tr></table></figure>
+<p>##第15章 模棱两可的分组<br> 很多时候都会用到查询时使用GROUP BY的场景，用来对分组多行记录使用一些聚合函数，或是每组获取一条统计记录等。它的强大之处在于，将复杂的报表生成过程简化到只用相对很少的代码。</p>
+<p>尽管group by很强大，但是针对我们想要返回每组最大值的查询，同时也能返回这个值对应的记录的其他字段。这类需求，就比较难以满足了。</p>
+<p>原因在于SQL中分组查询逻辑的特殊性：</p>
+<p>单值规则：属于每个组的行，它们的GROUP BY关键字所指定的那些列中得值都是一样的,对于每个不同的FID都会返回一条记录：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">SELECT FID, MAX(createTime) AS latest </div><div class="line">FROM table1 join table2 USING (commen_id)</div><div class="line">GROUP BY FID;</div></pre></td></tr></table></figure>
+<p>但是下面这个语句无法保证：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">SELECT FID, MAX(createTime) AS latest,common_id </div><div class="line">FROM table1 join table2 USING (common_id)</div><div class="line">GROUP BY FID;</div></pre></td></tr></table></figure></p>
+<p>因为一个FID可能对应多个common_id，这会导致数据库查询的错误。</p>
+<p>注意，distinct也能达到对查询结果去重的目的，保证最终返回的每一行都唯一,表Bugs描述了bug提出的日期和提出人等信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">SELECT DISTINCT date_reported,reported_by FROM Bugs;</div><div class="line">SELECT date_reported,reported_by FROM Bugs </div><div class="line">GROUP BY date_reported,reported_by;</div><div class="line">``` </div><div class="line"> 为了能够实现无歧义的使用列，存在几种方案：</div><div class="line"></div><div class="line">* 只查询功能依赖的列：</div><div class="line">所谓功能依赖是指一种确定的1v1 的关系，如果可以保证这一点，那就可以放心的使用GROUP BY了</div><div class="line">* 使用关联子查询：</div><div class="line">* 通过引用外联结查询，来保证返回的bug_id的唯一性：</div></pre></td></tr></table></figure>
+<p>SELECT bp1.product_id,b1.date_reported AS latest, b1.bug_id<br>FROM Bugs b1 JOIN BugsProducts bp1 USING (bug_id)<br>WHERE NOT EXISTS<br> (SELECT * FROM Bugs b2 JOIN BugsProducts bp2 USING (bug_id)<br>  WHERE bp1.product_id = bp2.product_id<br>      AND b1.date_reported &lt; b2.date_reported);<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"> 但是显然这个方法的查询性能不是最好，需要对美一条记录都执行一遍关联的子查询。</div><div class="line"></div><div class="line">使用衍生表：</div><div class="line">先得到临时结果，只包含product_id和其对应的最新的Bug报告日期。然后使用这个临时表和原表进行联结查询，然后即可得到每个产品的最新Bug信息。</div><div class="line">使用JOIN</div></pre></td></tr></table></figure></p>
+<p>SELECT bp1.product_id, b1.date_reported AS latest, b1.bug_id<br>FROM Bugs b1 JOIN BugsProducts bp1 ON (b1.bug_id = bp1.bug_id)<br>LEFT OUTER JOIN (Bugs AS b2 JOIN BugsProducts AS bp2 ON (b2.bug_id = bp2.bug_id))<br>     ON (bp1.product_id = bp2.product_id AND (b1.date_reported &lt; b2.date_reported))<br>     OR b1.date_reported = b2.date_reported AND b1.bug_id &lt; b2.bug_id))<br>WHERE b2.bug_id IS NULL;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">必须找到date_reported为最大的bug的bug_id，如果date_reported相同，就选择bug_id最小的bug. </div><div class="line">JOIN解决方案适用于针对大量数据查询并且可伸缩性比较关键时，尽管难于理解和维护，但是能比基于子查询的解决方案更好地适应数据变化，一定要对不同类型的查询的性能进行实际测量，而不是仅靠猜测来判断哪个更好。</div><div class="line">通过对额外的列使用聚合函数：</div></pre></td></tr></table></figure></p>
+<p>SELECT product_id, MAX(date_reported) AS latest<br>    MAX(bug_id) AS latest_bug_id<br>FROM Bugs JOIN BugsProducts USING (bug_id)<br>GROUP BY product_id;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">只有确定bug_id对应的bug的日期也是最新的时候，才可以使用这个方案，否则返回的结果就对不上了。 </div><div class="line"></div><div class="line">通过上述的论述可以看出，在查询，尤其是分组查询的时候，必须严格的遵守单值规则，从而避免获得模棱两可的查询结果。同时面对不同查询方法的选择，必须经过性能实际测量来确定，而非简单地猜测。</div><div class="line"></div><div class="line">## 第16章 随机选择</div><div class="line">在很多场景中，我们都需要从数据库中拉取一条随机数据，然后进行web展示。注入轮流展示的广告或是推荐的新闻、待审核记录的子集、测试数据等等。</div><div class="line"></div><div class="line">那么如何有效的获取样本数据，同时又能够保证较高的性能和较低的复杂度，是这一章主要讨论的问题。</div><div class="line"></div><div class="line">最常见的方式，是对查询记过进行随机排序，然后获取第一行：</div><div class="line"></div><div class="line">```SELECT * FROM Bugs ORDER BY RAND() LIMIT 1;</div></pre></td></tr></table></figure></p>
+<p>尽管很流行，但是弱点明显：</p>
+<ul>
+<li>注意一般的order by可以充分利用索引的好处，但是使用RAND意味着整个排序过程无法利用索引。没有索引会基于随机函数返回的值。所以性能有问题，相当于一次全表遍历。</li>
+<li>同时另一个问题是，好不容易排序好了，但绝大多数结果都浪费了。因为需要的只不过是一行而已。<br>当然，在数据量比较小得时候，这种方式毫无问题，比如随机产生中国所有省市中得一个。</li>
+</ul>
+<p>为了解决这一性能问题：</p>
+<ul>
+<li>从1到最大值之间随机选择：生成一个1到最大主键之间的随机数，但是必须保证主键连续。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">SELECT b1.*</div><div class="line">FROM Bugs AS b1</div><div class="line">JOIN (SELECT CEILT(RAND() * (SELECT MAX(bug_id) FROM Bugs)) AS rand_id) AS b2</div><div class="line">    ON (b1.bug_id = b2.bug_id);</div></pre></td></tr></table></figure>
+<ul>
+<li>选择下一个最大值：解决了1到最大值之间有间隙的情况，</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">SELECT b1.*</div><div class="line">FROM Bugs AS b1</div><div class="line">JOIN (SELECT CEIL(RAND()*(SELECT MAX(bug_id) FROM Bugs)) AS bug_id) AS b2</div><div class="line">WHERE b1.bug_id &gt;= b2.bug_id</div><div class="line">ORDER BY b1.bug_id</div><div class="line">LIMIT 1;</div></pre></td></tr></table></figure>
+<p>但在间隙后的那个值被选中的概率会增大，当队列中间隙不大并且每个值要被等概率选中的重要性不高时，可以选择折中方案</p>
+<ul>
+<li>获取所有键值，随机选择一个：<br>用程序代码获取所有键值，然后随机选择一个<br>但是列表可能过长，而且要查询两次。<br>所以适用于逻辑简单且数据量湿度的时候。它在处理非连续值时很好。</li>
+<li>使用偏移量选择随机行<br>计算总得数据行数，然后随机选择0-总行数之间的一个值。<br>当无法保证逐渐联系，而且需要每行被选中概率相同时，可以使用这个方案<br>本章中，提供了适应不同场景的诸多生成随机记录的方法，如何选择，就要视实际情况而定了。</li>
+</ul>
+<h2 id="第17章-可怜人的搜索引擎"><a href="#第17章-可怜人的搜索引擎" class="headerlink" title="第17章 可怜人的搜索引擎"></a>第17章 可怜人的搜索引擎</h2><p>SQL中，想要实现全文搜索非常困难，因为它根本就没有为此设计。sql一列中的的那个数据都是原子性的，因此比较两个值时通常都是两个整体，像like这种操作简直就是灾难。</p>
+<p>它不受益于索引，同时其简单地匹配模式也使得很多场景下并不适用。唯一的场景就是，你的需求非常小，且不在乎索引。</p>
+<p>最好的解决方案，就是让SQL做自己的事情，而把搜索交给专业的工具去做。这能够极大的减少重复的搜索开销。</p>
+<ul>
+<li>数据库扩展<br>MYSQL为MyISAM存储引擎提供了一个简单地全文索引类型。可以在一个类型为CHAR、VARCHAR或者TEXT列上定义一个全文索引。</li>
+</ul>
+<p><code>ALTER TABLE Bugs ADD FULLTEXT INDEX  bugfts</code><br>(summary,description);<br>检索时：</p>
+<p><code>SELECT * FROM Bugs WHERE MATCH(summary,description) AGAINST (‘crash’);</code></p>
+<p>Mysql 4.1之后同时还提供更精确的过滤方式：</p>
+<p><code>SELECT * FROM Bugs WHERE MATCH(summary,description)
+    AGAINST (‘+crash -save’ IN BOOLEAN MODE);</code><br> ORACLE、Microsoft SQL Server、PostgreSQL、SQLite都提供相应地搜索类型，这里不详细展开了。</p>
+<ul>
+<li>第三方搜索引擎<br>Sphinx Search<br>作为一个用于MySQL及PostgreSQL的开源搜索引擎，它构建索引和搜索都很快，并且支持分布式查询。对于数据不常更新且要求高可扩展性的程序来说是一个很好地选择。<br>通过配置sphinx的conf文件，可以指定构建索引的数据库。之后需要写一个SQL脚本获取数据从而构建索引。<br>以下给出配置文件的例子，最后一句指定从表中获取全量数据的语句：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">source bugsrc</div><div class="line">&#123;</div><div class="line">    type              = mysql</div><div class="line">    sql_user              = bugsuser</div><div class="line">    sql_pass              = password</div><div class="line">    sql_db           = database</div><div class="line">    sql_query      = \</div><div class="line">        SELECT bug_id,status,date_reported,summary,description \</div><div class="line">        FROM Bugs</div><div class="line">    sql_attr_timestamp = date_reported</div><div class="line">    sql_query_info       = SELECT * FROM Bugs WHERE bug_id=$id </div><div class="line">&#125;</div><div class="line"></div><div class="line">index bugs </div><div class="line">&#123;</div><div class="line">    source     = bugsrc</div><div class="line">    path        = /opt/local/var/db/sphinx/bugs</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p> 在shell中进行索引创建后，就可以搜索了：</p>
+<p>indexer -c sphinx.conf bugs<br>search -b “crash -save”<br>它同时也提供守护进程和对应的API常用的脚本语言，但是最主要问题是它不支持高效的增量更新。</p>
+<p>Apache Lucene<br>lucene是针对java的成熟搜索引擎。</p>
+<p>它使用独有格式为文本文档创建索引，更新数据时也需要更新索引。lucene给你的自由度非常大，它不会直接从数据库读取数据，必须手动写入集合。而检索式，就可以使用java api了。而更棒的是apache的另一个项目：solr。它是lucene索引的网关服务，可以向solr添加文档或是使用REST风格的接口提交查询请求，然后就可以使用任意语言进行调用了。</p>
+<p>看过这么多的解决搜索问题的方案，我想说的时，你完全没有必要使用SQL来解决所有的问题。</p>
+<h2 id="第18章-意大利面条式查询"><a href="#第18章-意大利面条式查询" class="headerlink" title="第18章 意大利面条式查询"></a>第18章 意大利面条式查询</h2><p> 开发人员经常遇到一个很困扰的问题，那就是“我要怎么用一个查询来完成这件事情”。这本身，就是一个怪圈。</p>
+<p>尽管sql极具表现力，可以在单个sql查询或单条语句完成很多事情，但是不意味着必须强制只使用一行代码。<br>通过一个查询来获得所有结果明显的副作用就是得到了一个笛卡尔积。这个结果往往是错误的，这也是一个最常见的错误。<br>不要尝试做一个类似于双重任务的查询，很多时候容易得到一个意料之外的笛卡尔积。<br>除了会得到错误的结果之外，这些查询也非常的难写、难以修改和难以调试。</p>
+<p>由于其实SQL并没有那么难，所以如果你和单条SQL查询纠结了很长时间，那么应该重新考虑你的实现方式。<br>在这种场景下，最好的方式是遵循简约律：</p>
+<blockquote>
+<p>当你有两个相互竞争的理论能得出同样的结论，那么简单地那个更好。</p>
+</blockquote>
+<p>必须对已有的复杂的SQL语句进行分拆。<br>拆完之后查询不会产生早先例子里地笛卡尔积，因此很简单就能确认查询给出的结果准确<br>当有新的需求加进来的时候，加上另一个简单地查询，比将更多计算整合到一个很复杂的查询中要简单很多<br>sql引擎能更容易和可靠地对简单查询进行优化和执行。即使整个工作看上去像是被分割出来的查询弄的有点重复，但可能执行的更快<br>code review也更加方便<br>如果想要一次性返回结果，那么可以通过UNION操作的方式。</p>
+<p>使用union操作之后，查询结果是每个子查询联合后得到的，但是要加上额外的一列来标识不同子查询的结果。<br>仅在两个子查询的列属性是相互兼容的情况下才能使用union，不能在查询的中间改变列的数值、名字或数据类型，需要确保所有行的所有列都是相同的。</p>
+<p>还有一种可行的方式是用sql生成sql：<br>代码生成：自动的脚本<br>不要太专注于使用单个SQL语句解决复杂的问题：脚本很多时候是很好地替代选择。<br>执行多次SQL查询或多条SQL语句可能并不是解决问题最高效的方法，但你应该在效率和解决问题之间找到平衡点。</p>
+<p>所以从本章中得出的最重要的结论就是：尽管SQL支持用一行代码解决复杂的问题，但也别做不切实际的事情。</p>
+<h2 id="第19章-隐式的列"><a href="#第19章-隐式的列" class="headerlink" title="第19章 隐式的列"></a>第19章 隐式的列</h2><p>本章的目标是在写SQL语句时减少输入，很多程序员在查询的时候都是使用通配符的。但是这种捷径很可能会让你迷失方向。</p>
+<ul>
+<li>破坏代码重构：一旦数据表结构发生变化，以前通配符写得语句都完蛋了</li>
+<li><p>隐藏的开销：在查询中使用通配符可能会影响性能和扩展性，一次查询所获取的列越多，客户端程序和数据库之间的网络传输的字节数也越多。<br>因此，解决的方案也很明显：</p>
+</li>
+<li><p>明确列出列名，而不是使用通配符或者隐式列的列表<br>这非常值得，因为：</p>
+<ul>
+<li>如果某一列位置被移动过，不会影响现有程序</li>
+<li>如果新加入一列，不出现在当前结果中</li>
+<li>如果删除，查询会得到告警的错误，这会早暴露出错误。</li>
+</ul>
+</li>
+</ul>
+<p>所以，通配符，还是少用的比较好。</p>
+<p>这一部分罗列出了数据库查询时可能遇到的各种场景，对于实际使用还是有一些借鉴意义的。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2014/11/23/mysql反模式-3-第二部分物理数据库设计反模式/" itemprop="url">
+                  mysql反模式(3)--第二部分物理数据库设计反模式
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-23T23:58:27+08:00" content="Nov 23 2014">
+              Nov 23 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据库/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/23/mysql反模式-3-第二部分物理数据库设计反模式/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/23/mysql反模式-3-第二部分物理数据库设计反模式/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="mysql反模式（3）–-第二部分-物理数据库设计反模式"><a href="#mysql反模式（3）–-第二部分-物理数据库设计反模式" class="headerlink" title="mysql反模式（3）– 第二部分 物理数据库设计反模式"></a>mysql反模式（3）– 第二部分 物理数据库设计反模式</h1><p>在这一部分中，提出了更加高效的数据管理的方式，包括如何选取合适的数据类型、如何存储大文件、以及如何规划索引的使用等等。</p>
+<p>主要章节如下：</p>
+<ol>
+<li><p>第10章 取整错误 – 如何正确的选取数据类型</p>
+</li>
+<li><p>第11章 每日新花样 – 数据库中得枚举类型介绍</p>
+</li>
+<li><p>第12章 幽灵文件 – 图片或多媒体文件如果不谨慎的选取存储方案，就会变成幽灵文件</p>
+</li>
+<li><p>第13章 乱用索引 – 充分的利用索引，让数据库再为你多做一点点</p>
+</li>
+</ol>
+<h2 id="第10章-取整错误"><a href="#第10章-取整错误" class="headerlink" title="第10章 取整错误"></a>第10章 取整错误</h2><p>从学习编程开始，浮点数相关的错误就层出不穷。10*0.1到底等于多少这个问题在不同的编程语言、情景之下可能结果都会有不同，数据库中，浮点数存储也是一个要尤其注意的问题。</p>
+<p>在各类报表尤其是财务报表中，浮点数的计算非常常见。本章的目标就是使用小数取代证书，存储非整数类型的数字，并且在基本运算中使用他们。</p>
+<p>一个显而易见的反模式就是：使用FLOAT类型。</p>
+<p>但是由于并不是所有十进制中描述的信息都能使用二进制存储，所以浮点数通常都会被舍入。这种舍入是必要了，但是问题在于，十进制所输入的有限精度的小数，在作为二进制存储中却并不能以相同的精度存储。按照IEEE 794的规定，十进制数59.95会被表示为59.950000762939. 在很多计算场景下，这不是问题，但是一旦牵扯到是否相等的比较，问题就来了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE Accounts (</div><div class="line">     hourly_rate FLOAT</div><div class="line">);</div><div class="line"></div><div class="line">INSERT INTO Accounts (hourly_rate) VALUES (59.95);</div><div class="line">SELECT * FROM Accounts WHERE hourly_rate=59.95;</div></pre></td></tr></table></figure>
+<p>返回的结果为空。一种可能的解决方案是通过差值小于某值取近似相等，但是需要找到合适的阀值才行。 </p>
+<p>同样，在使用合计函数SUM计算很多值时，误差也不可避免。</p>
+<p>因此，任何使用FLOAT、REAL或者DOUBLE PRECISION类型的设计都可能是反模式，大部分应用程序中得浮点数取值范围并不需要达到IEEE 754标准所定义的最大区间。</p>
+<p>应用FLOAT的合适场景应该是，当需要存储的数据的取值范围很大，大于INTERGER 和NUMERIC两个类型所支持的范围时。如科学计算。</p>
+<p><strong>解决方案：使用NUMERIC类型。</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ALTER TABLE Accounts ADD COLUMN hourly_rate NUMERIC(9,2);</div></pre></td></tr></table></figure>
+<p>指定精度，包括整数和小数位。这样可以避免FLOAT类型可能的摄入。除了NUMERIC还可以使用DECIMAL。这两个类型的行为是一样的。 </p>
+<h2 id="第11章-每日新花样"><a href="#第11章-每日新花样" class="headerlink" title="第11章 每日新花样"></a>第11章 每日新花样</h2><p>在个人信息表中，称呼列可以只有一个有限的候选值：Mr. Mrs. Ms Dr. Rev. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE PersonalContacts (</div><div class="line">    ….</div><div class="line">    salutation VARCHAR(4)</div><div class="line">        CHECK (salutation IN (‘Mr.’,’Mrs.’,’Ms.’,’Dr.’,’Rev.&apos;))</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>类似于枚举类型，本以为这已经够了，结果发现法国人称呼不同，要加Mile。。。</p>
+<p>本章的目标是限定列的有效值:将一列的有效字段值约束在一个固定集合中，从而拒绝无效值输入。</p>
+<p>很多人趋向于在数据库设计进行列定义时指定可选值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE Bugs</div><div class="line">   --- other culumn ---</div><div class="line">  status VARCHAR(20) CHECK (status IN (&apos;NEW&apos;,&apos;IN PROGRESS&apos;,&apos;FIXED&apos;)</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>mysql同时支持enum类型：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE Bugs (</div><div class="line">    --- other columns ---</div><div class="line">    status ENUM(&apos;NEW&apos;,&apos;IN PROGRESS&apos;,&apos;FIXED&apos;)</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>这种解决方案可能带来三个问题：</p>
+<ul>
+<li>完成这样的定义之后，如果想从数据库获取所有的状态，变成了一件很困难的事。可行的方法是从系统视图中取，但是非常复杂。 </li>
+<li>如果想添加新的状态，必须修改数据库定义，这种队员数据的修改应该非常注意质量。</li>
+<li>如果想删掉以前的状态，原有带有这个状态的数据会变得非常棘手。<br>主要的问题就在于候选值结合并不固定，如果候选值几乎不变，那么ENUM或者CHECK就是一个好的选择。这时候就可以在程序中维护一份拷贝，从而方便读取。</li>
+</ul>
+<p>解决方案就是：</p>
+<ul>
+<li>创建一张检查表，每一行包含一个允许在状态列中出现的候选值，然后定义一个外键约束</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">CREATE TABL BugStatus (</div><div class="line">     status VARCHAR(20) PRIMARY KEY</div><div class="line">);</div><div class="line"></div><div class="line">INSERT INTO BugStatus (status) VALUES (’NEW’),(‘IN PROGRESS’),(‘FIXED’);</div><div class="line"></div><div class="line">CREATE TABLE Bugs (</div><div class="line">    ….</div><div class="line">    status VARCHAR(20),</div><div class="line">    FOREIGN KEY (status) REFERENCES BugStatus(status)</div><div class="line">        ON UPDATE CASCADE //会联动</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>这种设计使得查询集合非常方便：直接SELECTBugStatus中所有行。更新、插入和删除原有状态也是如此。与此同时，这种解决方案的兼容性也非常好，不会与不同的数据库产生过多的耦合。</p>
+<h2 id="第12章-幽灵文件"><a href="#第12章-幽灵文件" class="headerlink" title="第12章 幽灵文件"></a>第12章 幽灵文件</h2><p> 本章的目标是存储图片或其他多媒体大文件。</p>
+<p>一种常见的做法是使用文件系统，数据表中存储图片的路径，然后将实际的文件存在硬盘里。还有一种做法是利用blob类型将文件以二进制形式存储。那么，孰优孰劣呢？</p>
+<ul>
+<li>文件不支持DELETE: 数据库的删除操作跟真正文件的删除根本就不相干</li>
+<li>文件不支持事务隔离：一旦删除了文件，其他客户端立刻就无法访问了</li>
+<li>文件不支持回滚：删除了就真的没了</li>
+<li>文件不支持数据库备份工具：外部数据无法备份</li>
+<li>文件不支持SQL的访问权限设置：GRANT和REVOKE 语句设定的访问权限无法支持</li>
+<li><p>文件不是SQL数据类型：数据库对文件的位置、名字等约束并不存在。<br>在考虑下面几个问题之后，再重新来看文件的问题：</p>
+</li>
+<li><p>数据备份和恢复的过程是怎样的？怎么对备份验证？</p>
+</li>
+<li>图片文件堆积在哪里，还是当孤立时就从系统移除？</li>
+<li>系统中哪些用户有权限查看图片？进入权限如何限制？当用户请求他们无权查看的图片时会发生什么？</li>
+<li><p>能撤销对图片的变更吗？如果能，是应用程序来负责恢复图片之前的状态吗？<br>那么，哪些场景下可以把图片存储在外面？</p>
+</li>
+<li><p>数据库在没有图片时能精益很多，图片太大了</p>
+</li>
+<li>当不包含图片时备份更快</li>
+<li>如果存储在数据库之外，对图片的预览或者编辑能使用更简单直接的处理方式</li>
+<li>如果这些将图片存储在文件系统中得好处是重要的，并且之前几节所描述的那些事项并不会破坏你的系统，那就可以肯定将图片存储在数据库之外是个好选择。</li>
+</ul>
+<p>但是如果想要避免上文中提到的，存储在文件系统的坏处，那么就需要使用BLOB类型进行存储：</p>
+<ul>
+<li>图片数据存储在数据库中，不需要额外的步骤加载它，也就没有“文件路径不正确”这样的风险</li>
+<li>删除一条记录的同时也自动删除了图片</li>
+<li>知道你提交了事务，否则对图片的改变是对其他客户端不可见的</li>
+<li>更新记录时会加锁，回滚事务当然也能恢复图片之前的状态</li>
+<li>数据库备份不会漏掉图片</li>
+<li>SQL权限控制对图片也有效</li>
+</ul>
+<p>MySQL可以通过LOAD_FILE()函数载入文件，也可以用DUMPFILE的方式直接写入文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">UPDATE  screenshot_image </div><div class="line">SET screenshot_image = LOAD_FILE(‘image/screenshot1234-1.jpg’)</div><div class="line">WHERE bug_id = 1234 AND image_id = 1;</div><div class="line"></div><div class="line">SELECT screenshot_image</div><div class="line">INTO DUMPFILE ‘images/screenshot1234-1.jpg’</div><div class="line">FROM Screenshots</div><div class="line">WHERE bug_id = 1234 AND image_id=1;</div></pre></td></tr></table></figure>
+<p>##第13章 乱用索引<br>本周的目标是尽可能的优化数据库的性能，当然，在不乱用索引的前提之下。</p>
+<p>改善性能最好的技术就是在数据库中合理的使用索引。索引作为一种数据结构，能使数据库将指定列中某个值快速定位在相应的行。索引提供了一种简单而高效的途径能够让数据库快速找到需要的值，而不是全局遍历。</p>
+<p>反模式就是蛮横的使用索引，而不管它究竟适合于什么场景。使用索引时，会有三种常见的错误：</p>
+<p>不使用索引或索引不足<br>必须意识到，正确的索引能够通过带给你更好的好处来抵消它的额外开销。它最好的好处就是避免全表遍历<br>使用了太多的索引或者使用了一些无效索引</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE Bugs (</div><div class="line">    bug_id SERIAL PRIMARY KEY,</div><div class="line">    date_reported DATE NOT NULL,</div><div class="line">    summary VARCHAR(80) NOT NULL,</div><div class="line">    status     VARCHAR(10) NOT NULL,</div><div class="line">    hours    NUMERIC(9,2),</div><div class="line">    INDEX (bug_id),</div><div class="line">    INDEX (summary),</div><div class="line">    INDEX (hours),</div><div class="line">    INDEX (bug_id, date_reported,status)</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>显然这里有很多无用的索引：</p>
+<ul>
+<li>bug_id:大多数数据库都为主键自动建立索引，额外定义索引就是冗余的操作</li>
+<li>summary: 对于长字符串，比如VARCHAR(80) 这种类型的索引要比更为紧凑数据类型的索引大很多，而且又不可能全字匹配查找</li>
+<li>hours: 很少可能会全匹配查找</li>
+<li>bug,date_reported,status: 组合索引是好选择，但是大多数人创建的组合索引通常都是冗余索引或者很少使用，同时组合索引的顺序也很重要，查询时需要照着来。</li>
+<li>执行一些让索引无能为力的查询</li>
+<li>以电话薄为例，由于姓都是按照字母大小排列的，因此将姓作为索引查询效率会提升很大，但是如果以名作为索引，那几乎就相当于是要做全表的扫描。因为名的排列并不遵循任何的顺序。</li>
+<li>上述规则在数据库中也是如此，除此之外，哪些LIKE进行匹配子串的操作也无法利用任何索引的好处。<br>因此，在选择数据库索引这个议题上必须加以斟酌。分离率是衡量数据库索引的一个指标，它是一张表中所有不重复值的数量和总记录的条数之比：</li>
+</ul>
+<p>SELECT COUNT(DISTINCT status) /<br>    COUNT(status) AS selectivity FROM Bugs;<br>分离率越低，索引效率就越低。相当于是很多重复的记录，必须不停查。</p>
+<p>如果想要使用好索引，那么一定要注意下面几点：</p>
+<ol>
+<li>测量<br>当然测量之前，最好确定数据库就是平静。<br>Mysql中使用慢查询日志，一般配置文件中long_query_time设为10s，注意禁止缓存，从而获得真实的结果。<br>通过profile分许，可以进行更准确的查询时间信息的查看<br>一旦找到比较慢得查询，就可以着手进行针对性的优化了。</li>
+<li>解释<br>找原因的时候到了，查询执行计划（QEP）登场<br>mysql中使用EXPLAIN来生产qep报告。报告中一般会指出查询使用的主键索引，以及是否引入临时表、是否存在索引优化等多种信息。<br>mysql文档“Optimizing  Queries with EXPLAIN”有更详细的信息</li>
+<li>挑选<br>那些没有使用索引的查询操作必须被放在放大镜下好好看看。<br>有一个解决方案是索引覆盖：如果一个索引包含了所有需要的列，那就不需要再从表中获取数据了。</li>
+<li>测试<br>必须跟踪才能确定优化是否有效</li>
+<li>优化<br>可以使用增加索引缓存的方式进一步提高效率。同时索引预加载也是一个方法：LOAD INDEX INTO CACHE</li>
+<li>重建<br>平衡的时候是索引最高效的时候。不断的更新和删除记录会使得索引不平衡，就像文件系统带来的磁盘碎片一样。因此定期的索引维护是必要的MYSQL中又ANALYZE或OPTIMIZE TABLE来重建索引。<br>重建的频率视情况而定，所有是否值得的判断都需要数据操作者来做。<br>关于优化索引，最重要的规则就是，千万别瞎猜索引的使用方法。</li>
+</ol>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2014/11/23/mysql反模式2/" itemprop="url">
+                  mysql反模式2
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-23T23:47:47+08:00" content="Nov 23 2014">
+              Nov 23 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据库/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/23/mysql反模式2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/23/mysql反模式2/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>#mysql反模式2</p>
+<p>继续第一部分：逻辑型数据库设计反模式</p>
+<p>##第四章：需要ID：<br>必须意识到主键的本质，并且正确的使用它。<br>很多时候，建立数据库表中的主键都是处于一种习惯，而不是对表本身的认知。一个常见的错误是，在存储关系的交叉表中，主键并不能标识唯一性，真正的唯一性是对表之间关系的描述。</p>
+<p>这一章的目标是找出那些尽管使用了主键，但是却混淆了主键的本质的情况。</p>
+<p><strong>主键是数据库确保数据行在整张表中唯一性的保障，它是定位到一条记录且确保不会重复存储的逻辑机制。</strong>如果你需要确保一张表中的数据不会出现重复行，并且需要在查询中引用单独的一行记录，还要支持外键，那么主键是必须的。</p>
+<p>对于那些没有明确主键的表，往往会引入一个对表的模型无意义的新列作为伪主键。MYSQL中，伪主键具有AUTO_INCREMENT的特性。</p>
+<p>反模式：</p>
+<ul>
+<li>主键的名字叫做id</li>
+<li>数据类型是32位或64位整型</li>
+<li>主键的值自动生成以保证唯一</li>
+<li>这个反模式会有如下的问题：</li>
+</ul>
+<p><strong>冗余键值</strong>：很多时候有更好的、更自然、更符合表意义的主键，没有必要每张表都用id这个字段。<br><strong>允许重复项</strong>：正如开头所说的，对于描述关系的交叉表，单独的主键不足以标识唯一性。假设个人与银行帐号信息有一张关系表，那么唯一的应该是（个人id，帐号id）这一个组合，而非单独主键。可以用UNIQUE KEY(个人id，帐号id)来标识之，这时候就不需要id这个单独的主键了。<br><strong>意义不明的关键字</strong>：主键的名称应该尽可能的有意义，id所拥有的信息太少了。</p>
+<p>联结查询时有一个更简洁的方式，比如<figure class="highlight plain"><figcaption><span>* FROM Bugs AS b JOIN BugsProducts AS bp ON (b.bug_id = bp.bug_id)```等同于 ```SELECT * FROM Bugs JOIN BugsProducts USING (bug_id);``` 如果一定要定义伪主键为id，那么就无法利用这个特性。</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">尽管如此，如果遇到一些假设“惯例优于配置”的面向对象框架，那么可能不得不使用id作为主键了。同时对于太长而不方便实现的自然键来说，伪主键是很好的代替品。</div><div class="line"></div><div class="line">因此对主键应该进行裁剪设计：</div><div class="line"></div><div class="line">* 直截了当：为主键选择更有意义的名称；同时外键应该尽可能的和所引用的列使用相同的名称，从而使他们在整个数据库的设计中唯一；</div><div class="line">* 拥抱自然键和组合键：如果表中已经包含了一列能够确保唯一、非空以及能够用来定位一条记录的字段，那么就不必要加伪主键了。不过由于数据库的设计趋向于在整个项目的生命周期中不断的调整优化，在没有合适的列的时候，伪主键就成了唯一的选择。合适的时候使用组合键，真正对数据的唯一性进行约束。</div><div class="line">在探讨主键的这一章需要注意，规范仅仅在它有帮助时才是好的。</div><div class="line"></div><div class="line">## 第五章：不用钥匙的入口：</div><div class="line">究竟应不应该使用外键约束保证引用完整性，还是代码来保证？</div><div class="line">外键在工作中常常是让我疑惑的一个部分，到底是否应该使用外键，它带来的好处和坏处究竟如何？一直没有一个非常清楚的认识，这章仔仔细细的剖析了一下其中的利弊。为了避免后续让人非常头疼的脚本式运维，还是适当的加上外键为好。</div><div class="line"></div><div class="line">**这一章的目标是简化数据库架构：关系型数据库的设计基本上可以说就是关于每张独立表之间的关系的设计。引用完整性当然是合理的数据库设计和操作非常重要的部分。**</div><div class="line"></div><div class="line">有些人不推荐使用外键，理由如下：</div><div class="line"></div><div class="line">* 数据更新可能和约束冲突</div><div class="line">* 数据库设计很灵活，不支持引用完整性约束</div><div class="line">* 数据库为外键建立的索引会影响性能</div><div class="line">* 数据库不支持外键</div><div class="line">* 定义外键语法复杂</div><div class="line">但是如果不定义外键，真的那么美好么？：</div><div class="line"></div><div class="line">使用代码来维护引用完整性，或许你对自己的代码有足够的自信，但是半年前的呢？别人的呢？同时需要在代码层面维护并发读写的问题，脏数据看起来简直无法避免。</div><div class="line">发现脏数据时，大多数的选择是定期脚本检查错误，简单逻辑或许可以删除相应记录，但是负责逻辑会使脚本异常复杂。</div><div class="line">对于这种不负责任的情况，必须加以声明约束。</div><div class="line"></div><div class="line">对于那些在数据库的层面上可以完美解决的问题，没有必要使用复杂的代码逻辑来完成。因为数据库的解决方案非常优雅，查查手册，定义一下外键，这会给程序带来巨大收益。</div><div class="line"></div><div class="line">同时外键也可以通过引入 级联更新的方式，在外键约束中声明 ON UPDATE或ON DELETE能够控制级联操作的结果。比如ON UPDATE CASCADE表明更新时一起更新，ON DELETE SET DEFAULT表示删除时设为默认值。</div><div class="line"></div><div class="line">不可避免的是外键带来的系统开销，但是相比于更新删除记录前select检查、同步修改时锁表、执行监控脚本来修正孤立数据，这些开销真心不算大。</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">## 第六章：实体-属性-值：</div><div class="line">面向对象的编程语言能够通过派生基类的方式进行属性扩展，那么如果数据库表出现类似的情况该如何处理呢？</div><div class="line">可扩展性是很多软件项目设计中得普遍目标。一般的数据设计中，一张表有一些属性，每条记录都表示相似的对象实例。不同的表就是不同的对象。</div><div class="line"></div><div class="line">但是现代面向对象的编程模型中，不同对象类型可能是相连的、可能是派生的等各种关系。在这种场景下，我们想要公用，想要将这种面向对象的关系体现在数据库的设计中。</div><div class="line"></div><div class="line">因此引出了如下的数据库设计：实体-属性-值（EAV）。</div><div class="line"></div><div class="line">**实体**：通常是一个指向父表的外键</div><div class="line">**属性**：每一列的名字</div><div class="line">示例如下：</div></pre></td></tr></table></figure></p>
+<p>CREATE TABLE Issues (<br>    issue_id SERIAL PRIMARY KEY<br>);<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">```</div><div class="line">CREATE TABLE IssueAttributes (</div><div class="line">     issue_id           BIGINT UNSIGNED NOT NULL,</div><div class="line">     attr_name        VARCHAR(100) NOT NULL,</div><div class="line">     attr_value        VARCHAR(100),</div><div class="line">     PRIMARY KEY (issue_id, attar_name),</div><div class="line">     FOREIGN KEY (issue_id) REFERENCES Issues (issue_id)</div><div class="line">);</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">INSERT INTO IssueAttributes (issue_id,attr_name,attr_value)</div><div class="line">    VALUES</div><div class="line">        (1234,&apos;product&apos;,&apos;1&apos;),</div><div class="line">        (1234,&apos;reported&apos;,&apos;tom&apos;),</div><div class="line">        (1234,&apos;status&apos;,&apos;NEW&apos;),</div></pre></td></tr></table></figure>
+<p>尽管看上去设计不错，但是问题多多：</p>
+<ul>
+<li>不好查询</li>
+<li>数据完整性、声明属性的SQL数据类型、非空限制、引用完整性这些数据库 的特性统统享受不到了。 </li>
+<li>事实上关系型数据库并不支持这种程度的灵活性，这种EAV的设计号称能任意扩展，但是显然没用对地方。</li>
+</ul>
+<p>对于非关系数据管理的需求，最好求助于非关系技术：</p>
+<p>Berkeley DB<br>Cassandra：分布式面向咧的数据库，facebook开发，提交给了apache<br>CouchDB：面向文档的数据库，分布式的key-value系统，使用json编码数据<br>Hadoop+Hbase、MongoDB、Redis等等<br>回到开头面向对象的数据库设计，有如下的几种解决方案：</p>
+<ul>
+<li>单表继承：将所有的属性都存在一张表里，然后通过type进行区分。比如客户和送货员公用性别属性，但是详细信息就有所不同了。这种方案问题在于加入新类型要改的地方比较多，同时比较难记录哪个属性属于哪个类型。但是当子类型少、特殊属性也少的时候，这是个不错的选择。</li>
+<li>实体表继承：为每个子类型创建独立表，表既包含共有属性也包含特殊属性。好处是一行记录里不需要存跟自己无关的属性了，坏处是通用属性和特殊属性不好区分，同时不好查询所有的子类型。</li>
+<li>类表继承：模拟继承，创建基类表、衍生表，使用外键相连。这是不错的选择。</li>
+<li>半结构化数据类型：如果子类型很多或者必须经常增加新属性，那就blob列存储数据，用XML或json格式。直接丢进数据库，这个方案绝对灵活可扩展。但问题是sql基本没办法获取某个指定属性。</li>
+</ul>
+<h2 id="第七章：多态关联："><a href="#第七章：多态关联：" class="headerlink" title="第七章：多态关联："></a>第七章：多态关联：</h2><p>A表中的记录可能匹配B表或C表的记录，使用type来区分是一个好的选择么？<br>显然用type不是一个好的选择，本章的内容，在第二章乱穿马路已经有所涉及。多态关联指的是子表引用多个父表的情况。比如评论可能来自留言板或博客区，使用type区分会带来查询的复杂和数据的混乱。和第二章一样，交叉表是最好的解决方案。这里不展开了。</p>
+<h2 id="第八章：多列属性："><a href="#第八章：多列属性：" class="headerlink" title="第八章：多列属性："></a>第八章：多列属性：</h2><p>与第二章比较类似，当一个属性有多个值时，如何处理？<br>本章则完全是对第二章的拓展，只不过使用了更明显的一个例子，给客户打标签。这种多对多的关系，天生就应该交给交叉表去处理。</p>
+<h2 id="第九章：元数据分裂："><a href="#第九章：元数据分裂：" class="headerlink" title="第九章：元数据分裂："></a>第九章：元数据分裂：</h2><p>当一张表的数据量太大以至于影响性能的时候，手动分隔是愚蠢的，有很多分区或标准化的方式可以解决这个问题。<br>随着时间的推移，数据库中得数据肯定也是逐渐积累。那么数据库的查询性能肯定也随之下降了。这时候，即使索引也都无济于事了。因此本章的目标是优化数据库的结构来提升查询的性能以及支持表的平滑扩展。</p>
+<p>一种非常错误的做法是，拆表存储或是拆列存储。这会造成：</p>
+<ul>
+<li>不断产生的新表：按照年份来分的话，每年都要加</li>
+<li>管理数据完整性：万一按照年份写错了，查询结果会有问题</li>
+<li>同步数据：更新日期需要异常谨慎，这竟会影响这条记录最终出现在哪个表中</li>
+<li>确保唯一性：必须确保分割出来的表中的主键都唯一，冲突了就不好玩了。因此需要额外的id生成器。如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE BugsIdGenerator (bug_id SERIAL PRIMARY KEY);</div><div class="line"></div><div class="line">INSERT INTO BugsIdGenerator (bug_id) VALUES (DEFAULT);</div><div class="line">ROLLBACK;</div><div class="line"></div><div class="line">INSERT INTO Bugs_2010 (bug_id,…)</div><div class="line">     VALUES (LAST_INSERT_ID(),…);</div></pre></td></tr></table></figure>
+<ul>
+<li>跨表查询：想要跨年查询的时候，会很复杂。</li>
+<li>管理引用完整性：掉进泥潭里了，拆分之后不再能使用外键</li>
+<li>元数据分裂了：如果属性A按年份了，属性B呢，早晚的事。<br>只有一个场景下，上述方式是可取的，那就是归档数据时。</li>
+</ul>
+<p>所以正确的解决方案应该是，分区及标准化。</p>
+<ol>
+<li>使用水平分区：根据行对表进行拆分。只需要定义一些规则，来进行对逻辑表的拆分。这种单向的哈希函数，让你不用担心数据放错表，本例中被分成了四个部分，如果觉得不够，那在数据库设计时就应该选取更多的分区。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE Bugs (</div><div class="line">     bug_id SERIAL PRIMARY KEY,</div><div class="line">     ….</div><div class="line">     date_reported DATE</div><div class="line">) PARTITION BY HASH (YEAR(date_reported))</div><div class="line">     PARTITION 4;</div></pre></td></tr></table></figure>
+<ol>
+<li>使用垂直分区：根据列对表进行拆分。BLOB类型和TEXT类型的列的大小可变，为了提高查询和存储性能，一般数据库会自动将这些列和其他列分开存储。从而提高效率。如果使用*查询，一般会性能很差，因为这些大字段也被选择出来了。所以最好将这些大字段分开存储，在MySQL的MyISAM存储引擎中，对一个所有行的大小都是固定的表最高效。因此可以通过适当的拆分提高效率。</li>
+</ol>
+<p>第一部分：逻辑型数据库设计反模式到此结束，主要探讨了不同场景下，如何通过更贴近数据库特性的设计方式，来避免实际数据库使用中可能遇到的问题。一句话，数据库能做到的事，千万别自己做，数据库能做好的事，就用这种更优雅的方式。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2014/11/23/mysql反模式1/" itemprop="url">
                   mysql反模式1
                 </a>
@@ -854,7 +1472,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-count">36</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -862,7 +1480,7 @@
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-count">12</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
@@ -871,7 +1489,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">3</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
