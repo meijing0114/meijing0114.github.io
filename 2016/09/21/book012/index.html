@@ -1,0 +1,819 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="代码应当易于理解表面层次的改进把信息装到名字里
+把信息装入名字：
+
+使用专业的词汇；
+避免泛泛的名字
+在适当的作用域使用适当的单词长短；
+通过后缀的方式增加额外的信息，比如单位，比如编码的描述；
+利用名字的格式来表达含义（通过使用下划线等区分类的变量）
+用具体代替抽象的名字
+
+使用专业的词汇清晰和精确比装可爱好。
+重灾区：get size
+1def  GetPage(url)
+换成FetchPag">
+<meta property="og:type" content="article">
+<meta property="og:title" content="编写可读代码的艺术">
+<meta property="og:url" content="http://meijing0114.com/2016/09/21/book012/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="代码应当易于理解表面层次的改进把信息装到名字里
+把信息装入名字：
+
+使用专业的词汇；
+避免泛泛的名字
+在适当的作用域使用适当的单词长短；
+通过后缀的方式增加额外的信息，比如单位，比如编码的描述；
+利用名字的格式来表达含义（通过使用下划线等区分类的变量）
+用具体代替抽象的名字
+
+使用专业的词汇清晰和精确比装可爱好。
+重灾区：get size
+1def  GetPage(url)
+换成FetchPag">
+<meta property="og:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwunkasj20l30dhwhr.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwu2j9uj20kq0c341j.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwxtmsdj20is0hx76m.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/mw690/67ad48bbgw1f87vwx38fgj20jo0ay403.jpg">
+<meta property="og:image" content="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f87vwwjq5lj20jk0c20v9.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f87vwvvukpj20lb0dg0vx.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/mw690/67ad48bbgw1f8a7c2q9s7j20ld0e3ad1.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7c23twpj20mf0fggoo.jpg">
+<meta property="og:image" content="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8a7c14eqkj20lo0dpwhq.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7c0i74zj20lo0fw76u.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7bzou36j20k40humzr.jpg">
+<meta property="og:updated_time" content="2016-10-21T01:10:35.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="编写可读代码的艺术">
+<meta name="twitter:description" content="代码应当易于理解表面层次的改进把信息装到名字里
+把信息装入名字：
+
+使用专业的词汇；
+避免泛泛的名字
+在适当的作用域使用适当的单词长短；
+通过后缀的方式增加额外的信息，比如单位，比如编码的描述；
+利用名字的格式来表达含义（通过使用下划线等区分类的变量）
+用具体代替抽象的名字
+
+使用专业的词汇清晰和精确比装可爱好。
+重灾区：get size
+1def  GetPage(url)
+换成FetchPag">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwunkasj20l30dhwhr.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2016/09/21/book012/"/>
+
+  <title> 编写可读代码的艺术 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                编写可读代码的艺术
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-21T08:59:14+08:00" content="Sep 21 2016">
+              Sep 21 2016
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/书评影评/" itemprop="url" rel="index">
+                    <span itemprop="name">书评影评</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/21/book012/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/21/book012/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="代码应当易于理解"><a href="#代码应当易于理解" class="headerlink" title="代码应当易于理解"></a>代码应当易于理解</h2><h2 id="表面层次的改进"><a href="#表面层次的改进" class="headerlink" title="表面层次的改进"></a>表面层次的改进</h2><h3 id="把信息装到名字里"><a href="#把信息装到名字里" class="headerlink" title="把信息装到名字里"></a>把信息装到名字里</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwunkasj20l30dhwhr.jpg" alt=""></p>
+<p>把信息装入名字：</p>
+<ul>
+<li>使用专业的词汇；</li>
+<li>避免泛泛的名字</li>
+<li>在适当的作用域使用适当的单词长短；</li>
+<li>通过后缀的方式增加额外的信息，比如单位，比如编码的描述；</li>
+<li>利用名字的格式来表达含义（通过使用下划线等区分类的变量）</li>
+<li>用具体代替抽象的名字</li>
+</ul>
+<h4 id="使用专业的词汇"><a href="#使用专业的词汇" class="headerlink" title="使用专业的词汇"></a>使用专业的词汇</h4><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwu2j9uj20kq0c341j.jpg" alt=""><br>清晰和精确比装可爱好。</p>
+<p>重灾区：get size</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def  GetPage(url)</div></pre></td></tr></table></figure>
+<p>换成FetchPage或DownloadPage会好很多</p>
+<p>size -&gt; height nums memoryBytes</p>
+<p>stop -&gt; kill resume pause</p>
+<p>find -&gt; search extract locate recover</p>
+<p>send -&gt; deliver dispatch annouce distribute route</p>
+<p>start -&gt; launch create begin open</p>
+<p>make -&gt; create setup build generate compose add new</p>
+<h4 id="避免泛泛的名字"><a href="#避免泛泛的名字" class="headerlink" title="避免泛泛的名字"></a>避免泛泛的名字</h4><p>比如retval tmp data ret<br>使用更具象的名字能够帮你清楚的定位错误。</p>
+<p>tmp的用武之地只在于经典的变量交换。</p>
+<p>循环迭代器索引：i j k 的大灾难，加上数组名前缀 mi ci di</p>
+<h4 id="具体的名字代替抽象的名字"><a href="#具体的名字代替抽象的名字" class="headerlink" title="具体的名字代替抽象的名字"></a>具体的名字代替抽象的名字</h4><p>在给变量、函数或其他元素命名时，描述的更具体而不是更抽象。<br><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwxtmsdj20is0hx76m.jpg" alt=""><br>比如参数 –run_locally 本来是用来输出额外的调试信息</p>
+<ul>
+<li>新成员不知道干嘛的</li>
+<li>有时候远程也需要输出调试信息</li>
+<li>有时候本地性能测试，不想输出调试信息<br>其实更适合extra_logging</li>
+</ul>
+<p><img src="http://ww4.sinaimg.cn/mw690/67ad48bbgw1f87vwx38fgj20jo0ay403.jpg" alt=""><br><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f87vwwjq5lj20jk0c20v9.jpg" alt=""><br>为了更具体，需要<strong>为名字附带更多的信息</strong>。</p>
+<ul>
+<li>带单位的值: diff_ms max_kbsps size_mb</li>
+<li>附带其他重要属性 hex_id data_urlenc html_utf8 plaintext_password</li>
+</ul>
+<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f87vwvvukpj20lb0dg0vx.jpg" alt=""><br>那么一般<strong>名字应该有多长</strong>呢？</p>
+<ul>
+<li>小的作用域里可以使用短的名字，比如if for 甚至可以用单个字母</li>
+<li>不用担心长名字，现在都有自动补全了</li>
+<li>首字母缩写，经验原则是你还是否能理解这种缩写？比如QD就很好理解，WSD可能有点难，REC就更难了</li>
+<li>普遍的没问题 str-&gt;string cnt-&gt;count eval-&gt;evaluation doc-&gt;document</li>
+<li>丢掉没用的词 convert_to_string -&gt; to_string</li>
+</ul>
+<p>利用名字的格式来传递含义：<br>下划线 连字符和大小写。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">static const int kMaxOpenFiles = 100;//常量并非全大写，区分宏</div><div class="line">class LogReader &#123;// 类名驼峰</div><div class="line">  public:</div><div class="line">    void OpenFile(string local_file//变量名);</div><div class="line">  private:</div><div class="line">    int offset_;//类成员变量用下划线</div><div class="line">    DISALLOW_COPY_AND_ASSIGN(LogReader);</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>总结本章：把信息塞到名字里去。</p>
+<ul>
+<li>使用专业的单词——例如，不用Get，而用Fetch或者Download可能会更好，这由上下文决定。</li>
+<li>避免空泛的名字，像tmp和retval，除非使用它们有特殊的理由。</li>
+<li>使用具体的名字来更细致地描述事物——Server Can Start()这个名字就比CanListenOnPort更不清楚。</li>
+<li>给变量名带上重要的细节——例如，在值为毫秒的变量后面加上ms，或者在还需要转义的，未处理的变量前面加上raw_。</li>
+<li>为作用域大的名字采用更长的名字——不要用让人费解的一个或两个字母的名字来命名在几屏之间都可见的变量。对于只存在于几行之间的变量用短一点的名字更好。<br>有目的地使用大小写、下划线等 — 例如，你可以在类成员和局部变量后面加上”_”来区分它们。</li>
+</ul>
+<h3 id="不会误解的名字"><a href="#不会误解的名字" class="headerlink" title="不会误解的名字"></a>不会误解的名字</h3><p>关键原则：多问自己几遍，这个名字会被别人误解成其他的含义么？<br><img src="http://ww4.sinaimg.cn/mw690/67ad48bbgw1f8a7c2q9s7j20ld0e3ad1.jpg" alt=""></p>
+<p>例子：</p>
+<ul>
+<li>filter：需要明确是挑出来，还是过滤掉</li>
+<li>clip(text,length)：减掉length，还是剪出来length -&gt; truncate更好</li>
+<li>length-&gt;max_length-&gt;max_chars</li>
+<li>差一问题：max<em> min</em> 进行明确，不要使用limit</li>
+<li>first last表明范围，不要用start stop</li>
+</ul>
+<p>一些基本的实践：</p>
+<ul>
+<li>给bool命名,增加is has can should 这样的词</li>
+<li>与使用者的期望匹配：举出了STL里面有一个size的函数调用，其实O(N2)的操作</li>
+</ul>
+<h3 id="审美"><a href="#审美" class="headerlink" title="审美"></a>审美</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7c23twpj20mf0fggoo.jpg" alt=""><br>好的审美真的很重要。</p>
+<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8a7c14eqkj20lo0dpwhq.jpg" alt=""><br>三条原则：</p>
+<ul>
+<li>使用一致的布局，让读者很快习惯这种风格；</li>
+<li>让相似的代码看起来相似；<ul>
+<li>并不一定局限于固定换行</li>
+<li>但要保持一种固定的顺序</li>
+</ul>
+</li>
+<li>把相关代码分组，形成代码块<ul>
+<li>按照逻辑分组分段，会更为清晰</li>
+</ul>
+</li>
+</ul>
+<p>让代码好看，有的时候也会涉及到一些对代码本身的改进，比如对方法的抽象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">class Logger &#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">class Logger</div><div class="line">&#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>个人风格的一致性，一致的风格，比正确的风格更为重要。</p>
+<h3 id="该写什么样的注释"><a href="#该写什么样的注释" class="headerlink" title="该写什么样的注释"></a>该写什么样的注释</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7c0i74zj20lo0fw76u.jpg" alt=""></p>
+<p>关键思想：注释的目的是尽量帮助读者了解的和作者一样多</p>
+<h4 id="什么不需要注释"><a href="#什么不需要注释" class="headerlink" title="什么不需要注释"></a>什么不需要注释</h4><p>那些很明显的逻辑(能够被快速推断出来的逻辑)，或者是因为命名不准确做的多余注释，为了注释而注释。</p>
+<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7bzou36j20k40humzr.jpg" alt=""></p>
+<p>明显的逻辑：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">// The class definition for Account</div><div class="line">class Account &#123;</div><div class="line">    public:</div><div class="line">    // Contructor</div><div class="line">    Account();</div><div class="line">    // set the profit member to a new value</div><div class="line">    void SetProfit (double profit);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>不好的名字：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// Realease the handle for this key, does not modify actual registry</div><div class="line">void DeleteRegistry(RegistryKey * key);</div></pre></td></tr></table></figure>
+<h4 id="记录你的思想"><a href="#记录你的思想" class="headerlink" title="记录你的思想"></a>记录你的思想</h4><p>加入导演评论：上帝视角</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">// 使用二叉树比哈希表处理这些数据快很多</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">// 这个类太乱了，谁写的，应该建立一个子类来处理它</div></pre></td></tr></table></figure>
+<p>加入特定的标记</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">标记</th>
+<th style="text-align:right">通常的事情</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">todo</td>
+<td style="text-align:right">未处理</td>
+</tr>
+<tr>
+<td style="text-align:right">FIXME</td>
+<td style="text-align:right">已知的无法运行的代码</td>
+</tr>
+<tr>
+<td style="text-align:right">HACK</td>
+<td style="text-align:right">为解决问题做的粗糙方案</td>
+</tr>
+<tr>
+<td style="text-align:right">XXX</td>
+<td style="text-align:right">危险！这里有重要问题</td>
+</tr>
+</tbody>
+</table>
+<p>给常量加注释：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">const CHAPTER_MAX = 500 // 后台能接受的最大为500，超过会有超时</div></pre></td></tr></table></figure>
+<h4 id="站在读者的角度"><a href="#站在读者的角度" class="headerlink" title="站在读者的角度"></a>站在读者的角度</h4><p>公布可能的陷阱：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">void SendEmail(string to, string subject ,string body);</div></pre></td></tr></table></figure>
+<p>这个调用有可能会花费整整一秒的时间，标注可能的超时时间。</p>
+<p>一些全局观:</p>
+<ul>
+<li>类之间如何交互</li>
+<li>数据如何在整个系统中流动</li>
+<li>入口点在哪里</li>
+</ul>
+<h4 id="注释会打断你的思绪么"><a href="#注释会打断你的思绪么" class="headerlink" title="注释会打断你的思绪么"></a>注释会打断你的思绪么</h4><p>其实很多时候会帮助你整理思绪。<br>把要实现的逻辑拆成几个不同的步骤，然后逐一时间，定义接口。</p>
+<h3 id="写出言简意赅的注释"><a href="#写出言简意赅的注释" class="headerlink" title="写出言简意赅的注释"></a>写出言简意赅的注释</h3><p>图1</p>
+<p>写出注释的关键一点在于：注释应该有很高的信息/空间率。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/09/01/book011/" rel="next" title="读阳明先生心学有感">
+                <i class="fa fa-chevron-left"></i> 读阳明先生心学有感
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/10/06/travel001/" rel="prev" title="山水游重庆">
+                山水游重庆 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/09/21/book012/"
+           data-title="编写可读代码的艺术" data-url="http://meijing0114.com/2016/09/21/book012/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">39</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#代码应当易于理解"><span class="nav-number">1.</span> <span class="nav-text">代码应当易于理解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#表面层次的改进"><span class="nav-number">2.</span> <span class="nav-text">表面层次的改进</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#把信息装到名字里"><span class="nav-number">2.1.</span> <span class="nav-text">把信息装到名字里</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用专业的词汇"><span class="nav-number">2.1.1.</span> <span class="nav-text">使用专业的词汇</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#避免泛泛的名字"><span class="nav-number">2.1.2.</span> <span class="nav-text">避免泛泛的名字</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#具体的名字代替抽象的名字"><span class="nav-number">2.1.3.</span> <span class="nav-text">具体的名字代替抽象的名字</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#不会误解的名字"><span class="nav-number">2.2.</span> <span class="nav-text">不会误解的名字</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#审美"><span class="nav-number">2.3.</span> <span class="nav-text">审美</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#该写什么样的注释"><span class="nav-number">2.4.</span> <span class="nav-text">该写什么样的注释</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#什么不需要注释"><span class="nav-number">2.4.1.</span> <span class="nav-text">什么不需要注释</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#记录你的思想"><span class="nav-number">2.4.2.</span> <span class="nav-text">记录你的思想</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#站在读者的角度"><span class="nav-number">2.4.3.</span> <span class="nav-text">站在读者的角度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#注释会打断你的思绪么"><span class="nav-number">2.4.4.</span> <span class="nav-text">注释会打断你的思绪么</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#写出言简意赅的注释"><span class="nav-number">2.5.</span> <span class="nav-text">写出言简意赅的注释</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
