@@ -250,6 +250,289 @@
             
               
                 
+                <a class="post-title-link" href="/2016/01/17/translate001/" itemprop="url">
+                  译术 | SQL vs NoSQL：异同比较
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-01-17T23:46:38+08:00" content="Jan 17 2016">
+              Jan 17 2016
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/译术/" itemprop="url" rel="index">
+                    <span itemprop="name">译术</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/01/17/translate001/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/01/17/translate001/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <blockquote>
+<p>译者按：SQL与NoSQL之争近年来十分受到关注，既存在“SQL吃遍天下”这种理念，也不乏“NoSQL一定代表着先进生产力”这种谬误。争者往往不求甚解，为弄潮而争，忽略了本质。这篇文章原文地址：<a href="http://www.sitepoint.com/sql-vs-nosql-differences/" target="_blank" rel="external">http://www.sitepoint.com/sql-vs-nosql-differences/</a> 作者对SQL与NoSQL在多个层面进行了细致的比较。值得一读。</p>
+</blockquote>
+<p>SQL（结构化查询语言）数据库成为主流的数据存储机制已经存在了80余年。在1990年代末，随着web应用和诸如MySQL、PostgreSQL和SQLite这类开源项目的兴起，SQL随之得到爆发式应用。</p>
+<p>NoSQL数据库产生于1960年代，但是最近才出现了一些类似于MongoDB、CouchDB、Redis和Apache Cassandra这样的流行选择。</p>
+<p>你可能会看到很多探讨如何使用SQL或NoSQL的某个特性的文章。对如何从中二选一的讨论却并不多见。我希望能填补这个空白。这篇文章中，我们会覆盖到最基本的差异。而接下来会有一篇文章针对典型的场景讨论数据存储的最优选择。</p>
+<p>大多数例子适用于流行的MySQL SQL数据库和MongoDB NoSQL数据库。其他的SQL/NoSQL数据库是类似的，但是在特性和语法上可能略有不同。</p>
+<h2 id="SQL与NoSQL的神圣战争"><a href="#SQL与NoSQL的神圣战争" class="headerlink" title="SQL与NoSQL的神圣战争"></a>SQL与NoSQL的神圣战争</h2><p>在进一步讨论之前，让我们先来修正一些普遍的谬误：</p>
+<h3 id="谬误：-NoSQL比SQL更好-差"><a href="#谬误：-NoSQL比SQL更好-差" class="headerlink" title="谬误： NoSQL比SQL更好/差"></a>谬误： NoSQL比SQL更好/差</h3><p>有些项目更适合使用SQL数据库。有些则更适合NoSQL。 还有些则能配合使用。这篇文章不是想在两者之间决出一个胜者，因为你不可能在所有的场景下都应用同样的假设。</p>
+<h3 id="谬误：-NoSQL和MySQL之间有着清晰的鸿沟"><a href="#谬误：-NoSQL和MySQL之间有着清晰的鸿沟" class="headerlink" title="谬误： NoSQL和MySQL之间有着清晰的鸿沟"></a>谬误： NoSQL和MySQL之间有着清晰的鸿沟</h3><p>这不一定是对的。有些SQL数据库正在加入NoSQL的特性，反之亦然。这两者的界限很可能会越来越模糊。而新的混合数据库能在未来提供有趣的选择。</p>
+<h3 id="谬误：编程语言-框架-决定了数据库"><a href="#谬误：编程语言-框架-决定了数据库" class="headerlink" title="谬误：编程语言/框架 决定了数据库"></a>谬误：编程语言/框架 决定了数据库</h3><p>我们越来越习惯各种各样的技术栈：</p>
+<ul>
+<li>LAMP: linux, Apache, MySQL(SQL), PHP</li>
+<li>MEAN: MongoDB(NoSQL), Express, Angular, Node.js</li>
+<li>.NET, IIS和SQL Server</li>
+<li>Java, Apache和Oracle</li>
+</ul>
+<p>这些技术栈产生可以归于应用的，历史上的和商业上的原因，但别被限死了。 你当然可以在你的PHP或.NET项目使用MongoDB的NoSQL数据库。你也可以在Node.js里面连接MySQL或SQL SERVER。可能你没法找到那么多教程和资源，但是你的需求本身应该决定数据库的类型，而不是编程语言。<br>（这意味着，别给自己故意挖坑！原则一个不常见的技术组合或SQL和NoSQL的混合式可能的，但是在寻求帮助和找到有经验的开发者方面会遇到不少困难<br>）<br>记住了这些，让我们来看看异同的比较。</p>
+<h2 id="SQL的表-vs-NoSQL的文档"><a href="#SQL的表-vs-NoSQL的文档" class="headerlink" title="SQL的表 vs NoSQL的文档"></a>SQL的表 vs NoSQL的文档</h2><p>SQL数据库提供了一族相关的数据表。举例来说，如果你在运营一个线上的书店，书的信息可以被加入到一个叫<strong>book</strong>的表。</p>
+<table>
+<thead>
+<tr>
+<th>ISBN</th>
+<th style="text-align:center">title</th>
+<th style="text-align:right">author</th>
+<th style="text-align:right">format</th>
+<th style="text-align:right">price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>9780992461225</td>
+<td style="text-align:center">JavaScript: Novice to Ninja</td>
+<td style="text-align:right">Darren Jones</td>
+<td style="text-align:right">ebook</td>
+<td style="text-align:right">29.00</td>
+</tr>
+<tr>
+<td>9780994182654</td>
+<td style="text-align:center">Jump Start Git</td>
+<td style="text-align:right">Shaumik Daityari</td>
+<td style="text-align:right">ebook</td>
+<td style="text-align:right">29.00</td>
+</tr>
+</tbody>
+</table>
+<p>每一行都是一条不同的书德尔记录。这种设计是比较苛刻的，你没法使用同样的表去存储不同的信息或者在是数字类型的字段插入字符串。</p>
+<p>NoSQL数据库存储类JSON的键值对文档：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    ISBN: 9780992461225, </div><div class="line">        title: &quot;JavaScript: Novice to Ninja&quot;, </div><div class="line">            author: &quot;Darren Jones&quot;, </div><div class="line">                format: &quot;ebook&quot;, </div><div class="line">                    price: 29.00</div><div class="line">                    &#125;</div></pre></td></tr></table></figure>
+<pre><code>相似的文档可以被存储进一个**集合**，这跟SQL表十分类似。但是，在文档里面你可以存储任何形式的数据，NoSQL数据库并不会抱怨：
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    ISBN: 9780992461225, </div><div class="line">        title: &quot;JavaScript: Novice to Ninja&quot;, </div><div class="line">            author: &quot;Darren Jones&quot;, </div><div class="line">                year: 2014, </div><div class="line">                    format: &quot;ebook&quot;, </div><div class="line">                        price: 29.00, </div><div class="line">                            description: &quot;Learn JavaScript from scratch!&quot;, </div><div class="line">                                rating: &quot;5/5&quot;, </div><div class="line">                                    review: [ </div><div class="line">                                            &#123; name: &quot;A Reader&quot;, text: &quot;The best JavaScript book I&apos;ve ever read.&quot; &#125;, </div><div class="line">                                                    &#123; name: &quot;JS Expert&quot;, text: &quot;Recommended to novice and expert developers alike.&quot; &#125; </div><div class="line">                                                        ]</div><div class="line">                                                        &#125;</div></pre></td></tr></table></figure>
+
+                                                        SQL表创建的是严格的数据模板，所以你很难犯错。而NoSQL更加灵活，但是能够在任何地方存储数据可能会导致持续的问题。
+
+                                                        ## SQL架构 vs NoSQL去架构
+                                                        在一个SQL数据库中，在你确定表和字段类型这些架构之前是无法添加数据的。SQL架构还可能包括其他的信息：
+                                                        * primary keys: 主键，就像ISBN一样标示了唯一的一条记录
+                                                        * indexs: 索引，经常被查询的字段会被加上索引来提高检索速度
+                                                        * relationships: 关系，数据字段之间的逻辑联系
+                                                        * 诸如存储过程和触发器这样的机制
+
+                                                        你的数据架构一定要在实现任何操作数据的应用逻辑之前被设计和实现出来。尽管之后再修改是可行的，但是大量的变更会非常复杂。
+
+                                                        在NoSQL数据库中，数据可以被非常灵活的添加。并不需要事先进行字段设计和表的设计。比如说，在MongoDB中，下面的命令会在**book**表中创建一条新的记录，如果**book**表不存在，那它也会被同时创建：
+                                                        <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">db.book.insert(</div><div class="line">    ISBN: 9780994182654, </div><div class="line">        title: &quot;Jump Start Git&quot;, </div><div class="line">            author: &quot;Shaumik Daityari&quot;, </div><div class="line">                format: &quot;ebook&quot;, </div><div class="line">                    price: 29.00</div><div class="line">                    );</div></pre></td></tr></table></figure>
+
+                                                                            (MongoDB会自动在表中添加一条唯一的_id字段，随后你也可以对索引进行定义。)
+
+                                                                            一个NoSQL数据库可能更适合初始数据形式很难确定的项目中。但这并不意味着，你可以因此而偷懒：在项目开始的时候忽视设计正确的数据表，可能会在之后引入问题。
+
+                                                                            ## SQL 中心化 vs NoSQL去中心化
+                                                                            假定我们需要往book数据库中添加出版社信息。在SQL数据库中，一个出版社会包含多个标题，我们创建了一张新的**publisher**表：
+
+                                                                            | id | name | country | email | 
+                                                                            | ------------- |:-------------:| -----:| -----:| 
+                                                                            | SP001 | SitePoint | Australia | feedback@sitepoint.com | 
+
+                                                                            我们可以在**book**表里面添加一个**publisher_id**字段，来作为**publisher.id**的外键。
+
+                                                                            | ISBN | title | author | format | price | publisher_id|
+                                                                            | ------------- |:-------------:| -----:| -----:| -----:| ----:|
+                                                                            | 9780992461225 | JavaScript: Novice to Ninja | Darren Jones | ebook | 29.00| SP001|
+                                                                            | 9780994182654 | Jump Start Git | Shaumik Daityari | ebook | 29.00| SP001|
+
+                                                                            这使得数据冗余被最小化，我们不必为每本书重复出版社的信息--只需要创建外键就行了。这种技术被称为中心化，而且也确实很有益处。我们可以在不用修改**book**的数据的前提下更新出版社信息。
+
+                                                                            在NoSQL中我们也可以使用中心化的技术。看一下在**book**集合中得一条文档：
+                                                                            <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    ISBN: 9780992461225, </div><div class="line">        title: &quot;JavaScript: Novice to Ninja&quot;, </div><div class="line">            author: &quot;Darren Jones&quot;, </div><div class="line">                format: &quot;ebook&quot;, </div><div class="line">                    price: 29.00, </div><div class="line">                        publisher_id: &quot;SP001&quot;</div><div class="line">                        &#125;</div></pre></td></tr></table></figure>
+
+                                                                                                    -- 引用了一条在**publisher**集合中得一条文档：
+                                                                                                    <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    id: &quot;SP001&quot; </div><div class="line">        name: &quot;SitePoint&quot;, </div><div class="line">            country: &quot;Australia&quot;, </div><div class="line">                email: &quot;feedback@sitepoint.com&quot;</div><div class="line">                &#125;</div></pre></td></tr></table></figure>
+
+                                                                                                                    然而这有的时候却并不实际。更希望的是能够把数据去中心化，对每一个**book**重复冗余的**publisher**.
+
+                                                                                                                    <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    ISBN: 9780992461225, </div><div class="line">        title: &quot;JavaScript: Novice to Ninja&quot;, </div><div class="line">            author: &quot;Darren Jones&quot;, </div><div class="line">                format: &quot;ebook&quot;, </div><div class="line">                    price: 29.00, </div><div class="line">                        publisher: </div><div class="line">                            &#123; </div><div class="line">                                    name: &quot;SitePoint&quot;, </div><div class="line">                                            country: &quot;Australia&quot;, </div><div class="line">                                                    email: &quot;feedback@sitepoint.com&quot; </div><div class="line">                                                        &#125;</div><div class="line">                                                        &#125;</div></pre></td></tr></table></figure>
+
+                                                                                                                                                                            这会使我们查询的更快，但是再多条记录中更新publisher信息，会非常的慢。
+
+                                                                                                                                                                            ## SQL关系型的JOIN vs NoSQL
+                                                                                                                                                                            SQL查询提供了强劲的JOIN语法。我们可以使用一条SQL语句在多个数据表中获取关系数据库。举例来说:
+                                                                                                                                                                            <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SELECT book.title, book.author, publisher.nameFROM bookLEFT JOIN book.publisher_id ON publisher.id;</div></pre></td></tr></table></figure>
+
+                                                                                                                                                                            这个语句会返回所有的书的标题，作者以及相关的出版人姓名。（假设出版人姓名存在）
+                                                                                                                                                                            NoSQL没有相对应的JOIN，这可能对那些熟练使用SQL的人非常不习惯。如果我们使用中心化的NoSQL集合，那我们需要拉取所有的book文档，再获取所有的publisher文档，再手动的通过程序逻辑来把两者联系起来。这也是为什么对NoSQL往往使用去中心化的方式很有必要。
+
+
+                                                                                                                                                                            ## SQL vs NoSQL 数据完整性
+                                                                                                                                                                            大部分的SQL数据库允许你通过外键限制的方式来强制的保证数据完整性。（除非你还在使用MySQL中得陈旧 不再被维护的MyISAM引擎）我们的book数据表能够：
+                                                                                                                                                                            * 保证所有的book数据能够有一个合法的对应在pubilisher表中得publisher_id
+                                                                                                                                                                            * 如果有book数据引用了publisher信息，那么这条数据不能被删除
+                                                                                                                                                                            这种模式强制了数据库应该遵循的规范。对于开发者或者用户而言，无法在可能引入孤儿数据或非法数据的情况下，对数据条目进行编辑或删除。但是在NoSQL中却没有类似的数据完整性保证。你可以不管其他的文档，只存储你想要存储的内容。理想的情况下，一个数据条目应该成为关于一个事物的唯一信息来源。
+
+                                                                                                                                                                            ## SQL vs NoSQL 事务
+                                                                                                                                                                            在SQL数据库中，两条或多条更新语句能够在一个事务（保证成功或失败回滚的机制）中被同时执行。举例来说，假设book数据库包含订单和库存两张表。当一本书被订购的时候，我们需要往订单表添加一条数据，然后在库存表中将库存字段减一。如果我们把这两条更新语句独立执行，一条可能失败，另一条可能成功。因此会造成数据的不同步。而把他们通过事务的方式执行，就能保证一起成功或一起失败。
+                                                                                                                                                                            在NoSQL数据库中，对单个文档的修改是原子的。也就是说，如果你在文档中更新三个字段，那么要么三个字段同时更新，要么都不变。但是对于多条文档的更新而言却没有事务。不过有一个类事务的选项（http://docs.mongodb.org/manual/core/write-operations-atomicity/）。不过在写这篇文章的时候，这些还都需要你在代码里自行处理。
+
+                                                                                                                                                                            ## SQL vs NoSQL CRUD 语法
+                                                                                                                                                                            创建、读取、更新和删除数据是所有数据库系统的基础。本质上来说：
+                                                                                                                                                                            * SQL是轻量级的解释性语言。语法强大，并且已经成为了国际标准。尽管大多数系统实现语法的时候略有不同。
+                                                                                                                                                                            * NoSQL数据库使用带json参数的类javascript语言一样的查询。基本的操作比较简单，但是对于更复杂的查询来说，嵌套的JSON会非常的繁复。
+                                                                                                                                                                            一个快速的对比：
+
+                                                                                                                                                                            | SQL | NoSQL  | 
+                                                                                                                                                                            | ------------- |:-------------:| 
+                                                                                                                                                                            | SP001 | SitePoint | 
+                                                                                                                                                                            |插入一条book记录|
+                                                                                                                                                                            |```INSERT INTO book ( `ISBN`, `title`, `author`)VALUES ( &apos;9780992461256&apos;, &apos;Full Stack JavaScript&apos;, &apos;Colin Ihrig &amp; Adam Bretz&apos;);```|```db.book.insert({ ISBN: &quot;9780992461256&quot;, title: &quot;Full Stack JavaScript&quot;, author: &quot;Colin Ihrig &amp; Adam Bretz&quot;});```|
+                                                                                                                                                                            |更新一条book记录|
+                                                                                                                                                                            |```UPDATE bookSET price = 19.99WHERE ISBN = &apos;9780992461256&apos;```|```db.book.update( { ISBN: &apos;9780992461256&apos; }, { $set: { price: 19.99 } });```|
+                                                                                                                                                                            |返回所有$10以上的书的标题|
+                                                                                                                                                                            |```SELECT title FROM bookWHERE price &gt; 10;```|```db.book.find( { price: { &amp;gt;: 10 } }, { _id: 0, title: 1 });```第二个JSON对象就是所谓的**projection**: 它设置了哪些字段要被返回 (_id字段是被默认返回的，所以需要覆盖它).|
+                                                                                                                                                                            |计算所有SitePoint网站的书的数量|
+                                                                                                                                                                            |```SELECT COUNT(1) FROM bookWHERE publisher_id = &apos;SP001&apos;;```|```db.book.count({ &quot;publisher.name&quot;: &quot;SitePoint&quot;});```这条语句假定使用了NoSQL的去中心化设计|
+                                                                                                                                                                            |返回book的格式类型的数量|
+                                                                                                                                                                            |```SELECT format, COUNT(1) AS `total`FROM bookGROUP BY format;```|```db.book.aggregate([ { $group: { _id: &quot;$format&quot;, total: { $sum: 1 } } }]);```这就是所谓的聚合：一个新的文档集合从原始的文档集合计算出来。|
+                                                                                                                                                                            |删除所有的SitePoint书|
+                                                                                                                                                                            |```DELETE FROM bookWHERE publisher_id = &apos;SP001&apos;;```|```db.book.remove({ &quot;publisher.name&quot;: &quot;SitePoint&quot;});```|
+
+                                                                                                                                                                            ## SQL vs NoSQL 性能表现
+                                                                                                                                                                            或许这是最有争议性的比较。NoSQL通常被认为势必SQL更快的。这并不奇怪。NoSQL更简单的去中心化存储允许你在单词请求中获取一个条目的所有信息。因此并不需要相关的JOIN或复杂的SQL查询。
+                                                                                                                                                                            也就是说，你的项目设计和数据库设计的影响很大。一个被设计的很好的SQL数据库肯定比设计的很差的NoSQL数据库性能好很多，当然反之亦然。
+
+                                                                                                                                                                            ## SQL vs NoSQL 扩容
+                                                                                                                                                                            随着你数据的增加，你可能会觉得有必要把负载分布到多台服务器。对于基于SQL的系统来说，这有时候没那么容易。你如何分配相关的数据呢？集群化可能是最简单的选项；多个服务器访问相同的中心化存储 -- 但是即使这样也会有挑战。
+                                                                                                                                                                            NoSQL简单地数据模型会使得扩容简单一些，很多NoSQL数据库一开始就自建了扩容的功能。不过当你遇到实际问题的时候，还是最好寻求专家的建议。
+
+                                                                                                                                                                            ## SQL vs NoSQL 实用性
+                                                                                                                                                                            最终，来考虑下安全和系统的问题。最流行的NoSQL数据库已经有几年了。不过它们相比于成熟的SQL产品，问题还是较多。不过大多数被报告的问题，还是因为一个原因：*知识不足*.
+                                                                                                                                                                            开发者和系统管理者对新的数据库系统经验不足，因此不免会犯错误。如果因为NoSQL比较新鲜或者因为你想避免最终必会发生的范式设计而使用它，那么之后你很可能会遇到问题。
+
+                                                                                                                                                                            ## SQL vs NoSQL 总结
+                                                                                                                                                                            SQL和NoSQL数据库用不同的方式做着同样的事情。在刚开始选择一种，之后在进行切换时完全可行的，但是预先设计肯定会节省时间和金钱。
+                                                                                                                                                                            **适用于SQL的项目：**
+                                                                                                                                                                            * 可以被预先确定的逻辑相关的离散数据
+                                                                                                                                                                            * 数据完整性是必须的
+                                                                                                                                                                            * 需要具有丰富开发者经验和支持的标准技术的项目
+
+                                                                                                                                                                            **适用于NoSQL的项目:**
+                                                                                                                                                                            * 非关系型的、模糊的或是不断演进的数据存储需求
+                                                                                                                                                                            * 简单、宽松的项目目标，能够快速的开始编程
+                                                                                                                                                                            * 速度和可扩展性很有必要
+
+                                                                                                                                                                            在
+</code></pre>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2015/11/23/book008/" itemprop="url">
                   读《大型网站架构》
                 </a>
@@ -1177,7 +1460,7 @@
 <p><strong>展示效果</strong>：</p>
 <p>还有一些其他的功能：</p>
 <ul>
-<li>邮件：An email <a href="&#109;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#101;&#x78;&#x61;&#109;&#x70;&#108;&#x65;&#64;&#x65;&#120;&#x61;&#x6d;&#x70;&#108;&#x65;&#46;&#x63;&#111;&#x6d;">&#101;&#x78;&#x61;&#109;&#x70;&#108;&#x65;&#64;&#x65;&#120;&#x61;&#x6d;&#x70;&#108;&#x65;&#46;&#x63;&#111;&#x6d;</a> link. 点击直接呼起邮件应用。</li>
+<li>邮件：An email <a href="&#109;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#x65;&#x78;&#x61;&#x6d;&#112;&#x6c;&#x65;&#64;&#101;&#x78;&#97;&#109;&#x70;&#x6c;&#101;&#x2e;&#99;&#111;&#109;">&#x65;&#x78;&#x61;&#x6d;&#112;&#x6c;&#x65;&#64;&#101;&#x78;&#97;&#109;&#x70;&#x6c;&#101;&#x2e;&#99;&#111;&#109;</a> link. 点击直接呼起邮件应用。</li>
 <li>图片：<img src="http://ww4.sinaimg.cn/mw690/a0788e3bgw1f74swdtnbrj20iw0doq4y.jpg" alt="Alt text"><ul>
 <li>支持嵌套<ul>
 <li>daf</li>
@@ -1539,162 +1822,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/02/17/training1/" itemprop="url">
-                  《演讲呈现技巧》培训感悟
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2015-02-17T12:05:39+08:00" content="Feb 17 2015">
-              Feb 17 2015
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/感悟/" itemprop="url" rel="index">
-                    <span itemprop="name">感悟</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2015/02/17/training1/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/02/17/training1/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>今天花了一天的时间参加了公司的《演讲呈现技巧》的课程，一天的时间蛮长的，但是老师很有亲和力，收获也是颇多。总结下来，一共有如下几个方面：</p>
-<ul>
-<li>成功演讲有什么障碍</li>
-<li>演讲的时候需要注意什么技巧</li>
-<li>实战的时候如何呈现</li>
-</ul>
-<p>在课程刚开始的时候，老师要求每个人做一个自我介绍并且以视频的方式记录下来，而在课程的最后会重新给大家呈现以下。这个方式的确非常的好，每个人能够非常清楚的看到自己或者别人在演讲时候的一些问题，这也是从这堂课中感觉收获最大的地方。那么就以自我介绍为例，看看到底有哪些需要注意的点。</p>
-<p>自我介绍中最多犯的错误：</p>
-<ul>
-<li>晃来晃去：这个大部分人都会有，很多无谓的动作，会分散听众的注意力。形体很重要，抬头挺胸对一个人的气场和自信还是有很大的影响的</li>
-<li>选了一个很差的位置，让投影打到脸上。。（上台之前，想想需要在哪个位置，必须让关注看到ppt的同时，也能看到你，方便互动）</li>
-<li>语速非常快：语速很快可能说明你思路很清晰，可能你很紧张，但是问题是观众未必能够听得清楚</li>
-<li>口头禅：个人的口头禅是“然后、那个”，一个是习惯的问题，一个可能是没准备好所以导致了思维了一些停滞，这个必须要注意加以改进。</li>
-<li>拖沓：话语太多拖沓，会让听众厌倦并且快速的增加听众的尿点，并且产生一种吐槽的欲望。</li>
-<li>自然自语：很多人在台上会开启自然自语模式，又像自嘲，又像吐槽，老师建议下，这些话自己默默的说就好了T T</li>
-<li>很着急：很多人在公众前演讲的时候很着急，老是觉得话筒烫手，想赶快竹筒倒豆子一样把话赶紧说完了。事实上稳下心来考虑一下，不要让自己处在一个临时的状态，正视这件事，好好的讲。</li>
-</ul>
-<p>总结来说，自我介绍在客服上述的缺点之外，最重要的是“突出自己的特点”。一个介绍是一个很好的机会，你最好可以被大家记住，所以，你说什么会被记住呢？今天大家的自我介绍中比较好的点也给了我一些启发：</p>
-<ul>
-<li>幽默开场：一句“不想当厨子的吉他手不是好程序员”，大家都记得住</li>
-<li>热点话题：“论程序员与产品经理之间的恩怨情仇”</li>
-<li>抓住关键词：“90后” “2.5次元”，这些词听着就很有趣，解释起来更是新鲜，萌妹子说出来，大家自然印象深刻。</li>
-<li>抓住自己的特点：今天有个哥们个子很高，又姓高，这么介绍很有特点，有这么一个trick，一个小花枪，那么给别人的影响就是完全不一样的：记住你和记不住你。</li>
-</ul>
-<p>老师推荐了史蒂夫鲍尔默和史蒂夫乔布斯的两个开场，风格完全不同，但是效果都是超群的。一个激情四射，一个幽默深沉，着两个人都是公众演讲的大师，有兴趣的也可以去看看。<br>鲍尔默视频：<a href="http://v.youku.com/v_show/id_XMTUzMzM2MzY=.html" target="_blank" rel="external">http://v.youku.com/v_show/id_XMTUzMzM2MzY=.html</a><br>乔布斯第一代iphone发布的视频：<a href="http://v.youku.com/v_show/id_XNjE2MzM5NzI4.html" target="_blank" rel="external">http://v.youku.com/v_show/id_XNjE2MzM5NzI4.html</a><br>当时看过开发第一代iphone的开发者的回忆文章，他说直到发布会的前几天，很多功能都是不通的，很不稳定。当时现场演示过一个 模块，这个模块的负责人就喝一口酒，然后递给下一个模块的人。这种情况下，乔布斯压力下的发挥，让人非常佩服的。</p>
-<p>课程首先分析了产生演讲心理障碍的原因，无非是<strong>害怕做错、害怕丢面子以及害怕不被接受</strong>。<br>很多人在演讲之前会给自己很大的压力，觉得上台了要如何如何，一旦犯了错误，就立刻乱了真巧。事实上这个是非常要注意的一点，就是不要让自己的情绪失控。这种叠加的效应如果不在心理上面加以调节的话，很容易就变成一个大大的杯具。<br>举前两天一个简单的例子，一辆汽车与电动车刮擦，电动车主躺在地上不肯起来，与机动车主吵架，结果被第二辆车碾压。从法律上来讲，汽车车主没有设置安全提示和双闪，责任很大。但是电动车主不应让自己的情绪失控，导致一个可能的轻伤变成了这么大的悲剧，其实是很不应该发生的。</p>
-<p>要避免紧张情绪，一个是要准备充分，知道下一步是什么的时候，就不会慌了。还有一个是要有自己的comfort zone。找到自己熟悉的区域，调节自己，这样才能更加的放松。</p>
-<p>同时，一些简单的<strong>技巧</strong>，也非常有助于公众演讲。<br>比如速度、语调的变化：中文作为语调最为丰富的语言之一，一定要好好利用。同一句话，不同的语调，表达的意思可能就完全不同了。<br>不要指责听众：别管听众说什么，你先hold住。</p>
-<p>当然技巧非常的多，但是这毕竟是“术”，但是演讲关键的“道”还是要去：</p>
-<ul>
-<li>思考演讲的目的：对方想要什么、达到什么效果、可以传递哪些信息、</li>
-<li>分析听众是谁：不要跟女人讲道理，不要跟男人说情绪，别跟老板谈过程，少向下属说结果。</li>
-<li>写个提纲，搞个论据：一些思维的组织工具</li>
-<li>别只靠自己，搞点材料，搞点辅助性工具：好的道具是成功的一半</li>
-<li>既要有虎头，也不能有蛇尾：开场白、结束语，下五分的功夫，就能收获十分的效果。</li>
-</ul>
-<p>公众演讲能力想来在很多时候都可能会用到，我觉得，有机会就要多说多试，首先要做到不怯场，然后才能把自己想说的，都给说明白了。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1740,7 +1867,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">39</span>
+              <span class="site-state-item-count">40</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1748,7 +1875,7 @@
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>

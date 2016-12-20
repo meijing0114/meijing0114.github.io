@@ -1,0 +1,692 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="选择nginxNginx性能为王：
+
+支持epoll，大规模高并发
+支持Linux的sendfile系统调用，可以高效地把硬盘中数据发送到网络上。
+
+选择Nginx的原因：
+
+更快：要理解它怎么做到更快的
+高扩展性：不同模块，大量的第三方模块，并且模块之间具有很好的隔离性；
+高可靠性：来自于核心框架代码的优秀设计、模块设计的简单性。master-worker模式很稳定；
+低内存消耗：10000个非">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nginx模块之echo">
+<meta property="og:url" content="http://meijing0114.com/2016/12/19/nginx001/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="选择nginxNginx性能为王：
+
+支持epoll，大规模高并发
+支持Linux的sendfile系统调用，可以高效地把硬盘中数据发送到网络上。
+
+选择Nginx的原因：
+
+更快：要理解它怎么做到更快的
+高扩展性：不同模块，大量的第三方模块，并且模块之间具有很好的隔离性；
+高可靠性：来自于核心框架代码的优秀设计、模块设计的简单性。master-worker模式很稳定；
+低内存消耗：10000个非">
+<meta property="og:updated_time" content="2016-12-19T15:39:27.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Nginx模块之echo">
+<meta name="twitter:description" content="选择nginxNginx性能为王：
+
+支持epoll，大规模高并发
+支持Linux的sendfile系统调用，可以高效地把硬盘中数据发送到网络上。
+
+选择Nginx的原因：
+
+更快：要理解它怎么做到更快的
+高扩展性：不同模块，大量的第三方模块，并且模块之间具有很好的隔离性；
+高可靠性：来自于核心框架代码的优秀设计、模块设计的简单性。master-worker模式很稳定；
+低内存消耗：10000个非">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2016/12/19/nginx001/"/>
+
+  <title> Nginx模块之echo | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Nginx模块之echo
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-12-19T23:17:40+08:00" content="Dec 19 2016">
+              Dec 19 2016
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/接入层/" itemprop="url" rel="index">
+                    <span itemprop="name">接入层</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/12/19/nginx001/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/19/nginx001/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="选择nginx"><a href="#选择nginx" class="headerlink" title="选择nginx"></a>选择nginx</h2><p>Nginx性能为王：</p>
+<ul>
+<li>支持epoll，大规模高并发</li>
+<li>支持Linux的sendfile系统调用，可以高效地把硬盘中数据发送到网络上。</li>
+</ul>
+<p>选择Nginx的原因：</p>
+<ul>
+<li>更快：要理解它怎么做到更快的</li>
+<li>高扩展性：不同模块，大量的第三方模块，并且模块之间具有很好的隔离性；</li>
+<li>高可靠性：来自于核心框架代码的优秀设计、模块设计的简单性。master-worker模式很稳定；</li>
+<li>低内存消耗：10000个非活跃的http keep-alive连接至消耗2.5MB内存！精细的数据结构控制，c语言精华的体现；</li>
+<li>单机支持10万以上的并发连接：上限只取决于内存</li>
+<li>热部署，从没见过这么顺滑的reload</li>
+<li>BSD许可协议的自由性</li>
+</ul>
+<h2 id="echo模块-debug利器"><a href="#echo模块-debug利器" class="headerlink" title="echo模块 - debug利器"></a>echo模块 - debug利器</h2><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>github开源，openresty作者推荐<br><a href="https://github.com/openresty/echo-nginx-module" target="_blank" rel="external">https://github.com/openresty/echo-nginx-module</a></p>
+<h3 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h3><h4 id="Location测试："><a href="#Location测试：" class="headerlink" title="Location测试："></a>Location测试：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">location /test &#123;</div><div class="line">        echo &quot;test here&quot;;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/test&quot;</code></p>
+<h4 id="计算后端请求时间："><a href="#计算后端请求时间：" class="headerlink" title="计算后端请求时间："></a>计算后端请求时间：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">location /timed_hello &#123;</div><div class="line">     # 计时器重置</div><div class="line">     echo_reset_timer;</div><div class="line">     echo hello world;</div><div class="line">     # 休眠2.5s</div><div class="line">     echo_sleep   2.5;</div><div class="line">     # 打印最终耗时</div><div class="line">     echo &quot;&apos;hello world&apos; takes about $echo_timer_elapsed sec.&quot;;</div><div class="line">     echo_reset_timer;</div><div class="line">     echo hiya igor;</div><div class="line">     echo_sleep 1;</div><div class="line">     echo &quot;&apos;hiya igor&apos; takes about $echo_timer_elapsed sec.&quot;;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/timed_hello&quot;</code></p>
+<h4 id="请求代理："><a href="#请求代理：" class="headerlink" title="请求代理："></a>请求代理：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">location /echo_proxy &#123;</div><div class="line">       # 修改向下游请求的body</div><div class="line">       echo_before_body hello;</div><div class="line">       echo_before_body world;</div><div class="line">       # 进行proxy pass的请求</div><div class="line">       proxy_pass $scheme://10.247.165.120:10090/monitor/monitor.html;</div><div class="line">       # 修改返回到client端的body</div><div class="line">       echo_after_body hiya;</div><div class="line">       echo_after_body igor;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/echo_proxy&quot;</code></p>
+<h4 id="发起子请求："><a href="#发起子请求：" class="headerlink" title="发起子请求："></a>发起子请求：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"># 子请求1，充分利用epoll的优势</div><div class="line">location /main1 &#123;</div><div class="line">    echo_reset_timer;</div><div class="line">    echo &quot;start takes about $echo_timer_elapsed sec.&quot;;</div><div class="line"></div><div class="line">    # subrequests in parallel，并发子请求</div><div class="line">    echo_location_async /sub1;</div><div class="line">    echo_location_async /sub2;</div><div class="line">    # 打印结果为0s 请求耗时为2s</div><div class="line">    echo &quot;took $echo_timer_elapsed sec for total.&quot;;</div><div class="line">&#125;</div><div class="line"># 子请求2，并未发挥子请求优势</div><div class="line">location /main2 &#123;</div><div class="line">    echo_reset_timer;</div><div class="line">    echo &quot;start takes about $echo_timer_elapsed sec.&quot;;</div><div class="line"></div><div class="line">    # 同步的进行请求</div><div class="line">    echo_location /sub1;</div><div class="line">    echo_location /sub2;</div><div class="line">    # 打印结果为3s 最终耗时3s</div><div class="line">    echo &quot;took $echo_timer_elapsed sec for total.&quot;;</div><div class="line">&#125;</div><div class="line"># 子请求1</div><div class="line">location /sub1 &#123;</div><div class="line">    echo_sleep 2;</div><div class="line">    echo hello;</div><div class="line">&#125;</div><div class="line"># 子请求2</div><div class="line">location /sub2 &#123;</div><div class="line">    echo_sleep 1;</div><div class="line">    echo world;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/main1&quot;
+curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
+<h4 id="同时发起多个子请求："><a href="#同时发起多个子请求：" class="headerlink" title="同时发起多个子请求："></a>同时发起多个子请求：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">location /multi &#123;</div><div class="line">    # 指定请求方式 参数等</div><div class="line">    echo_subrequest_async POST &apos;/tools&apos; -q &apos;foo=Foo&apos; -b &apos;hi&apos;;</div><div class="line">    echo_subrequest_async PUT &apos;/tools&apos; -q &apos;bar=Bar&apos; -b &apos;hello&apos;;</div><div class="line">&#125;</div><div class="line">location /tools &#123;</div><div class="line">    # 支持打印打印多个nginx的内建变量</div><div class="line">    echo &quot;querystring: $query_string&quot;;</div><div class="line">    echo &quot;method: $echo_request_method&quot;;</div><div class="line">    echo &quot;body: $echo_request_body&quot;;</div><div class="line">    echo &quot;content length: $http_content_length&quot;;</div><div class="line">    echo &apos;///&apos;;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/multi&quot;</code></p>
+<h4 id="静态资源合并："><a href="#静态资源合并：" class="headerlink" title="静态资源合并："></a>静态资源合并：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># 不多说，和combo扩展非常的类似</div><div class="line">location /merge &#123;</div><div class="line">       default_type &apos;text/javascript&apos;;</div><div class="line">       echo_foreach_split &apos;&amp;&apos; $query_string;</div><div class="line">           echo &quot;/* JS File $echo_it */&quot;;</div><div class="line">           echo_location_async $echo_it;</div><div class="line">           echo;</div><div class="line">       echo_end;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/merge?/foo.js&amp;/test.js&quot;</code></p>
+<h4 id="if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"><a href="#if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的" class="headerlink" title="if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"></a>if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">location ^~ /if &#123;</div><div class="line">     set $res miss;</div><div class="line">     if ($arg_val ~* &apos;^a&apos;) &#123;</div><div class="line">         set $res hit;</div><div class="line">         echo $res;</div><div class="line">     &#125;</div><div class="line">     echo $res;</div><div class="line"> &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/if?val=abc&quot;</code><br><code>curl &quot;http://testecho.qidian.com/if?val=ddd&quot;</code></p>
+<h3 id="其中涉及的一些nginx模块的开发概念"><a href="#其中涉及的一些nginx模块的开发概念" class="headerlink" title="其中涉及的一些nginx模块的开发概念"></a>其中涉及的一些nginx模块的开发概念</h3><h4 id="subrequest与upstream"><a href="#subrequest与upstream" class="headerlink" title="subrequest与upstream"></a>subrequest与upstream</h4><p>upstream：<br>提供了一种访问后端服务的能力。更加基础，同时充分利用了nginx优秀设计中的epoll模型，从而做到了异步和无阻塞. 通信方式不限，通信协议不限。常见的就是udp和tcp，同时再配合二进制的一些高校打包协议，这时候你就可以让nginx和后端服务无缝的衔接在一起了。</p>
+<p>subrequest： 子请求<br>针对的是第三方的服务，举个例子，你的网站导航服务依赖于第三方服务比如新浪天气的返回结果，那么可以使用子请求的方式。<br>但是第三方的服务协议局限于http，同时它的底层也是由upstream实现的。但是相比之下概念和出发点有所不同。</p>
+<h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><p>几个名词：IO多路复用、高性能网络模型、同步异步、阻塞非阻塞、协程与并发。<br>推荐篇文章：<a href="http://blog.csdn.net/tianmohust/article/details/6677985" target="_blank" rel="external">http://blog.csdn.net/tianmohust/article/details/6677985</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/26/book013/" rel="next" title="读《成为乔布斯》">
+                <i class="fa fa-chevron-left"></i> 读《成为乔布斯》
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/12/19/nginx001/"
+           data-title="Nginx模块之echo" data-url="http://meijing0114.com/2016/12/19/nginx001/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">40</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">14</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#选择nginx"><span class="nav-number">1.</span> <span class="nav-text">选择nginx</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#echo模块-debug利器"><span class="nav-number">2.</span> <span class="nav-text">echo模块 - debug利器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#背景"><span class="nav-number">2.1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实例"><span class="nav-number">2.2.</span> <span class="nav-text">实例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Location测试："><span class="nav-number">2.2.1.</span> <span class="nav-text">Location测试：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#计算后端请求时间："><span class="nav-number">2.2.2.</span> <span class="nav-text">计算后端请求时间：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#请求代理："><span class="nav-number">2.2.3.</span> <span class="nav-text">请求代理：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#发起子请求："><span class="nav-number">2.2.4.</span> <span class="nav-text">发起子请求：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#同时发起多个子请求："><span class="nav-number">2.2.5.</span> <span class="nav-text">同时发起多个子请求：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#静态资源合并："><span class="nav-number">2.2.6.</span> <span class="nav-text">静态资源合并：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"><span class="nav-number">2.2.7.</span> <span class="nav-text">if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其中涉及的一些nginx模块的开发概念"><span class="nav-number">2.3.</span> <span class="nav-text">其中涉及的一些nginx模块的开发概念</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#subrequest与upstream"><span class="nav-number">2.3.1.</span> <span class="nav-text">subrequest与upstream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#epoll"><span class="nav-number">2.3.2.</span> <span class="nav-text">epoll</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

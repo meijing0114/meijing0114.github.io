@@ -250,6 +250,163 @@
             
               
                 
+                <a class="post-title-link" href="/2014/11/30/php的扩展和嵌入-c扩展开发helloworld/" itemprop="url">
+                  php的扩展和嵌入--c扩展开发helloworld
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-30T13:03:05+08:00" content="Nov 30 2014">
+              Nov 30 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/php扩展/" itemprop="url" rel="index">
+                    <span itemprop="name">php扩展</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/30/php的扩展和嵌入-c扩展开发helloworld/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/30/php的扩展和嵌入-c扩展开发helloworld/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="php的扩展和嵌入–c扩展开发helloworld"><a href="#php的扩展和嵌入–c扩展开发helloworld" class="headerlink" title="php的扩展和嵌入–c扩展开发helloworld"></a>php的扩展和嵌入–c扩展开发helloworld</h1><p>在linux下面完成了LAMP的配置环境之后，就可以进行php的扩展开发了。<br>php中的扩展开发都在源码包的/ext文件夹之下，可以看到这里已经有了很多开发好的扩展。比如与数据库相关的mysql以及xml处理的模块等等。<br>首先建立一个文件夹：</p>
+<p><code>mkdir hello</code><br>在进入这个文件夹之后，先创建并打开一个配置文件：</p>
+<p><code>vim config.m4</code><br>这个给出一个配置问题的实例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">1 PHP_ARG_ENABLE(sample, whether to enable SAMPLE support,</div><div class="line">2 [ --enable-sample Enable SAMPLE support])</div><div class="line">3 if test &quot;$PHP_SAMPLE&quot; = &quot;yes&quot;; then</div><div class="line">4    AC_DEFINE(SAMPLE, 1, [Whether you have SAMPLE])</div><div class="line">5   PHP_NEW_EXTENSION(sample, sample.c, $ext_shared)</div><div class="line">6 fi</div></pre></td></tr></table></figure>
+<ul>
+<li>这个配置文件创造了一个–enable-hello的配置选项，而PHP_ARG_ENABLE的第二个选项会在配置的时候显示出来</li>
+<li>PHP_ARG_ENABLE的第三个参数则是在调用./configurehelp的时候会显示出来</li>
+<li>为什么有时候用enable-xxx，有时候用with-xxx？enable是可以关掉的，但是with需要额外的第三方的库</li>
+<li>如果说–enable-hello在配置的时候有了，那么$PHP_HELLO这个参数就会被设为yes，那么才有接下来的操作</li>
+<li>PHP_NEW_EXTENSION则是要声明所有需要的源文件：PHP_NEW_EXTENSION(sample, sample.c sample2.c sample3.c, $ext_shared)</li>
+<li>最后一个参数在building一个shared module的时候一般是这么些的。$ext_shared</li>
+</ul>
+<p>下面列出在config文件中可能有的配置选项：</p>
+<ul>
+<li>PHP_ARG_WITH 或者 PHP_ARG_ENABLE 指定了PHP扩展模块的工作方式，前者意味着不需要第三方库，后者正好相反；</li>
+<li>PHP_REQUIRE_CXX 用于指定这个扩展用到了C++；</li>
+<li>PHP_ADD_INCLUDE 指定PHP扩展模块用到的头文件目录；</li>
+<li>PHP_CHECK_LIBRARY 指定PHP扩展模块PHP_ADD_LIBRARY_WITH_PATH定义以及库连接错误信息等；</li>
+<li>PHP_ADD_LIBRARY(stdc++,””,EXTERN_NAME_LIBADD)用于将标准C++库链接进入扩展</li>
+<li>PHP_SUBST(EXTERN_NAME_SHARED_LIBADD) 用于说明这个扩展编译成动态链接库的形式；</li>
+<li>PHP_NEW_EXTENSION 用于指定有哪些源文件应该被编译,文件和文件之间用空格隔开；</li>
+</ul>
+<p>接下来看头文件：php_sample.h</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">1  ﻿#ifndef PHP_SAMPLE_H</div><div class="line">2  /* 防止两次引入 */</div><div class="line">3  #define PHP_SAMPLE_H</div><div class="line">4  /* 定义扩展的性质 */</div><div class="line">5  #define PHP_SAMPLE_EXTNAME &quot;sample&quot;</div><div class="line">6  #define PHP_SAMPLE_EXTVER &quot;1.0&quot;</div><div class="line">7  /* 当在php的源码树之外build的时候，引入配置选项, 在使用phpize工具时，一般都是先定义的 */</div><div class="line">8  #ifdef HAVE_CONFIG_H</div><div class="line">9  #include &quot;config.h&quot;</div><div class="line">10  #endif</div><div class="line">11  /* 引入php标准头文件 */</div><div class="line">12  #include &quot;php.h&quot;</div><div class="line">13  PHP_FUNCTION(hello_world);//声明扩展中的函数</div><div class="line">14   /* 定义入口点的符号，zend在加载这个module的时候会用*/</div><div class="line">15  extern zend_module_entry sample_module_entry;</div><div class="line">16  #define phpext_sample_ptr &amp;sample_module_entry</div><div class="line">17  #endif /* PHP_SAMPLE_H */</div></pre></td></tr></table></figure>
+<p>最后再注意两点：</p>
+<ul>
+<li>php.h则是一定要引入的</li>
+<li>声明zend_module_entry被声明为extern，所以当扩展被以extension=。。的形式加载的时候，Zend能够通过dlopen()和dlsym()找到它。</li>
+</ul>
+<p>最后来看源文件sample.c：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">#include &quot;php_sample.h&quot;</div><div class="line"></div><div class="line">    static function_entry php_sample_functions[] = &#123;</div><div class="line">    PHP_FE(sample_hello_world, NULL)//任何扩展中的函数都要在这里声明。把函数名输出到了用户空间中</div><div class="line">    &#123; NULL, NULL, NULL &#125;</div><div class="line">    &#125;;</div><div class="line">zend_module_entry sample_module_entry = &#123; //创建一个入口</div><div class="line">    #if ZEND_MODULE_API_NO &gt;= 20010901 //这个是一个版本号</div><div class="line">    STANDARD_MODULE_HEADER,</div><div class="line">    #endif</div><div class="line">    PHP_SAMPLE_EXTNAME,</div><div class="line">    php_sample_functions, /* Functions 这里是把php_function加入到Zend中去*/</div><div class="line">    NULL, /* MINIT */</div><div class="line">    NULL, /* MSHUTDOWN */</div><div class="line">    NULL, /* RINIT */</div><div class="line">    NULL, /* RSHUTDOWN */</div><div class="line">    NULL, /* MINFO */</div><div class="line">    #if ZEND_MODULE_API_NO &gt;= 20010901</div><div class="line">    PHP_SAMPLE_EXTVER,</div><div class="line">    #endif</div><div class="line">    STANDARD_MODULE_PROPERTIES</div><div class="line">&#125;;</div><div class="line">#ifdef COMPILE_DL_SAMPLE</div><div class="line">ZEND_GET_MODULE(sample)</div><div class="line">#endif //这块区域是当扩展被动态加载的时候，为Zend添加一个引用，记得要添加上就行。</div><div class="line">/*真正的函数体的部分*/</div><div class="line">PHP_FUNCTION(sample_hello_world)</div><div class="line">&#123;</div><div class="line">    php_printf(&quot;Hello World!\n&quot;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这就是源码的内容了。</p>
+<p>接下来需要进行扩展的生成：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">phpize</div><div class="line">./configure --enable-sample</div><div class="line">make</div><div class="line">sudo make install</div></pre></td></tr></table></figure>
+<p>在执行完这些语句之后，需要在php.ini中添加这个扩展名：extension=sample.so<br>然后再重启一下apache<br><code>sudo /etc/init.d/httpd restart</code></p>
+<p>接下来在phpinfo页面中查看是否sample这个扩展已经有了，如果有了，那么在下面test.php中验证：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line">    sample_hello_world();</div><div class="line">?&gt;</div></pre></td></tr></table></figure>
+<p>如果打印除了”Hello World!”，那么就说明这个php扩展开发成功了。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2014/11/30/php扩展与嵌入-如何在linux下配置LAMP环境/" itemprop="url">
                   php扩展与嵌入-如何在linux下配置LAMP环境
                 </a>
@@ -2146,7 +2303,7 @@ char到数字的话减去’0’
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">39</span>
+              <span class="site-state-item-count">40</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2154,7 +2311,7 @@ char到数字的话减去’0’
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>

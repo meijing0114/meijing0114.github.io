@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://meijing0114.com/"/>
-  <updated>2016-11-26T04:02:28.000Z</updated>
+  <updated>2016-12-19T15:39:27.000Z</updated>
   <id>http://meijing0114.com/</id>
   
   <author>
@@ -14,6 +14,63 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Nginx模块之echo</title>
+    <link href="http://meijing0114.com/2016/12/19/nginx001/"/>
+    <id>http://meijing0114.com/2016/12/19/nginx001/</id>
+    <published>2016-12-19T15:17:40.000Z</published>
+    <updated>2016-12-19T15:39:27.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="选择nginx"><a href="#选择nginx" class="headerlink" title="选择nginx"></a>选择nginx</h2><p>Nginx性能为王：</p>
+<ul>
+<li>支持epoll，大规模高并发</li>
+<li>支持Linux的sendfile系统调用，可以高效地把硬盘中数据发送到网络上。</li>
+</ul>
+<p>选择Nginx的原因：</p>
+<ul>
+<li>更快：要理解它怎么做到更快的</li>
+<li>高扩展性：不同模块，大量的第三方模块，并且模块之间具有很好的隔离性；</li>
+<li>高可靠性：来自于核心框架代码的优秀设计、模块设计的简单性。master-worker模式很稳定；</li>
+<li>低内存消耗：10000个非活跃的http keep-alive连接至消耗2.5MB内存！精细的数据结构控制，c语言精华的体现；</li>
+<li>单机支持10万以上的并发连接：上限只取决于内存</li>
+<li>热部署，从没见过这么顺滑的reload</li>
+<li>BSD许可协议的自由性</li>
+</ul>
+<h2 id="echo模块-debug利器"><a href="#echo模块-debug利器" class="headerlink" title="echo模块 - debug利器"></a>echo模块 - debug利器</h2><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>github开源，openresty作者推荐<br><a href="https://github.com/openresty/echo-nginx-module" target="_blank" rel="external">https://github.com/openresty/echo-nginx-module</a></p>
+<h3 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h3><h4 id="Location测试："><a href="#Location测试：" class="headerlink" title="Location测试："></a>Location测试：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">location /test &#123;</div><div class="line">        echo &quot;test here&quot;;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/test&quot;</code></p>
+<h4 id="计算后端请求时间："><a href="#计算后端请求时间：" class="headerlink" title="计算后端请求时间："></a>计算后端请求时间：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">location /timed_hello &#123;</div><div class="line">     # 计时器重置</div><div class="line">     echo_reset_timer;</div><div class="line">     echo hello world;</div><div class="line">     # 休眠2.5s</div><div class="line">     echo_sleep   2.5;</div><div class="line">     # 打印最终耗时</div><div class="line">     echo &quot;&apos;hello world&apos; takes about $echo_timer_elapsed sec.&quot;;</div><div class="line">     echo_reset_timer;</div><div class="line">     echo hiya igor;</div><div class="line">     echo_sleep 1;</div><div class="line">     echo &quot;&apos;hiya igor&apos; takes about $echo_timer_elapsed sec.&quot;;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/timed_hello&quot;</code></p>
+<h4 id="请求代理："><a href="#请求代理：" class="headerlink" title="请求代理："></a>请求代理：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">location /echo_proxy &#123;</div><div class="line">       # 修改向下游请求的body</div><div class="line">       echo_before_body hello;</div><div class="line">       echo_before_body world;</div><div class="line">       # 进行proxy pass的请求</div><div class="line">       proxy_pass $scheme://10.247.165.120:10090/monitor/monitor.html;</div><div class="line">       # 修改返回到client端的body</div><div class="line">       echo_after_body hiya;</div><div class="line">       echo_after_body igor;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/echo_proxy&quot;</code></p>
+<h4 id="发起子请求："><a href="#发起子请求：" class="headerlink" title="发起子请求："></a>发起子请求：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"># 子请求1，充分利用epoll的优势</div><div class="line">location /main1 &#123;</div><div class="line">    echo_reset_timer;</div><div class="line">    echo &quot;start takes about $echo_timer_elapsed sec.&quot;;</div><div class="line"></div><div class="line">    # subrequests in parallel，并发子请求</div><div class="line">    echo_location_async /sub1;</div><div class="line">    echo_location_async /sub2;</div><div class="line">    # 打印结果为0s 请求耗时为2s</div><div class="line">    echo &quot;took $echo_timer_elapsed sec for total.&quot;;</div><div class="line">&#125;</div><div class="line"># 子请求2，并未发挥子请求优势</div><div class="line">location /main2 &#123;</div><div class="line">    echo_reset_timer;</div><div class="line">    echo &quot;start takes about $echo_timer_elapsed sec.&quot;;</div><div class="line"></div><div class="line">    # 同步的进行请求</div><div class="line">    echo_location /sub1;</div><div class="line">    echo_location /sub2;</div><div class="line">    # 打印结果为3s 最终耗时3s</div><div class="line">    echo &quot;took $echo_timer_elapsed sec for total.&quot;;</div><div class="line">&#125;</div><div class="line"># 子请求1</div><div class="line">location /sub1 &#123;</div><div class="line">    echo_sleep 2;</div><div class="line">    echo hello;</div><div class="line">&#125;</div><div class="line"># 子请求2</div><div class="line">location /sub2 &#123;</div><div class="line">    echo_sleep 1;</div><div class="line">    echo world;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/main1&quot;
+curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
+<h4 id="同时发起多个子请求："><a href="#同时发起多个子请求：" class="headerlink" title="同时发起多个子请求："></a>同时发起多个子请求：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">location /multi &#123;</div><div class="line">    # 指定请求方式 参数等</div><div class="line">    echo_subrequest_async POST &apos;/tools&apos; -q &apos;foo=Foo&apos; -b &apos;hi&apos;;</div><div class="line">    echo_subrequest_async PUT &apos;/tools&apos; -q &apos;bar=Bar&apos; -b &apos;hello&apos;;</div><div class="line">&#125;</div><div class="line">location /tools &#123;</div><div class="line">    # 支持打印打印多个nginx的内建变量</div><div class="line">    echo &quot;querystring: $query_string&quot;;</div><div class="line">    echo &quot;method: $echo_request_method&quot;;</div><div class="line">    echo &quot;body: $echo_request_body&quot;;</div><div class="line">    echo &quot;content length: $http_content_length&quot;;</div><div class="line">    echo &apos;///&apos;;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/multi&quot;</code></p>
+<h4 id="静态资源合并："><a href="#静态资源合并：" class="headerlink" title="静态资源合并："></a>静态资源合并：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># 不多说，和combo扩展非常的类似</div><div class="line">location /merge &#123;</div><div class="line">       default_type &apos;text/javascript&apos;;</div><div class="line">       echo_foreach_split &apos;&amp;&apos; $query_string;</div><div class="line">           echo &quot;/* JS File $echo_it */&quot;;</div><div class="line">           echo_location_async $echo_it;</div><div class="line">           echo;</div><div class="line">       echo_end;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/merge?/foo.js&amp;/test.js&quot;</code></p>
+<h4 id="if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"><a href="#if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的" class="headerlink" title="if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"></a>if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">location ^~ /if &#123;</div><div class="line">     set $res miss;</div><div class="line">     if ($arg_val ~* &apos;^a&apos;) &#123;</div><div class="line">         set $res hit;</div><div class="line">         echo $res;</div><div class="line">     &#125;</div><div class="line">     echo $res;</div><div class="line"> &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/if?val=abc&quot;</code><br><code>curl &quot;http://testecho.qidian.com/if?val=ddd&quot;</code></p>
+<h3 id="其中涉及的一些nginx模块的开发概念"><a href="#其中涉及的一些nginx模块的开发概念" class="headerlink" title="其中涉及的一些nginx模块的开发概念"></a>其中涉及的一些nginx模块的开发概念</h3><h4 id="subrequest与upstream"><a href="#subrequest与upstream" class="headerlink" title="subrequest与upstream"></a>subrequest与upstream</h4><p>upstream：<br>提供了一种访问后端服务的能力。更加基础，同时充分利用了nginx优秀设计中的epoll模型，从而做到了异步和无阻塞. 通信方式不限，通信协议不限。常见的就是udp和tcp，同时再配合二进制的一些高校打包协议，这时候你就可以让nginx和后端服务无缝的衔接在一起了。</p>
+<p>subrequest： 子请求<br>针对的是第三方的服务，举个例子，你的网站导航服务依赖于第三方服务比如新浪天气的返回结果，那么可以使用子请求的方式。<br>但是第三方的服务协议局限于http，同时它的底层也是由upstream实现的。但是相比之下概念和出发点有所不同。</p>
+<h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><p>几个名词：IO多路复用、高性能网络模型、同步异步、阻塞非阻塞、协程与并发。<br>推荐篇文章：<a href="http://blog.csdn.net/tianmohust/article/details/6677985" target="_blank" rel="external">http://blog.csdn.net/tianmohust/article/details/6677985</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;选择nginx&quot;&gt;&lt;a href=&quot;#选择nginx&quot; class=&quot;headerlink&quot; title=&quot;选择nginx&quot;&gt;&lt;/a&gt;选择nginx&lt;/h2&gt;&lt;p&gt;Nginx性能为王：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;支持epoll，大规模高并发&lt;/li&gt;
+&lt;li&gt;支持
+    
+    </summary>
+    
+      <category term="接入层" scheme="http://meijing0114.com/categories/%E6%8E%A5%E5%85%A5%E5%B1%82/"/>
+    
+    
+  </entry>
   
   <entry>
     <title>读《成为乔布斯》</title>
@@ -1391,7 +1448,7 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
 <p><strong>展示效果</strong>：</p>
 <p>还有一些其他的功能：</p>
 <ul>
-<li>邮件：An email <a href="&#109;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#101;&#x78;&#x61;&#109;&#x70;&#108;&#x65;&#64;&#x65;&#120;&#x61;&#x6d;&#x70;&#108;&#x65;&#46;&#x63;&#111;&#x6d;">&#101;&#x78;&#x61;&#109;&#x70;&#108;&#x65;&#64;&#x65;&#120;&#x61;&#x6d;&#x70;&#108;&#x65;&#46;&#x63;&#111;&#x6d;</a> link. 点击直接呼起邮件应用。</li>
+<li>邮件：An email <a href="&#109;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#x65;&#x78;&#x61;&#x6d;&#112;&#x6c;&#x65;&#64;&#101;&#x78;&#97;&#109;&#x70;&#x6c;&#101;&#x2e;&#99;&#111;&#109;">&#x65;&#x78;&#x61;&#x6d;&#112;&#x6c;&#x65;&#64;&#101;&#x78;&#97;&#109;&#x70;&#x6c;&#101;&#x2e;&#99;&#111;&#109;</a> link. 点击直接呼起邮件应用。</li>
 <li>图片：<img src="http://ww4.sinaimg.cn/mw690/a0788e3bgw1f74swdtnbrj20iw0doq4y.jpg" alt="Alt text"><ul>
 <li>支持嵌套<ul>
 <li>daf</li>
@@ -1542,67 +1599,6 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
     </summary>
     
       <category term="生活随感" scheme="http://meijing0114.com/categories/%E7%94%9F%E6%B4%BB%E9%9A%8F%E6%84%9F/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>《演讲呈现技巧》培训感悟</title>
-    <link href="http://meijing0114.com/2015/02/17/training1/"/>
-    <id>http://meijing0114.com/2015/02/17/training1/</id>
-    <published>2015-02-17T04:05:39.000Z</published>
-    <updated>2015-02-17T04:07:09.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>今天花了一天的时间参加了公司的《演讲呈现技巧》的课程，一天的时间蛮长的，但是老师很有亲和力，收获也是颇多。总结下来，一共有如下几个方面：</p>
-<ul>
-<li>成功演讲有什么障碍</li>
-<li>演讲的时候需要注意什么技巧</li>
-<li>实战的时候如何呈现</li>
-</ul>
-<p>在课程刚开始的时候，老师要求每个人做一个自我介绍并且以视频的方式记录下来，而在课程的最后会重新给大家呈现以下。这个方式的确非常的好，每个人能够非常清楚的看到自己或者别人在演讲时候的一些问题，这也是从这堂课中感觉收获最大的地方。那么就以自我介绍为例，看看到底有哪些需要注意的点。</p>
-<p>自我介绍中最多犯的错误：</p>
-<ul>
-<li>晃来晃去：这个大部分人都会有，很多无谓的动作，会分散听众的注意力。形体很重要，抬头挺胸对一个人的气场和自信还是有很大的影响的</li>
-<li>选了一个很差的位置，让投影打到脸上。。（上台之前，想想需要在哪个位置，必须让关注看到ppt的同时，也能看到你，方便互动）</li>
-<li>语速非常快：语速很快可能说明你思路很清晰，可能你很紧张，但是问题是观众未必能够听得清楚</li>
-<li>口头禅：个人的口头禅是“然后、那个”，一个是习惯的问题，一个可能是没准备好所以导致了思维了一些停滞，这个必须要注意加以改进。</li>
-<li>拖沓：话语太多拖沓，会让听众厌倦并且快速的增加听众的尿点，并且产生一种吐槽的欲望。</li>
-<li>自然自语：很多人在台上会开启自然自语模式，又像自嘲，又像吐槽，老师建议下，这些话自己默默的说就好了T T</li>
-<li>很着急：很多人在公众前演讲的时候很着急，老是觉得话筒烫手，想赶快竹筒倒豆子一样把话赶紧说完了。事实上稳下心来考虑一下，不要让自己处在一个临时的状态，正视这件事，好好的讲。</li>
-</ul>
-<p>总结来说，自我介绍在客服上述的缺点之外，最重要的是“突出自己的特点”。一个介绍是一个很好的机会，你最好可以被大家记住，所以，你说什么会被记住呢？今天大家的自我介绍中比较好的点也给了我一些启发：</p>
-<ul>
-<li>幽默开场：一句“不想当厨子的吉他手不是好程序员”，大家都记得住</li>
-<li>热点话题：“论程序员与产品经理之间的恩怨情仇”</li>
-<li>抓住关键词：“90后” “2.5次元”，这些词听着就很有趣，解释起来更是新鲜，萌妹子说出来，大家自然印象深刻。</li>
-<li>抓住自己的特点：今天有个哥们个子很高，又姓高，这么介绍很有特点，有这么一个trick，一个小花枪，那么给别人的影响就是完全不一样的：记住你和记不住你。</li>
-</ul>
-<p>老师推荐了史蒂夫鲍尔默和史蒂夫乔布斯的两个开场，风格完全不同，但是效果都是超群的。一个激情四射，一个幽默深沉，着两个人都是公众演讲的大师，有兴趣的也可以去看看。<br>鲍尔默视频：<a href="http://v.youku.com/v_show/id_XMTUzMzM2MzY=.html" target="_blank" rel="external">http://v.youku.com/v_show/id_XMTUzMzM2MzY=.html</a><br>乔布斯第一代iphone发布的视频：<a href="http://v.youku.com/v_show/id_XNjE2MzM5NzI4.html" target="_blank" rel="external">http://v.youku.com/v_show/id_XNjE2MzM5NzI4.html</a><br>当时看过开发第一代iphone的开发者的回忆文章，他说直到发布会的前几天，很多功能都是不通的，很不稳定。当时现场演示过一个 模块，这个模块的负责人就喝一口酒，然后递给下一个模块的人。这种情况下，乔布斯压力下的发挥，让人非常佩服的。</p>
-<p>课程首先分析了产生演讲心理障碍的原因，无非是<strong>害怕做错、害怕丢面子以及害怕不被接受</strong>。<br>很多人在演讲之前会给自己很大的压力，觉得上台了要如何如何，一旦犯了错误，就立刻乱了真巧。事实上这个是非常要注意的一点，就是不要让自己的情绪失控。这种叠加的效应如果不在心理上面加以调节的话，很容易就变成一个大大的杯具。<br>举前两天一个简单的例子，一辆汽车与电动车刮擦，电动车主躺在地上不肯起来，与机动车主吵架，结果被第二辆车碾压。从法律上来讲，汽车车主没有设置安全提示和双闪，责任很大。但是电动车主不应让自己的情绪失控，导致一个可能的轻伤变成了这么大的悲剧，其实是很不应该发生的。</p>
-<p>要避免紧张情绪，一个是要准备充分，知道下一步是什么的时候，就不会慌了。还有一个是要有自己的comfort zone。找到自己熟悉的区域，调节自己，这样才能更加的放松。</p>
-<p>同时，一些简单的<strong>技巧</strong>，也非常有助于公众演讲。<br>比如速度、语调的变化：中文作为语调最为丰富的语言之一，一定要好好利用。同一句话，不同的语调，表达的意思可能就完全不同了。<br>不要指责听众：别管听众说什么，你先hold住。</p>
-<p>当然技巧非常的多，但是这毕竟是“术”，但是演讲关键的“道”还是要去：</p>
-<ul>
-<li>思考演讲的目的：对方想要什么、达到什么效果、可以传递哪些信息、</li>
-<li>分析听众是谁：不要跟女人讲道理，不要跟男人说情绪，别跟老板谈过程，少向下属说结果。</li>
-<li>写个提纲，搞个论据：一些思维的组织工具</li>
-<li>别只靠自己，搞点材料，搞点辅助性工具：好的道具是成功的一半</li>
-<li>既要有虎头，也不能有蛇尾：开场白、结束语，下五分的功夫，就能收获十分的效果。</li>
-</ul>
-<p>公众演讲能力想来在很多时候都可能会用到，我觉得，有机会就要多说多试，首先要做到不怯场，然后才能把自己想说的，都给说明白了。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;今天花了一天的时间参加了公司的《演讲呈现技巧》的课程，一天的时间蛮长的，但是老师很有亲和力，收获也是颇多。总结下来，一共有如下几个方面：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;成功演讲有什么障碍&lt;/li&gt;
-&lt;li&gt;演讲的时候需要注意什么技巧&lt;/li&gt;
-&lt;li&gt;实战的时候如何呈现&lt;/li
-    
-    </summary>
-    
-      <category term="感悟" scheme="http://meijing0114.com/categories/%E6%84%9F%E6%82%9F/"/>
     
     
   </entry>
