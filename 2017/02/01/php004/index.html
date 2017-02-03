@@ -1,0 +1,672 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="存储," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。
+首先来看一下swooletable中用来存储的基本数据结构swTableRow：
+1234567891011121314151617typedef struct _swTableRow&amp;#123;    sw_atomic_t lock;// 原子锁，所谓的效率更高的行锁，这个要等下看">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于php的共享内存的使用和研究之深入剖析swoole table">
+<meta property="og:url" content="http://meijing0114.com/2017/02/01/php004/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。
+首先来看一下swooletable中用来存储的基本数据结构swTableRow：
+1234567891011121314151617typedef struct _swTableRow&amp;#123;    sw_atomic_t lock;// 原子锁，所谓的效率更高的行锁，这个要等下看">
+<meta property="og:updated_time" content="2017-02-01T10:16:06.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="关于php的共享内存的使用和研究之深入剖析swoole table">
+<meta name="twitter:description" content="话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。
+首先来看一下swooletable中用来存储的基本数据结构swTableRow：
+1234567891011121314151617typedef struct _swTableRow&amp;#123;    sw_atomic_t lock;// 原子锁，所谓的效率更高的行锁，这个要等下看">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2017/02/01/php004/"/>
+
+  <title> 关于php的共享内存的使用和研究之深入剖析swoole table | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                关于php的共享内存的使用和研究之深入剖析swoole table
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-02-01T18:14:26+08:00" content="Feb 1 2017">
+              Feb 1 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/php/" itemprop="url" rel="index">
+                    <span itemprop="name">php</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/02/01/php004/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/01/php004/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。</p>
+<p>首先来看一下swooletable中用来存储的基本数据结构swTableRow：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">typedef struct _swTableRow</div><div class="line">&#123;</div><div class="line">    sw_atomic_t lock;// 原子锁，所谓的效率更高的行锁，这个要等下看看了。</div><div class="line">    /**</div><div class="line">     * 1:used, 0:empty</div><div class="line">     */</div><div class="line">    uint8_t active;//是否启用状态</div><div class="line">    /**</div><div class="line">     * next slot</div><div class="line">     */</div><div class="line">    struct _swTableRow *next;//链表结构</div><div class="line">    /**</div><div class="line">     * Hash Key</div><div class="line">     */</div><div class="line">    char key[SW_TABLE_KEY_SIZE];//大小64，意味着单哈希key的长度</div><div class="line">    char data[0];//真实数据</div><div class="line">&#125; swTableRow;</div></pre></td></tr></table></figure>
+<p>然后是用来遍历行的索引数据结构<code>swTable_iterator</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">    uint32_t absolute_index;</div><div class="line">    uint32_t collision_index;</div><div class="line">    swTableRow *row;</div><div class="line">&#125; swTable_iterator;</div></pre></td></tr></table></figure>
+<p>然后是包含了多行内容的swTable:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">    swHashMap *columns;// 一个table，包含多列中的列信息</div><div class="line">    uint16_t column_num;</div><div class="line">    swLock lock;</div><div class="line">    uint32_t size;</div><div class="line">    uint32_t mask;</div><div class="line">    uint32_t item_size;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * total rows that in active state(shm)</div><div class="line">     */</div><div class="line">    sw_atomic_t row_num;</div><div class="line"></div><div class="line">    swTableRow **rows;// 一列包含多行，所以是个二维的数组</div><div class="line">    swMemoryPool *pool;</div><div class="line"></div><div class="line">    uint32_t compress_threshold;</div><div class="line"></div><div class="line">    swTable_iterator *iterator;</div><div class="line"></div><div class="line">    void *memory;</div><div class="line">&#125; swTable;</div></pre></td></tr></table></figure>
+<p>用来存储swooletable中每一列信息的swTableColumn:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">   uint8_t type; // 结构类型，可选是int、浮点、字符串</div><div class="line">   uint32_t size; // 声明的大小，</div><div class="line"></div><div class="line">   swString* name;</div><div class="line">   uint16_t index;</div><div class="line">&#125; swTableColumn;</div><div class="line"></div><div class="line">// 此结构体即为执行$_swooleTable-&gt;column(&apos;ip&apos;,\swoole_table::TYPE_STRING, 64)时设置结构体中内容</div></pre></td></tr></table></figure>
+<p>几个对外暴露的api如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">swTable* swTable_new(uint32_t rows_size);</div><div class="line">int swTable_create(swTable *table);</div><div class="line">void swTable_free(swTable *table);</div><div class="line">int swTableColumn_add(swTable *table, char *name, int len, int type, int size);</div><div class="line">swTableRow* swTableRow_set(swTable *table, char *key, int keylen, sw_atomic_t **rowlock);</div><div class="line">swTableRow* swTableRow_get(swTable *table, char *key, int keylen, sw_atomic_t **rowlock);</div></pre></td></tr></table></figure>
+<p>先来看看创建swooletable的时候会发生什么：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">swTable* swTable_new(uint32_t rows_size)</div><div class="line">&#123;</div><div class="line">    // 隐含限制，单个swoole table 最大128M，还是挺狠的</div><div class="line">    if (rows_size &gt;= 0x80000000)</div><div class="line">    &#123;</div><div class="line">        rows_size = 0x80000000;</div><div class="line">    &#125;</div><div class="line">    // 16进制转换，这应该也是文档里面说的，创建需要2的倍数的原因，比较好处理一些</div><div class="line">    else</div><div class="line">    &#123;</div><div class="line">        uint32_t i = 10;</div><div class="line">        while ((1U &lt;&lt; i) &lt; rows_size)</div><div class="line">        &#123;</div><div class="line">            i++;</div><div class="line">        &#125;</div><div class="line">        rows_size = 1 &lt;&lt; i;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 统一申请内存</div><div class="line">    swTable *table = SwooleG.memory_pool-&gt;alloc(SwooleG.memory_pool, sizeof(swTable));</div><div class="line">    if (table == NULL)</div><div class="line">    &#123;</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 给table创建锁，独一无二</div><div class="line">    if (swMutex_create(&amp;table-&gt;lock, 1) &lt; 0)</div><div class="line">    &#123;</div><div class="line">        swWarn(&quot;mutex create failed.&quot;);</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 预创建迭代器</div><div class="line">    table-&gt;iterator = sw_malloc(sizeof(swTable_iterator));</div><div class="line">    if (!table-&gt;iterator)</div><div class="line">    &#123;</div><div class="line">        swWarn(&quot;malloc failed.&quot;);</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 预创建存储列信息的哈希表，这里同样隐含了，最多32列的限制条件，同时制定了析构函数</div><div class="line">    table-&gt;columns = swHashMap_new(SW_HASHMAP_INIT_BUCKET_N, (swHashMap_dtor)swTableColumn_free);</div><div class="line">    if (!table-&gt;columns)</div><div class="line">    &#123;</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 结构体变量初始化</div><div class="line">    table-&gt;size = rows_size;</div><div class="line">    table-&gt;mask = rows_size - 1;</div><div class="line"></div><div class="line">    bzero(table-&gt;iterator, sizeof(swTable_iterator));</div><div class="line">    table-&gt;memory = NULL;</div><div class="line">    return table;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我个人比较关注关于锁的这一块，所以看了下<code>swMutex_create</code>方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">int swMutex_create(swLock *lock, int use_in_process)</div><div class="line">&#123;</div><div class="line">    int ret;</div><div class="line">    bzero(lock, sizeof(swLock));</div><div class="line">    lock-&gt;type = SW_MUTEX;</div><div class="line">    pthread_mutexattr_init(&amp;lock-&gt;object.mutex.attr);</div><div class="line">    if (use_in_process == 1)</div><div class="line">    &#123;</div><div class="line">        pthread_mutexattr_setpshared(&amp;lock-&gt;object.mutex.attr, PTHREAD_PROCESS_SHARED);</div><div class="line">    &#125;</div><div class="line">    if ((ret = pthread_mutex_init(&amp;lock-&gt;object.mutex._lock, &amp;lock-&gt;object.mutex.attr)) &lt; 0)</div><div class="line">    &#123;</div><div class="line">        return SW_ERR;</div><div class="line">    &#125;</div><div class="line">    lock-&gt;lock = swMutex_lock;</div><div class="line">    lock-&gt;unlock = swMutex_unlock;</div><div class="line">    lock-&gt;trylock = swMutex_trylock;</div><div class="line">    lock-&gt;free = swMutex_free;</div><div class="line">    return SW_OK;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里使用了posix thread中的用于线程同步的mutex函数来创建和初始化互斥锁。参照<a href="http://blog.sina.com.cn/s/blog_4176c2800100tabf.html" target="_blank" rel="external">http://blog.sina.com.cn/s/blog_4176c2800100tabf.html</a> 中的说明，这里swoole应该创建的是<code>PTHREAD_MUTEX_TIMED_NP</code> 普通锁，当一个线程加锁以后，其余请求锁的线程将形成一个等待队列，并在解锁后按优先级获得锁。这种锁策略保证了资源分配的公平性。</p>
+<p>同时创建锁也给出了一个参数<code>use_in_process</code>, 如果是在进程间使用，那么意味着锁在进程间共享，这也就对应了swooletable的第一种使用方式：在server启动之前创建，否则就是我们上文中的使用方式：在每个进程中单独的使用。</p>
+<p>注意，这里swoole table使用了互斥锁，这是阻塞的，当某线程无法获取互斥量时，该线程会被直接挂起，该线程不再消耗CPU时间，当其他线程释放互斥量后，操作系统会激活那个被挂起的线程，让其投入运行。由于table之间加锁的频率比较低，所以使用互斥锁是划算的。</p>
+<p>再看下指定了swooletable中的列信息之后，进行<code>swTable_create</code>时发生了什么：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">int swTable_create(swTable *table)</div><div class="line">&#123;</div><div class="line">    // 数据初始化</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 真正申请了共享内存，计算出了最终需要的大小</div><div class="line">    void *memory = sw_shm_malloc(memory_size);</div><div class="line">    if (memory == NULL)</div><div class="line">    &#123;</div><div class="line">        return SW_ERR;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 变量初始化</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最后看一下我们最关注的，对于行内容的get、set、del：</p>
+<p>先看get方法，每次get，都更新一下自旋锁<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">swTableRow* swTableRow_get(swTable *table, char *key, int keylen, sw_atomic_t **rowlock)</div><div class="line">&#123;</div><div class="line">    //参数校验</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 根据哈希算法获取相应的行</div><div class="line">    swTableRow *row = swTable_hash(table, key, keylen);</div><div class="line">    // 获取行中存储的初始的原子锁</div><div class="line">    sw_atomic_t *lock = &amp;row-&gt;lock;</div><div class="line">    // 对应swSpinLock_create方法，其中调用pthread_spin_init进行自旋锁初始化</div><div class="line">    sw_spinlock(lock);</div><div class="line">    // 自旋锁赋值</div><div class="line">    *rowlock = lock;</div><div class="line"></div><div class="line">    // 遍历table，找对应的列中的行</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>再看set方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div></pre></td><td class="code"><pre><div class="line">swTableRow* swTableRow_set(swTable *table, char *key, int keylen, sw_atomic_t **rowlock)</div><div class="line">&#123;</div><div class="line">    //参数校验</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 更新自旋锁</div><div class="line">    swTableRow *row = swTable_hash(table, key, keylen);</div><div class="line">    sw_atomic_t *lock = &amp;row-&gt;lock;</div><div class="line">    sw_spinlock(lock);</div><div class="line">    *rowlock = lock;</div><div class="line"></div><div class="line">    if (row-&gt;active)</div><div class="line">    &#123;</div><div class="line">        for (;;)</div><div class="line">        &#123;</div><div class="line">            if (strncmp(row-&gt;key, key, keylen) == 0)</div><div class="line">            &#123;</div><div class="line">                break;</div><div class="line">            &#125;</div><div class="line">            else if (row-&gt;next == NULL)</div><div class="line">            &#123;</div><div class="line">                //!!! 锁住table</div><div class="line">                table-&gt;lock.lock(&amp;table-&gt;lock);</div><div class="line">                swTableRow *new_row = table-&gt;pool-&gt;alloc(table-&gt;pool, 0);</div><div class="line">                // !!! 创建完成，解锁table</div><div class="line">                table-&gt;lock.unlock(&amp;table-&gt;lock);</div><div class="line"></div><div class="line">                if (!new_row)</div><div class="line">                &#123;</div><div class="line">                    return NULL;</div><div class="line">                &#125;</div><div class="line">                //add row_num</div><div class="line">                bzero(new_row, sizeof(swTableRow));</div><div class="line">                // 多线程全局变量自加，确保行数全局唯一，对应__sync_fetch_and_add方法！！</div><div class="line">                sw_atomic_fetch_add(&amp;(table-&gt;row_num), 1);</div><div class="line">                row-&gt;next = new_row;</div><div class="line">                row = new_row;</div><div class="line">                break;</div><div class="line">            &#125;</div><div class="line">            else</div><div class="line">            &#123;</div><div class="line">                row = row-&gt;next;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    else</div><div class="line">    &#123;</div><div class="line">        // 多线程全局变量自加，确保行数全局唯一，对应__sync_fetch_and_add方法！！</div><div class="line">        sw_atomic_fetch_add(&amp;(table-&gt;row_num), 1);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    memcpy(row-&gt;key, key, keylen);</div><div class="line">    row-&gt;active = 1;</div><div class="line">    return row;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>del方法也比较类似的，这里就不讲了，仔细看看还是很有意思。核心点在于：</p>
+<ul>
+<li>对互斥锁、自旋锁的灵活使用</li>
+<li>对多线程下的全局变量处理</li>
+<li>对共享内存的把控与操作</li>
+<li>对内存的分配与正确回收</li>
+</ul>
+<p>swoole的源码的确有很多可取之处，涉及到了很多系统和存储的基本的只是，非常值得学习。<br>那么，关于php使用本机存储系列，也就到此为止吧！</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/存储/" rel="tag">#存储</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/02/01/php003/" rel="next" title="关于php的共享内存的使用和研究之外部存储">
+                <i class="fa fa-chevron-left"></i> 关于php的共享内存的使用和研究之外部存储
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/02/01/php004/"
+           data-title="关于php的共享内存的使用和研究之深入剖析swoole table" data-url="http://meijing0114.com/2017/02/01/php004/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">43</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">14</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

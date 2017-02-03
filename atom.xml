@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://meijing0114.com/"/>
-  <updated>2017-02-01T10:01:52.000Z</updated>
+  <updated>2017-02-01T10:16:06.000Z</updated>
   <id>http://meijing0114.com/</id>
   
   <author>
@@ -14,6 +14,62 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>关于php的共享内存的使用和研究之深入剖析swoole table</title>
+    <link href="http://meijing0114.com/2017/02/01/php004/"/>
+    <id>http://meijing0114.com/2017/02/01/php004/</id>
+    <published>2017-02-01T10:14:26.000Z</published>
+    <updated>2017-02-01T10:16:06.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。</p>
+<p>首先来看一下swooletable中用来存储的基本数据结构swTableRow：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">typedef struct _swTableRow</div><div class="line">&#123;</div><div class="line">    sw_atomic_t lock;// 原子锁，所谓的效率更高的行锁，这个要等下看看了。</div><div class="line">    /**</div><div class="line">     * 1:used, 0:empty</div><div class="line">     */</div><div class="line">    uint8_t active;//是否启用状态</div><div class="line">    /**</div><div class="line">     * next slot</div><div class="line">     */</div><div class="line">    struct _swTableRow *next;//链表结构</div><div class="line">    /**</div><div class="line">     * Hash Key</div><div class="line">     */</div><div class="line">    char key[SW_TABLE_KEY_SIZE];//大小64，意味着单哈希key的长度</div><div class="line">    char data[0];//真实数据</div><div class="line">&#125; swTableRow;</div></pre></td></tr></table></figure>
+<p>然后是用来遍历行的索引数据结构<code>swTable_iterator</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">    uint32_t absolute_index;</div><div class="line">    uint32_t collision_index;</div><div class="line">    swTableRow *row;</div><div class="line">&#125; swTable_iterator;</div></pre></td></tr></table></figure>
+<p>然后是包含了多行内容的swTable:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">    swHashMap *columns;// 一个table，包含多列中的列信息</div><div class="line">    uint16_t column_num;</div><div class="line">    swLock lock;</div><div class="line">    uint32_t size;</div><div class="line">    uint32_t mask;</div><div class="line">    uint32_t item_size;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * total rows that in active state(shm)</div><div class="line">     */</div><div class="line">    sw_atomic_t row_num;</div><div class="line"></div><div class="line">    swTableRow **rows;// 一列包含多行，所以是个二维的数组</div><div class="line">    swMemoryPool *pool;</div><div class="line"></div><div class="line">    uint32_t compress_threshold;</div><div class="line"></div><div class="line">    swTable_iterator *iterator;</div><div class="line"></div><div class="line">    void *memory;</div><div class="line">&#125; swTable;</div></pre></td></tr></table></figure>
+<p>用来存储swooletable中每一列信息的swTableColumn:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">   uint8_t type; // 结构类型，可选是int、浮点、字符串</div><div class="line">   uint32_t size; // 声明的大小，</div><div class="line"></div><div class="line">   swString* name;</div><div class="line">   uint16_t index;</div><div class="line">&#125; swTableColumn;</div><div class="line"></div><div class="line">// 此结构体即为执行$_swooleTable-&gt;column(&apos;ip&apos;,\swoole_table::TYPE_STRING, 64)时设置结构体中内容</div></pre></td></tr></table></figure>
+<p>几个对外暴露的api如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">swTable* swTable_new(uint32_t rows_size);</div><div class="line">int swTable_create(swTable *table);</div><div class="line">void swTable_free(swTable *table);</div><div class="line">int swTableColumn_add(swTable *table, char *name, int len, int type, int size);</div><div class="line">swTableRow* swTableRow_set(swTable *table, char *key, int keylen, sw_atomic_t **rowlock);</div><div class="line">swTableRow* swTableRow_get(swTable *table, char *key, int keylen, sw_atomic_t **rowlock);</div></pre></td></tr></table></figure>
+<p>先来看看创建swooletable的时候会发生什么：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">swTable* swTable_new(uint32_t rows_size)</div><div class="line">&#123;</div><div class="line">    // 隐含限制，单个swoole table 最大128M，还是挺狠的</div><div class="line">    if (rows_size &gt;= 0x80000000)</div><div class="line">    &#123;</div><div class="line">        rows_size = 0x80000000;</div><div class="line">    &#125;</div><div class="line">    // 16进制转换，这应该也是文档里面说的，创建需要2的倍数的原因，比较好处理一些</div><div class="line">    else</div><div class="line">    &#123;</div><div class="line">        uint32_t i = 10;</div><div class="line">        while ((1U &lt;&lt; i) &lt; rows_size)</div><div class="line">        &#123;</div><div class="line">            i++;</div><div class="line">        &#125;</div><div class="line">        rows_size = 1 &lt;&lt; i;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 统一申请内存</div><div class="line">    swTable *table = SwooleG.memory_pool-&gt;alloc(SwooleG.memory_pool, sizeof(swTable));</div><div class="line">    if (table == NULL)</div><div class="line">    &#123;</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 给table创建锁，独一无二</div><div class="line">    if (swMutex_create(&amp;table-&gt;lock, 1) &lt; 0)</div><div class="line">    &#123;</div><div class="line">        swWarn(&quot;mutex create failed.&quot;);</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 预创建迭代器</div><div class="line">    table-&gt;iterator = sw_malloc(sizeof(swTable_iterator));</div><div class="line">    if (!table-&gt;iterator)</div><div class="line">    &#123;</div><div class="line">        swWarn(&quot;malloc failed.&quot;);</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 预创建存储列信息的哈希表，这里同样隐含了，最多32列的限制条件，同时制定了析构函数</div><div class="line">    table-&gt;columns = swHashMap_new(SW_HASHMAP_INIT_BUCKET_N, (swHashMap_dtor)swTableColumn_free);</div><div class="line">    if (!table-&gt;columns)</div><div class="line">    &#123;</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 结构体变量初始化</div><div class="line">    table-&gt;size = rows_size;</div><div class="line">    table-&gt;mask = rows_size - 1;</div><div class="line"></div><div class="line">    bzero(table-&gt;iterator, sizeof(swTable_iterator));</div><div class="line">    table-&gt;memory = NULL;</div><div class="line">    return table;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我个人比较关注关于锁的这一块，所以看了下<code>swMutex_create</code>方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">int swMutex_create(swLock *lock, int use_in_process)</div><div class="line">&#123;</div><div class="line">    int ret;</div><div class="line">    bzero(lock, sizeof(swLock));</div><div class="line">    lock-&gt;type = SW_MUTEX;</div><div class="line">    pthread_mutexattr_init(&amp;lock-&gt;object.mutex.attr);</div><div class="line">    if (use_in_process == 1)</div><div class="line">    &#123;</div><div class="line">        pthread_mutexattr_setpshared(&amp;lock-&gt;object.mutex.attr, PTHREAD_PROCESS_SHARED);</div><div class="line">    &#125;</div><div class="line">    if ((ret = pthread_mutex_init(&amp;lock-&gt;object.mutex._lock, &amp;lock-&gt;object.mutex.attr)) &lt; 0)</div><div class="line">    &#123;</div><div class="line">        return SW_ERR;</div><div class="line">    &#125;</div><div class="line">    lock-&gt;lock = swMutex_lock;</div><div class="line">    lock-&gt;unlock = swMutex_unlock;</div><div class="line">    lock-&gt;trylock = swMutex_trylock;</div><div class="line">    lock-&gt;free = swMutex_free;</div><div class="line">    return SW_OK;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里使用了posix thread中的用于线程同步的mutex函数来创建和初始化互斥锁。参照<a href="http://blog.sina.com.cn/s/blog_4176c2800100tabf.html" target="_blank" rel="external">http://blog.sina.com.cn/s/blog_4176c2800100tabf.html</a> 中的说明，这里swoole应该创建的是<code>PTHREAD_MUTEX_TIMED_NP</code> 普通锁，当一个线程加锁以后，其余请求锁的线程将形成一个等待队列，并在解锁后按优先级获得锁。这种锁策略保证了资源分配的公平性。</p>
+<p>同时创建锁也给出了一个参数<code>use_in_process</code>, 如果是在进程间使用，那么意味着锁在进程间共享，这也就对应了swooletable的第一种使用方式：在server启动之前创建，否则就是我们上文中的使用方式：在每个进程中单独的使用。</p>
+<p>注意，这里swoole table使用了互斥锁，这是阻塞的，当某线程无法获取互斥量时，该线程会被直接挂起，该线程不再消耗CPU时间，当其他线程释放互斥量后，操作系统会激活那个被挂起的线程，让其投入运行。由于table之间加锁的频率比较低，所以使用互斥锁是划算的。</p>
+<p>再看下指定了swooletable中的列信息之后，进行<code>swTable_create</code>时发生了什么：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">int swTable_create(swTable *table)</div><div class="line">&#123;</div><div class="line">    // 数据初始化</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 真正申请了共享内存，计算出了最终需要的大小</div><div class="line">    void *memory = sw_shm_malloc(memory_size);</div><div class="line">    if (memory == NULL)</div><div class="line">    &#123;</div><div class="line">        return SW_ERR;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 变量初始化</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最后看一下我们最关注的，对于行内容的get、set、del：</p>
+<p>先看get方法，每次get，都更新一下自旋锁<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">swTableRow* swTableRow_get(swTable *table, char *key, int keylen, sw_atomic_t **rowlock)</div><div class="line">&#123;</div><div class="line">    //参数校验</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 根据哈希算法获取相应的行</div><div class="line">    swTableRow *row = swTable_hash(table, key, keylen);</div><div class="line">    // 获取行中存储的初始的原子锁</div><div class="line">    sw_atomic_t *lock = &amp;row-&gt;lock;</div><div class="line">    // 对应swSpinLock_create方法，其中调用pthread_spin_init进行自旋锁初始化</div><div class="line">    sw_spinlock(lock);</div><div class="line">    // 自旋锁赋值</div><div class="line">    *rowlock = lock;</div><div class="line"></div><div class="line">    // 遍历table，找对应的列中的行</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>再看set方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div></pre></td><td class="code"><pre><div class="line">swTableRow* swTableRow_set(swTable *table, char *key, int keylen, sw_atomic_t **rowlock)</div><div class="line">&#123;</div><div class="line">    //参数校验</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 更新自旋锁</div><div class="line">    swTableRow *row = swTable_hash(table, key, keylen);</div><div class="line">    sw_atomic_t *lock = &amp;row-&gt;lock;</div><div class="line">    sw_spinlock(lock);</div><div class="line">    *rowlock = lock;</div><div class="line"></div><div class="line">    if (row-&gt;active)</div><div class="line">    &#123;</div><div class="line">        for (;;)</div><div class="line">        &#123;</div><div class="line">            if (strncmp(row-&gt;key, key, keylen) == 0)</div><div class="line">            &#123;</div><div class="line">                break;</div><div class="line">            &#125;</div><div class="line">            else if (row-&gt;next == NULL)</div><div class="line">            &#123;</div><div class="line">                //!!! 锁住table</div><div class="line">                table-&gt;lock.lock(&amp;table-&gt;lock);</div><div class="line">                swTableRow *new_row = table-&gt;pool-&gt;alloc(table-&gt;pool, 0);</div><div class="line">                // !!! 创建完成，解锁table</div><div class="line">                table-&gt;lock.unlock(&amp;table-&gt;lock);</div><div class="line"></div><div class="line">                if (!new_row)</div><div class="line">                &#123;</div><div class="line">                    return NULL;</div><div class="line">                &#125;</div><div class="line">                //add row_num</div><div class="line">                bzero(new_row, sizeof(swTableRow));</div><div class="line">                // 多线程全局变量自加，确保行数全局唯一，对应__sync_fetch_and_add方法！！</div><div class="line">                sw_atomic_fetch_add(&amp;(table-&gt;row_num), 1);</div><div class="line">                row-&gt;next = new_row;</div><div class="line">                row = new_row;</div><div class="line">                break;</div><div class="line">            &#125;</div><div class="line">            else</div><div class="line">            &#123;</div><div class="line">                row = row-&gt;next;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    else</div><div class="line">    &#123;</div><div class="line">        // 多线程全局变量自加，确保行数全局唯一，对应__sync_fetch_and_add方法！！</div><div class="line">        sw_atomic_fetch_add(&amp;(table-&gt;row_num), 1);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    memcpy(row-&gt;key, key, keylen);</div><div class="line">    row-&gt;active = 1;</div><div class="line">    return row;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>del方法也比较类似的，这里就不讲了，仔细看看还是很有意思。核心点在于：</p>
+<ul>
+<li>对互斥锁、自旋锁的灵活使用</li>
+<li>对多线程下的全局变量处理</li>
+<li>对共享内存的把控与操作</li>
+<li>对内存的分配与正确回收</li>
+</ul>
+<p>swoole的源码的确有很多可取之处，涉及到了很多系统和存储的基本的只是，非常值得学习。<br>那么，关于php使用本机存储系列，也就到此为止吧！</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。&lt;/p&gt;
+&lt;p&gt;首先来看一下swooletable中用来存储的基本数据结构swTableRow：&lt;/p&gt;
+&lt;figure class=&quot;highlight pla
+    
+    </summary>
+    
+      <category term="php" scheme="http://meijing0114.com/categories/php/"/>
+    
+    
+      <category term="存储" scheme="http://meijing0114.com/tags/%E5%AD%98%E5%82%A8/"/>
+    
+  </entry>
   
   <entry>
     <title>关于php的共享内存的使用和研究之外部存储</title>
@@ -1564,123 +1620,6 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
     </summary>
     
       <category term="书评影评" scheme="http://meijing0114.com/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>一次关于“Markdown”的分享</title>
-    <link href="http://meijing0114.com/2015/03/02/tool001/"/>
-    <id>http://meijing0114.com/2015/03/02/tool001/</id>
-    <published>2015-03-02T14:29:41.000Z</published>
-    <updated>2016-08-24T12:17:23.000Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="分享大纲"><a href="#分享大纲" class="headerlink" title="分享大纲"></a>分享大纲</h2><ul>
-<li>语法掠影</li>
-<li>常用工具</li>
-</ul>
-<h2 id="语法掠影"><a href="#语法掠影" class="headerlink" title="语法掠影"></a>语法掠影</h2><p><strong>源代码</strong>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt; Markdown 是一种轻量级标记语言，它允许人们使用易读易写的纯文本格式编写文档，然后转换成格式丰富的HTML页面。    —— [维基百科](https://zh.wikipedia.org/wiki/Markdown)</div><div class="line">&gt; 连续的引用也会放到一起去</div></pre></td></tr></table></figure>
-<p><strong>展示效果</strong>：</p>
-<blockquote>
-<p>Markdown 是一种轻量级标记语言，它允许人们使用易读易写的纯文本格式编写文档，然后转换成格式丰富的HTML页面。    —— <a href="https://zh.wikipedia.org/wiki/Markdown" target="_blank" rel="external">维基百科</a></p>
-<p>连续的引用也会放到一起去</p>
-</blockquote>
-<hr>
-<p><strong>源代码</strong>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">正如您在阅读的这份文档，它使用简单的符号标识不同的标题，将某些文字标记为**粗体**或者*斜体*，创建一个[链接](http://www.example.com)</div></pre></td></tr></table></figure></p>
-<p><strong>展示效果</strong>：<br>正如您在阅读的这份文档，它使用简单的符号标识不同的标题，将某些文字标记为<strong>粗体</strong>或者<em>斜体</em>，创建一个<a href="http://www.example.com" target="_blank" rel="external">链接</a></p>
-<hr>
-<p><strong>源代码</strong>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">还有一些其他的功能：</div><div class="line">* 邮件：An email &lt;example@example.com&gt; link. 点击直接呼起邮件应用。</div><div class="line">* 图片：![Alt text](./tumblr_nh9atbj52G1sf1m92o1_500.jpg)</div><div class="line">    * 支持嵌套</div><div class="line">        *  daf</div><div class="line">1. adf</div><div class="line">2. adf</div><div class="line">3. adf</div><div class="line"></div><div class="line">咯咯咯咯，华丽的分割线</div><div class="line">---</div></pre></td></tr></table></figure></p>
-<p><strong>展示效果</strong>：</p>
-<p>还有一些其他的功能：</p>
-<ul>
-<li>邮件：An email <a href="&#109;&#x61;&#105;&#108;&#116;&#x6f;&#x3a;&#x65;&#x78;&#97;&#x6d;&#x70;&#x6c;&#101;&#x40;&#101;&#120;&#97;&#109;&#112;&#108;&#101;&#46;&#x63;&#111;&#109;">&#x65;&#x78;&#97;&#x6d;&#x70;&#x6c;&#101;&#x40;&#101;&#120;&#97;&#109;&#112;&#108;&#101;&#46;&#x63;&#111;&#109;</a> link. 点击直接呼起邮件应用。</li>
-<li>图片：<img src="http://ww4.sinaimg.cn/mw690/a0788e3bgw1f74swdtnbrj20iw0doq4y.jpg" alt="Alt text"><ul>
-<li>支持嵌套<ul>
-<li>daf</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<ol>
-<li>adf</li>
-<li>adf</li>
-<li>adf</li>
-</ol>
-<p><strong>咯咯咯咯，华丽的分割线</strong>：</p>
-<hr>
-<h3 id="代码块"><a href="#代码块" class="headerlink" title="代码块"></a>代码块</h3><p>使用``包围的是代码段，使用三个`包围的是代码块。</p>
-<p><code>test</code></p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@requires_authorization</span></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">somefunc</span><span class="params">(param1=<span class="string">''</span>, param2=<span class="number">0</span>)</span>:</span></div><div class="line">    <span class="string">'''A docstring'''</span></div><div class="line">    <span class="keyword">if</span> param1 &gt; param2: <span class="comment"># interesting</span></div><div class="line">        <span class="keyword">print</span> <span class="string">'Greater'</span></div><div class="line">    <span class="keyword">return</span> (param2 - param1 + <span class="number">1</span>) <span class="keyword">or</span> <span class="keyword">None</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">SomeClass</span>:</span></div><div class="line">    <span class="keyword">pass</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>message = <span class="string">'''interpreter</span></div><div class="line"><span class="meta">... </span>prompt'''</div></pre></td></tr></table></figure>
-<h3 id="表格"><a href="#表格" class="headerlink" title="表格"></a>表格</h3><p><strong>源代码</strong>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">| Tables        | Are           | Cool  |</div><div class="line">| ------------- |:-------------:| -----:|</div><div class="line">| col 3 is      | right-aligned | $1600 |</div><div class="line">| col 2 is      | centered      |   $12 |</div><div class="line">| zebra stripes | are neat      |    $1 |</div></pre></td></tr></table></figure></p>
-<p><strong>展示效果</strong>：</p>
-<table>
-<thead>
-<tr>
-<th>Tables</th>
-<th style="text-align:center">Are</th>
-<th style="text-align:right">Cool</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>col 3 is</td>
-<td style="text-align:center">right-aligned</td>
-<td style="text-align:right">$1600</td>
-</tr>
-<tr>
-<td>col 2 is</td>
-<td style="text-align:center">centered</td>
-<td style="text-align:right">$12</td>
-</tr>
-<tr>
-<td>zebra stripes</td>
-<td style="text-align:center">are neat</td>
-<td style="text-align:right">$1</td>
-</tr>
-</tbody>
-</table>
-<h2 id="常用工具"><a href="#常用工具" class="headerlink" title="常用工具"></a>常用工具</h2><ul>
-<li>sublime – windows and mac and free</li>
-<li>mou – mac下free,方便撰写，本地存储，客户端体验非常好。</li>
-</ul>
-<ul>
-<li>简书 – web+手机，free，号称最好的中文体验</li>
-</ul>
-<ul>
-<li>马克飞象 – 年费79，与evernote深度契合，高级语法。web+chrome extension（离线客户端）</li>
-</ul>
-<h2 id="通用性"><a href="#通用性" class="headerlink" title="通用性"></a>通用性</h2><ol>
-<li>语法简单，容易编写。</li>
-<li>使用html的通用标准格式，方便分享：</li>
-</ol>
-<ul>
-<li>km文章直接通过html源代码的方式分享，不用再关心格式。</li>
-<li>outlook的方式，通过复制浏览器打开的的html内容，直接贴入outlook的正文中。</li>
-</ul>
-<h2 id="马克飞象号外推介："><a href="#马克飞象号外推介：" class="headerlink" title="马克飞象号外推介："></a><strong>马克飞象号外推介</strong>：</h2><p>正如上文中所说，马克飞象除了基本的markdown语法之外，还提供了很多额外的高级语法。通过这些语法生成的诸如公式、流程图、时序图之类的，会在生成的时候以图片的方式存在。从而不必担心发生任何的格式不兼容或者错乱的问题。</p>
-<h3 id="LaTex-公式"><a href="#LaTex-公式" class="headerlink" title="LaTex 公式"></a>LaTex 公式</h3><p>可以创建行内公式，例如 $\Gamma(n) = (n-1)!\quad\forall n\in\mathbb N$。或者块级公式：</p>
-<p>$$    x = \dfrac{-b \pm \sqrt{b^2 - 4ac}}{2a} $$</p>
-<h3 id="流程图"><a href="#流程图" class="headerlink" title="流程图"></a>流程图</h3><p><strong>源代码</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">```flow</div><div class="line">st=&gt;start: Start</div><div class="line">e=&gt;end</div><div class="line">op=&gt;operation: My Operation</div><div class="line">cond=&gt;condition: Yes or No?</div><div class="line"></div><div class="line">st-&gt;op-&gt;cond</div><div class="line">cond(yes)-&gt;e</div><div class="line">cond(no)-&gt;op</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">**展示效果**：</div><div class="line">```flow</div><div class="line">st=&gt;start: Start</div><div class="line">e=&gt;end</div><div class="line">op=&gt;operation: My Operation</div><div class="line">cond=&gt;condition: Yes or No?</div><div class="line"></div><div class="line">st-&gt;op-&gt;cond</div><div class="line">cond(yes)-&gt;e</div><div class="line">cond(no)-&gt;op</div></pre></td></tr></table></figure>
-<h3 id="以及时序图"><a href="#以及时序图" class="headerlink" title="以及时序图:"></a>以及时序图:</h3><p><strong>源代码</strong>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">```sequence</div><div class="line">Alice-&gt;Bob: Hello Bob, how are you?</div><div class="line">Note right of Bob: Bob thinks</div><div class="line">Bob--&gt;Alice: I am good thanks!</div></pre></td></tr></table></figure></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">**展示效果**:</div><div class="line">```sequence</div><div class="line">Alice-&gt;Bob: Hello Bob, how are you?</div><div class="line">Note right of Bob: Bob thinks</div><div class="line">Bob--&gt;Alice: I am good thanks!</div></pre></td></tr></table></figure>
-<h3 id="页内链接"><a href="#页内链接" class="headerlink" title="页内链接"></a>页内链接</h3><p>马克飞象同样提供了页内链接的功能，只需要在文章的起始写下<code>[TOC]</code></p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h2 id=&quot;分享大纲&quot;&gt;&lt;a href=&quot;#分享大纲&quot; class=&quot;headerlink&quot; title=&quot;分享大纲&quot;&gt;&lt;/a&gt;分享大纲&lt;/h2&gt;&lt;ul&gt;
-&lt;li&gt;语法掠影&lt;/li&gt;
-&lt;li&gt;常用工具&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id=&quot;语法掠影&quot;&gt;&lt;a href=&quot;#语法
-    
-    </summary>
-    
-      <category term="程序员效率" scheme="http://meijing0114.com/categories/%E7%A8%8B%E5%BA%8F%E5%91%98%E6%95%88%E7%8E%87/"/>
     
     
   </entry>
