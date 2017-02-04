@@ -250,6 +250,181 @@
             
               
                 
+                <a class="post-title-link" href="/2014/11/23/mysql反模式2/" itemprop="url">
+                  mysql反模式2
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-23T23:47:47+08:00" content="Nov 23 2014">
+              Nov 23 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据库/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/23/mysql反模式2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/23/mysql反模式2/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>#mysql反模式2</p>
+<p>继续第一部分：逻辑型数据库设计反模式</p>
+<p>##第四章：需要ID：<br>必须意识到主键的本质，并且正确的使用它。<br>很多时候，建立数据库表中的主键都是处于一种习惯，而不是对表本身的认知。一个常见的错误是，在存储关系的交叉表中，主键并不能标识唯一性，真正的唯一性是对表之间关系的描述。</p>
+<p>这一章的目标是找出那些尽管使用了主键，但是却混淆了主键的本质的情况。</p>
+<p><strong>主键是数据库确保数据行在整张表中唯一性的保障，它是定位到一条记录且确保不会重复存储的逻辑机制。</strong>如果你需要确保一张表中的数据不会出现重复行，并且需要在查询中引用单独的一行记录，还要支持外键，那么主键是必须的。</p>
+<p>对于那些没有明确主键的表，往往会引入一个对表的模型无意义的新列作为伪主键。MYSQL中，伪主键具有AUTO_INCREMENT的特性。</p>
+<p>反模式：</p>
+<ul>
+<li>主键的名字叫做id</li>
+<li>数据类型是32位或64位整型</li>
+<li>主键的值自动生成以保证唯一</li>
+<li>这个反模式会有如下的问题：</li>
+</ul>
+<p><strong>冗余键值</strong>：很多时候有更好的、更自然、更符合表意义的主键，没有必要每张表都用id这个字段。<br><strong>允许重复项</strong>：正如开头所说的，对于描述关系的交叉表，单独的主键不足以标识唯一性。假设个人与银行帐号信息有一张关系表，那么唯一的应该是（个人id，帐号id）这一个组合，而非单独主键。可以用UNIQUE KEY(个人id，帐号id)来标识之，这时候就不需要id这个单独的主键了。<br><strong>意义不明的关键字</strong>：主键的名称应该尽可能的有意义，id所拥有的信息太少了。</p>
+<p>联结查询时有一个更简洁的方式，比如<figure class="highlight plain"><figcaption><span>* FROM Bugs AS b JOIN BugsProducts AS bp ON (b.bug_id = bp.bug_id)```等同于 ```SELECT * FROM Bugs JOIN BugsProducts USING (bug_id);``` 如果一定要定义伪主键为id，那么就无法利用这个特性。</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">尽管如此，如果遇到一些假设“惯例优于配置”的面向对象框架，那么可能不得不使用id作为主键了。同时对于太长而不方便实现的自然键来说，伪主键是很好的代替品。</div><div class="line"></div><div class="line">因此对主键应该进行裁剪设计：</div><div class="line"></div><div class="line">* 直截了当：为主键选择更有意义的名称；同时外键应该尽可能的和所引用的列使用相同的名称，从而使他们在整个数据库的设计中唯一；</div><div class="line">* 拥抱自然键和组合键：如果表中已经包含了一列能够确保唯一、非空以及能够用来定位一条记录的字段，那么就不必要加伪主键了。不过由于数据库的设计趋向于在整个项目的生命周期中不断的调整优化，在没有合适的列的时候，伪主键就成了唯一的选择。合适的时候使用组合键，真正对数据的唯一性进行约束。</div><div class="line">在探讨主键的这一章需要注意，规范仅仅在它有帮助时才是好的。</div><div class="line"></div><div class="line">## 第五章：不用钥匙的入口：</div><div class="line">究竟应不应该使用外键约束保证引用完整性，还是代码来保证？</div><div class="line">外键在工作中常常是让我疑惑的一个部分，到底是否应该使用外键，它带来的好处和坏处究竟如何？一直没有一个非常清楚的认识，这章仔仔细细的剖析了一下其中的利弊。为了避免后续让人非常头疼的脚本式运维，还是适当的加上外键为好。</div><div class="line"></div><div class="line">**这一章的目标是简化数据库架构：关系型数据库的设计基本上可以说就是关于每张独立表之间的关系的设计。引用完整性当然是合理的数据库设计和操作非常重要的部分。**</div><div class="line"></div><div class="line">有些人不推荐使用外键，理由如下：</div><div class="line"></div><div class="line">* 数据更新可能和约束冲突</div><div class="line">* 数据库设计很灵活，不支持引用完整性约束</div><div class="line">* 数据库为外键建立的索引会影响性能</div><div class="line">* 数据库不支持外键</div><div class="line">* 定义外键语法复杂</div><div class="line">但是如果不定义外键，真的那么美好么？：</div><div class="line"></div><div class="line">使用代码来维护引用完整性，或许你对自己的代码有足够的自信，但是半年前的呢？别人的呢？同时需要在代码层面维护并发读写的问题，脏数据看起来简直无法避免。</div><div class="line">发现脏数据时，大多数的选择是定期脚本检查错误，简单逻辑或许可以删除相应记录，但是负责逻辑会使脚本异常复杂。</div><div class="line">对于这种不负责任的情况，必须加以声明约束。</div><div class="line"></div><div class="line">对于那些在数据库的层面上可以完美解决的问题，没有必要使用复杂的代码逻辑来完成。因为数据库的解决方案非常优雅，查查手册，定义一下外键，这会给程序带来巨大收益。</div><div class="line"></div><div class="line">同时外键也可以通过引入 级联更新的方式，在外键约束中声明 ON UPDATE或ON DELETE能够控制级联操作的结果。比如ON UPDATE CASCADE表明更新时一起更新，ON DELETE SET DEFAULT表示删除时设为默认值。</div><div class="line"></div><div class="line">不可避免的是外键带来的系统开销，但是相比于更新删除记录前select检查、同步修改时锁表、执行监控脚本来修正孤立数据，这些开销真心不算大。</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">## 第六章：实体-属性-值：</div><div class="line">面向对象的编程语言能够通过派生基类的方式进行属性扩展，那么如果数据库表出现类似的情况该如何处理呢？</div><div class="line">可扩展性是很多软件项目设计中得普遍目标。一般的数据设计中，一张表有一些属性，每条记录都表示相似的对象实例。不同的表就是不同的对象。</div><div class="line"></div><div class="line">但是现代面向对象的编程模型中，不同对象类型可能是相连的、可能是派生的等各种关系。在这种场景下，我们想要公用，想要将这种面向对象的关系体现在数据库的设计中。</div><div class="line"></div><div class="line">因此引出了如下的数据库设计：实体-属性-值（EAV）。</div><div class="line"></div><div class="line">**实体**：通常是一个指向父表的外键</div><div class="line">**属性**：每一列的名字</div><div class="line">示例如下：</div></pre></td></tr></table></figure></p>
+<p>CREATE TABLE Issues (<br>    issue_id SERIAL PRIMARY KEY<br>);<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">```</div><div class="line">CREATE TABLE IssueAttributes (</div><div class="line">     issue_id           BIGINT UNSIGNED NOT NULL,</div><div class="line">     attr_name        VARCHAR(100) NOT NULL,</div><div class="line">     attr_value        VARCHAR(100),</div><div class="line">     PRIMARY KEY (issue_id, attar_name),</div><div class="line">     FOREIGN KEY (issue_id) REFERENCES Issues (issue_id)</div><div class="line">);</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">INSERT INTO IssueAttributes (issue_id,attr_name,attr_value)</div><div class="line">    VALUES</div><div class="line">        (1234,&apos;product&apos;,&apos;1&apos;),</div><div class="line">        (1234,&apos;reported&apos;,&apos;tom&apos;),</div><div class="line">        (1234,&apos;status&apos;,&apos;NEW&apos;),</div></pre></td></tr></table></figure>
+<p>尽管看上去设计不错，但是问题多多：</p>
+<ul>
+<li>不好查询</li>
+<li>数据完整性、声明属性的SQL数据类型、非空限制、引用完整性这些数据库 的特性统统享受不到了。 </li>
+<li>事实上关系型数据库并不支持这种程度的灵活性，这种EAV的设计号称能任意扩展，但是显然没用对地方。</li>
+</ul>
+<p>对于非关系数据管理的需求，最好求助于非关系技术：</p>
+<p>Berkeley DB<br>Cassandra：分布式面向咧的数据库，facebook开发，提交给了apache<br>CouchDB：面向文档的数据库，分布式的key-value系统，使用json编码数据<br>Hadoop+Hbase、MongoDB、Redis等等<br>回到开头面向对象的数据库设计，有如下的几种解决方案：</p>
+<ul>
+<li>单表继承：将所有的属性都存在一张表里，然后通过type进行区分。比如客户和送货员公用性别属性，但是详细信息就有所不同了。这种方案问题在于加入新类型要改的地方比较多，同时比较难记录哪个属性属于哪个类型。但是当子类型少、特殊属性也少的时候，这是个不错的选择。</li>
+<li>实体表继承：为每个子类型创建独立表，表既包含共有属性也包含特殊属性。好处是一行记录里不需要存跟自己无关的属性了，坏处是通用属性和特殊属性不好区分，同时不好查询所有的子类型。</li>
+<li>类表继承：模拟继承，创建基类表、衍生表，使用外键相连。这是不错的选择。</li>
+<li>半结构化数据类型：如果子类型很多或者必须经常增加新属性，那就blob列存储数据，用XML或json格式。直接丢进数据库，这个方案绝对灵活可扩展。但问题是sql基本没办法获取某个指定属性。</li>
+</ul>
+<h2 id="第七章：多态关联："><a href="#第七章：多态关联：" class="headerlink" title="第七章：多态关联："></a>第七章：多态关联：</h2><p>A表中的记录可能匹配B表或C表的记录，使用type来区分是一个好的选择么？<br>显然用type不是一个好的选择，本章的内容，在第二章乱穿马路已经有所涉及。多态关联指的是子表引用多个父表的情况。比如评论可能来自留言板或博客区，使用type区分会带来查询的复杂和数据的混乱。和第二章一样，交叉表是最好的解决方案。这里不展开了。</p>
+<h2 id="第八章：多列属性："><a href="#第八章：多列属性：" class="headerlink" title="第八章：多列属性："></a>第八章：多列属性：</h2><p>与第二章比较类似，当一个属性有多个值时，如何处理？<br>本章则完全是对第二章的拓展，只不过使用了更明显的一个例子，给客户打标签。这种多对多的关系，天生就应该交给交叉表去处理。</p>
+<h2 id="第九章：元数据分裂："><a href="#第九章：元数据分裂：" class="headerlink" title="第九章：元数据分裂："></a>第九章：元数据分裂：</h2><p>当一张表的数据量太大以至于影响性能的时候，手动分隔是愚蠢的，有很多分区或标准化的方式可以解决这个问题。<br>随着时间的推移，数据库中得数据肯定也是逐渐积累。那么数据库的查询性能肯定也随之下降了。这时候，即使索引也都无济于事了。因此本章的目标是优化数据库的结构来提升查询的性能以及支持表的平滑扩展。</p>
+<p>一种非常错误的做法是，拆表存储或是拆列存储。这会造成：</p>
+<ul>
+<li>不断产生的新表：按照年份来分的话，每年都要加</li>
+<li>管理数据完整性：万一按照年份写错了，查询结果会有问题</li>
+<li>同步数据：更新日期需要异常谨慎，这竟会影响这条记录最终出现在哪个表中</li>
+<li>确保唯一性：必须确保分割出来的表中的主键都唯一，冲突了就不好玩了。因此需要额外的id生成器。如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE BugsIdGenerator (bug_id SERIAL PRIMARY KEY);</div><div class="line"></div><div class="line">INSERT INTO BugsIdGenerator (bug_id) VALUES (DEFAULT);</div><div class="line">ROLLBACK;</div><div class="line"></div><div class="line">INSERT INTO Bugs_2010 (bug_id,…)</div><div class="line">     VALUES (LAST_INSERT_ID(),…);</div></pre></td></tr></table></figure>
+<ul>
+<li>跨表查询：想要跨年查询的时候，会很复杂。</li>
+<li>管理引用完整性：掉进泥潭里了，拆分之后不再能使用外键</li>
+<li>元数据分裂了：如果属性A按年份了，属性B呢，早晚的事。<br>只有一个场景下，上述方式是可取的，那就是归档数据时。</li>
+</ul>
+<p>所以正确的解决方案应该是，分区及标准化。</p>
+<ol>
+<li>使用水平分区：根据行对表进行拆分。只需要定义一些规则，来进行对逻辑表的拆分。这种单向的哈希函数，让你不用担心数据放错表，本例中被分成了四个部分，如果觉得不够，那在数据库设计时就应该选取更多的分区。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE Bugs (</div><div class="line">     bug_id SERIAL PRIMARY KEY,</div><div class="line">     ….</div><div class="line">     date_reported DATE</div><div class="line">) PARTITION BY HASH (YEAR(date_reported))</div><div class="line">     PARTITION 4;</div></pre></td></tr></table></figure>
+<ol>
+<li>使用垂直分区：根据列对表进行拆分。BLOB类型和TEXT类型的列的大小可变，为了提高查询和存储性能，一般数据库会自动将这些列和其他列分开存储。从而提高效率。如果使用*查询，一般会性能很差，因为这些大字段也被选择出来了。所以最好将这些大字段分开存储，在MySQL的MyISAM存储引擎中，对一个所有行的大小都是固定的表最高效。因此可以通过适当的拆分提高效率。</li>
+</ol>
+<p>第一部分：逻辑型数据库设计反模式到此结束，主要探讨了不同场景下，如何通过更贴近数据库特性的设计方式，来避免实际数据库使用中可能遇到的问题。一句话，数据库能做到的事，千万别自己做，数据库能做好的事，就用这种更优雅的方式。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2014/11/23/mysql反模式1/" itemprop="url">
                   mysql反模式1
                 </a>
@@ -854,7 +1029,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">43</span>
+              <span class="site-state-item-count">44</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -862,7 +1037,7 @@
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">14</span>
+                <span class="site-state-item-count">15</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
@@ -871,7 +1046,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-count">6</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
