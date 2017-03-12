@@ -250,6 +250,446 @@
             
               
                 
+                <a class="post-title-link" href="/2016/09/21/book012/" itemprop="url">
+                  编写可读代码的艺术
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-21T08:59:14+08:00" content="Sep 21 2016">
+              Sep 21 2016
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/书评影评/" itemprop="url" rel="index">
+                    <span itemprop="name">书评影评</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/21/book012/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/21/book012/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="代码应当易于理解"><a href="#代码应当易于理解" class="headerlink" title="代码应当易于理解"></a>代码应当易于理解</h2><h2 id="表面层次的改进"><a href="#表面层次的改进" class="headerlink" title="表面层次的改进"></a>表面层次的改进</h2><h3 id="把信息装到名字里"><a href="#把信息装到名字里" class="headerlink" title="把信息装到名字里"></a>把信息装到名字里</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwunkasj20l30dhwhr.jpg" alt=""></p>
+<p>把信息装入名字：</p>
+<ul>
+<li>使用专业的词汇；</li>
+<li>避免泛泛的名字</li>
+<li>在适当的作用域使用适当的单词长短；</li>
+<li>通过后缀的方式增加额外的信息，比如单位，比如编码的描述；</li>
+<li>利用名字的格式来表达含义（通过使用下划线等区分类的变量）</li>
+<li>用具体代替抽象的名字</li>
+</ul>
+<h4 id="使用专业的词汇"><a href="#使用专业的词汇" class="headerlink" title="使用专业的词汇"></a>使用专业的词汇</h4><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwu2j9uj20kq0c341j.jpg" alt=""><br>清晰和精确比装可爱好。</p>
+<p>重灾区：get size</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def  GetPage(url)</div></pre></td></tr></table></figure>
+<p>换成FetchPage或DownloadPage会好很多</p>
+<p>size -&gt; height nums memoryBytes</p>
+<p>stop -&gt; kill resume pause</p>
+<p>find -&gt; search extract locate recover</p>
+<p>send -&gt; deliver dispatch annouce distribute route</p>
+<p>start -&gt; launch create begin open</p>
+<p>make -&gt; create setup build generate compose add new</p>
+<h4 id="避免泛泛的名字"><a href="#避免泛泛的名字" class="headerlink" title="避免泛泛的名字"></a>避免泛泛的名字</h4><p>比如retval tmp data ret<br>使用更具象的名字能够帮你清楚的定位错误。</p>
+<p>tmp的用武之地只在于经典的变量交换。</p>
+<p>循环迭代器索引：i j k 的大灾难，加上数组名前缀 mi ci di</p>
+<h4 id="具体的名字代替抽象的名字"><a href="#具体的名字代替抽象的名字" class="headerlink" title="具体的名字代替抽象的名字"></a>具体的名字代替抽象的名字</h4><p>在给变量、函数或其他元素命名时，描述的更具体而不是更抽象。<br><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwxtmsdj20is0hx76m.jpg" alt=""><br>比如参数 –run_locally 本来是用来输出额外的调试信息</p>
+<ul>
+<li>新成员不知道干嘛的</li>
+<li>有时候远程也需要输出调试信息</li>
+<li>有时候本地性能测试，不想输出调试信息<br>其实更适合extra_logging</li>
+</ul>
+<p><img src="http://ww4.sinaimg.cn/mw690/67ad48bbgw1f87vwx38fgj20jo0ay403.jpg" alt=""><br><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f87vwwjq5lj20jk0c20v9.jpg" alt=""><br>为了更具体，需要<strong>为名字附带更多的信息</strong>。</p>
+<ul>
+<li>带单位的值: diff_ms max_kbsps size_mb</li>
+<li>附带其他重要属性 hex_id data_urlenc html_utf8 plaintext_password</li>
+</ul>
+<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f87vwvvukpj20lb0dg0vx.jpg" alt=""><br>那么一般<strong>名字应该有多长</strong>呢？</p>
+<ul>
+<li>小的作用域里可以使用短的名字，比如if for 甚至可以用单个字母</li>
+<li>不用担心长名字，现在都有自动补全了</li>
+<li>首字母缩写，经验原则是你还是否能理解这种缩写？比如QD就很好理解，WSD可能有点难，REC就更难了</li>
+<li>普遍的没问题 str-&gt;string cnt-&gt;count eval-&gt;evaluation doc-&gt;document</li>
+<li>丢掉没用的词 convert_to_string -&gt; to_string</li>
+</ul>
+<p>利用名字的格式来传递含义：<br>下划线 连字符和大小写。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">static const int kMaxOpenFiles = 100;//常量并非全大写，区分宏</div><div class="line">class LogReader &#123;// 类名驼峰</div><div class="line">  public:</div><div class="line">    void OpenFile(string local_file//变量名);</div><div class="line">  private:</div><div class="line">    int offset_;//类成员变量用下划线</div><div class="line">    DISALLOW_COPY_AND_ASSIGN(LogReader);</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>总结本章：把信息塞到名字里去。</p>
+<ul>
+<li>使用专业的单词——例如，不用Get，而用Fetch或者Download可能会更好，这由上下文决定。</li>
+<li>避免空泛的名字，像tmp和retval，除非使用它们有特殊的理由。</li>
+<li>使用具体的名字来更细致地描述事物——Server Can Start()这个名字就比CanListenOnPort更不清楚。</li>
+<li>给变量名带上重要的细节——例如，在值为毫秒的变量后面加上ms，或者在还需要转义的，未处理的变量前面加上raw_。</li>
+<li>为作用域大的名字采用更长的名字——不要用让人费解的一个或两个字母的名字来命名在几屏之间都可见的变量。对于只存在于几行之间的变量用短一点的名字更好。<br>有目的地使用大小写、下划线等 — 例如，你可以在类成员和局部变量后面加上”_”来区分它们。</li>
+</ul>
+<h3 id="不会误解的名字"><a href="#不会误解的名字" class="headerlink" title="不会误解的名字"></a>不会误解的名字</h3><p>关键原则：多问自己几遍，这个名字会被别人误解成其他的含义么？<br><img src="http://ww4.sinaimg.cn/mw690/67ad48bbgw1f8a7c2q9s7j20ld0e3ad1.jpg" alt=""></p>
+<p>例子：</p>
+<ul>
+<li>filter：需要明确是挑出来，还是过滤掉</li>
+<li>clip(text,length)：减掉length，还是剪出来length -&gt; truncate更好</li>
+<li>length-&gt;max_length-&gt;max_chars</li>
+<li>差一问题：max<em> min</em> 进行明确，不要使用limit</li>
+<li>first last表明范围，不要用start stop</li>
+</ul>
+<p>一些基本的实践：</p>
+<ul>
+<li>给bool命名,增加is has can should 这样的词</li>
+<li>与使用者的期望匹配：举出了STL里面有一个size的函数调用，其实O(N2)的操作</li>
+</ul>
+<h3 id="审美"><a href="#审美" class="headerlink" title="审美"></a>审美</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7c23twpj20mf0fggoo.jpg" alt=""><br>好的审美真的很重要。</p>
+<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8a7c14eqkj20lo0dpwhq.jpg" alt=""><br>三条原则：</p>
+<ul>
+<li>使用一致的布局，让读者很快习惯这种风格；</li>
+<li>让相似的代码看起来相似；<ul>
+<li>并不一定局限于固定换行</li>
+<li>但要保持一种固定的顺序</li>
+</ul>
+</li>
+<li>把相关代码分组，形成代码块<ul>
+<li>按照逻辑分组分段，会更为清晰</li>
+</ul>
+</li>
+</ul>
+<p>让代码好看，有的时候也会涉及到一些对代码本身的改进，比如对方法的抽象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">class Logger &#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">class Logger</div><div class="line">&#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>个人风格的一致性，一致的风格，比正确的风格更为重要。</p>
+<h3 id="该写什么样的注释"><a href="#该写什么样的注释" class="headerlink" title="该写什么样的注释"></a>该写什么样的注释</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7c0i74zj20lo0fw76u.jpg" alt=""></p>
+<p>关键思想：注释的目的是尽量帮助读者了解的和作者一样多</p>
+<h4 id="什么不需要注释"><a href="#什么不需要注释" class="headerlink" title="什么不需要注释"></a>什么不需要注释</h4><p>那些很明显的逻辑(能够被快速推断出来的逻辑)，或者是因为命名不准确做的多余注释，为了注释而注释。</p>
+<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7bzou36j20k40humzr.jpg" alt=""></p>
+<p>明显的逻辑：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">// The class definition for Account</div><div class="line">class Account &#123;</div><div class="line">    public:</div><div class="line">    // Contructor</div><div class="line">    Account();</div><div class="line">    // set the profit member to a new value</div><div class="line">    void SetProfit (double profit);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>不好的名字：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// Realease the handle for this key, does not modify actual registry</div><div class="line">void DeleteRegistry(RegistryKey * key);</div></pre></td></tr></table></figure>
+<h4 id="记录你的思想"><a href="#记录你的思想" class="headerlink" title="记录你的思想"></a>记录你的思想</h4><p>加入导演评论：上帝视角</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">// 使用二叉树比哈希表处理这些数据快很多</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">// 这个类太乱了，谁写的，应该建立一个子类来处理它</div></pre></td></tr></table></figure>
+<p>加入特定的标记</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">标记</th>
+<th style="text-align:right">通常的事情</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">todo</td>
+<td style="text-align:right">未处理</td>
+</tr>
+<tr>
+<td style="text-align:right">FIXME</td>
+<td style="text-align:right">已知的无法运行的代码</td>
+</tr>
+<tr>
+<td style="text-align:right">HACK</td>
+<td style="text-align:right">为解决问题做的粗糙方案</td>
+</tr>
+<tr>
+<td style="text-align:right">XXX</td>
+<td style="text-align:right">危险！这里有重要问题</td>
+</tr>
+</tbody>
+</table>
+<p>给常量加注释：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">const CHAPTER_MAX = 500 // 后台能接受的最大为500，超过会有超时</div></pre></td></tr></table></figure>
+<h4 id="站在读者的角度"><a href="#站在读者的角度" class="headerlink" title="站在读者的角度"></a>站在读者的角度</h4><p>公布可能的陷阱：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">void SendEmail(string to, string subject ,string body);</div></pre></td></tr></table></figure>
+<p>这个调用有可能会花费整整一秒的时间，标注可能的超时时间。</p>
+<p>一些全局观:</p>
+<ul>
+<li>类之间如何交互</li>
+<li>数据如何在整个系统中流动</li>
+<li>入口点在哪里</li>
+</ul>
+<h4 id="注释会打断你的思绪么"><a href="#注释会打断你的思绪么" class="headerlink" title="注释会打断你的思绪么"></a>注释会打断你的思绪么</h4><p>其实很多时候会帮助你整理思绪。<br>把要实现的逻辑拆成几个不同的步骤，然后逐一时间，定义接口。</p>
+<h3 id="写出言简意赅的注释"><a href="#写出言简意赅的注释" class="headerlink" title="写出言简意赅的注释"></a>写出言简意赅的注释</h3><p>图1</p>
+<p>写出注释的关键一点在于：注释应该有很高的信息/空间率。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/09/01/book011/" itemprop="url">
+                  读阳明先生心学有感
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-01T08:58:30+08:00" content="Sep 1 2016">
+              Sep 1 2016
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/书评影评/" itemprop="url" rel="index">
+                    <span itemprop="name">书评影评</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/01/book011/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/01/book011/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="结缘，之前的感受"><a href="#结缘，之前的感受" class="headerlink" title="结缘，之前的感受"></a>结缘，之前的感受</h2><p>早先在看《明朝那些事》的时候，心里就一直对王阳明有了这么一个印象。书中的具体描述已然淡去，但作者对王阳明的心学的推崇，以及其弟子遍地开花，执掌明朝内阁大权的事实却是浓墨重彩的。当时对心学的唯一印象就是“知行合一”。尽管简单，但是让我很有好感。以致于很长的一段时间里，我并不以为它是儒学的一个分支，而是认为它是更入市，或者说更接地气的一种为人处世的方式。</p>
+<p>直到近日，心中烦恼颇多。烦恼并非来自于现实中的不顺利，反而是来自于生活中的倦怠与惯性，让我感到心力俱疲。在这种情况下，不自觉的想要去寻求一种答案，再加上之前对心学的这么一个良好的印象。所以才有了对这本《王阳明-最神奇的心学》的细读。</p>
+<p>不过说实话，刚开始读的时候有些患得患失。一方面担心这又是一本古文翻译而来的鸡汤（事实上书中不少篇幅确实如此），另一方面，接触了西方的那套自由思想体系之后，怕形成价值观上的冲突。不过读起来之后，倒是领悟了书中的一点：寻求本心而破除纷扰，你领悟的只是本心的，和你本来拥有的也并不冲突。这本二手书的优点在于，作者的诗词底子很好，很多心学的思想，他通过一些诗词的方式表示出来，非常能够加深你的理解。</p>
+<p>太阳底下没有新鲜事，春秋战国时代百家争鸣，看后来人所议论之事，无一不能从百家经典中找到验证，不禁让人神往那个思想碰撞的年代。王阳明之言，在我看来很多是一种回归，去掉宋代朱熹那种格物的思想，提出了知行合一的观点，更关注了人性本身。</p>
+<h2 id="阳明此人"><a href="#阳明此人" class="headerlink" title="阳明此人"></a>阳明此人</h2><p>王阳明一身跌宕起伏，有过少年天才得志，也有过官场为奸臣所害，更有的是龙场悟道与评定宁王之乱。更重要的是他将所行所悟，发扬光大，在他之后的明代内阁首辅，几乎大部分都受到了心学的影响。他的人生关键词可以总结为，阳明格竹 龙场悟道 宁王之乱 创立心学。 从人生轨迹和成就上来看，他是第一个实现立功立言立德的三不朽的神人。</p>
+<p>心学的核心思想是心即是理，反对格物致知，提倡知行合一。说到格物，维基百科中提到了一件很有趣的事，说王阳明小时候喜欢杨朱理学，相信天下之物皆有义理，所以他不断的格物，曾经两周的时间尝试去“格”竹子，结果一场大病，最后痛定思痛，再也不从外物出发，而是关注于自己的内心。</p>
+<p>史书说王阳明豪迈不羁而又十分有个性，而他自己也是表达了宁做狂人不做小人的心态：</p>
+<p>“乡愿以忠信廉洁见取于君子，以同流合污无忤于小人，故非之无举，刺之无刺。然究其心，乃知忠信廉洁所以媚君子也，同流合污所以媚小人也，其心已破坏矣，故不可与入尧舜之道。狂者志存古人，一切纷嚣俗染，举不足以累其心，真有凤凰翔于千仞之意，一克念即圣人矣。惟不克念，故阔略事情，而行常不掩。惟其不掩，故心尚未坏而庶可与裁”</p>
+<p>与其去做一个乡人赞赏的老好人，还不如做个狂人，更近本心，这里深得我心。因为我从小就被称为好人，循规蹈矩，不敢越雷池一步。长大后不自觉有逆反心理，常常心中所想与实际所做大相径庭。慢慢的学会贴近自己的本心，而不是以他人的眼光，定义自己的行为。</p>
+<p>还有一定要提的就是王阳明的军功，作为文人，他的作战水平相当之高。对兵法的理解也是入木三分的。明史中对他的军事才能，也是十分赞赏。宁王叛乱时，谣言满天飞。而他稳如泰山，调兵遣将，迷惑对手，几乎以一人之力，平定了宁王叛乱。当真文武双全。</p>
+<h2 id="精华，受到启发的地方"><a href="#精华，受到启发的地方" class="headerlink" title="精华，受到启发的地方"></a>精华，受到启发的地方</h2><p>本书将王阳明的心学主观的分成了如下的几个部分：</p>
+<ul>
+<li>磨砺</li>
+<li>立志</li>
+<li>行动</li>
+<li>态度</li>
+<li>智慧</li>
+<li>处世</li>
+</ul>
+<p>对于<strong>磨砺</strong>，王阳明所提倡的就是让能力在磨练中快速成长。</p>
+<blockquote>
+<p>人须在事上磨练做功夫，乃有益。若只好静，遇事便乱，终无长进</p>
+</blockquote>
+<p>很多时候，不管是工作还是生活，我们往往会进入一种舒适的区域。在这个区域之内，我们便不敢越雷池一步。生怕犯错，生怕打破现有的生活平衡。但是如果没有磨砺，就不会有进步，就不能突破自己。但是呢，人们改变自己的意愿，有的时候又没那么强烈，所以这个时候，重要的便是<strong>立志</strong>。</p>
+<p>因为“志不立，天下无可成之事”，有了决心和一个具体的目标，你会调动自己所有的能力，用尽方法去完成它。反过来，没有目标，那么努力了一段也很有可能停滞。古往今来，成大事的人往往有大志，比如张载：为天地立心，为生民立命，为往圣续绝学，为万世开太平。比如司马迁的写史书之志。但是作为我们一般人来说，是很难有这样的志向的，或许是因为际遇不足，或许是因为个人涵养不足。因此，我们正确的立志就更重要了。</p>
+<p>对我来说，利用科技改变大家的生活很重要，我也愿意为之奋斗，所以我给自己也立下了这样的志向。或许不大，但是如果能够完成，对我而言就是一种巨大的满足。</p>
+<p>但是立了志，如果不能正确的<strong>行动</strong>，仍是毫无用处。所以遇到该完成的时候时候，必须 “马上行动，一以贯之”。当然了，马上行动并不是鲁莽的行动，而是根据你的判断和思考所进行的行动。因为去尝试，永远好过于一直在等待。实践中的学习，永远好过纸上谈兵。如果面对该做的事情的时候，总是推脱说一切万事俱备了才去做，如此永远做不成。这种所谓等待万事俱备的推脱心态，必须加以警惕，区分到底是真的仍需时间，还是你的惰性所引起的拖延症又犯了。</p>
+<p>行动固然重要，不半途而废更是如此。米卢说，<strong>态度</strong>决定一切。行动中要自己做自己的贵人。陈胜吴广起事的时候，在鱼中放置陈胜为王的布条。这就是一种心理的安慰，只有去除了疑惑，坚定了信念，做事情才能一往无前。而当你真的要做的时候，记得努力到极致，否则的话，倒还不如不做了。而一件事，如果你真想想做，很多时候方法会源源不断，记得放下你的偏见，放下你曾经学过的不能，而是发动一切你可以发动的力量。<br>所谓</p>
+<blockquote>
+<p>瞽者善听，聋者善视，绝利一源，用师十倍，三返昼夜，用师万倍。</p>
+</blockquote>
+<p>关注在一点的时候，就能够水滴石穿。</p>
+<p>书中同样对<strong>智慧</strong>着墨很多，其中最得我心的就是“活在当下”。</p>
+<blockquote>
+<p>只存得此心常见在，便是学。过去未来事，思之何益？徒放心耳！</p>
+</blockquote>
+<p>这与《新世界，灵性的觉醒》中的观点何其相似。只有活在当下，你才能更好的体察当下。试着放弃其他无关的事情，花一个小时去全神贯注地做一件事。做时时刻留心、管住自己每一刻的感受。人的不快乐，很多时候来自于对事务的心猿意马，俗话说呢，就是吃着碗里的看着锅里的。而心猿意马时，及时地把自己拉回来，只要能够意识到自己的杂念就行。每天尝试冥想十分钟，完全的放飞自己的心灵，你会发现，之前让你十分苦恼的情绪，也就烟消云散了。</p>
+<p>前面都是些自己的修为，<strong>处世</strong>则着重去说与他人和社会的接触。</p>
+<blockquote>
+<p>山光物态弄春辉，莫为轻阴便拟归。纵使晴明无雨色，入云深处亦沾衣。</p>
+</blockquote>
+<p>俗话说，常在河边站哪有不湿鞋，所以遇人闲话，不妨置之一笑。遇人侮辱，只当是耳边风。</p>
+<blockquote>
+<p>天地生意，花草一般。何曾有善恶之分？子欲观花，则以花为善，以草为恶。如欲用草时，复以草为善</p>
+</blockquote>
+<p>改变你的心境，就在一瞬间。现在我的很多快乐，往往是建立在与他人比较的基础之上的，很多不快乐，同样也是如此，这正应了阳明先生所说：</p>
+<blockquote>
+<p>不知就自己心地良知良能上体认扩充，却去求知其所不知，求能其所不能，一味只是希高慕大，不知自己桀纣心地，动辄要做尧舜事业，如何做得？</p>
+</blockquote>
+<p>确实值得反思。</p>
+<p>诗中有云：</p>
+<blockquote>
+<p>钓罢归来不系船，江村月落正堪眠。纵然一夜风吹去，只在芦花浅水边。</p>
+</blockquote>
+<p>这种顺其自然的功夫，现在的我有些望尘莫及，但在世间纷纷扰扰之时，不妨给自己留下这么一扇窗，让自己的心灵透透气。</p>
+<h2 id="践行，我所认同的心学"><a href="#践行，我所认同的心学" class="headerlink" title="践行，我所认同的心学"></a>践行，我所认同的心学</h2><p>初读这本书，自以为还是有一些收获。对我的日常生活影响最大的不外乎以下几点：</p>
+<ul>
+<li>活在当下</li>
+<li>控制情绪，让情绪不侵入本心，而是本心静静的看着他们</li>
+<li>立志，必须让远大的志向催动自己前行</li>
+<li>用中学，掉书袋是万万不可的</li>
+<li>想到就去做，不要犹豫，不要让自己后悔</li>
+<li>专注的去做，但不是盲目的去做</li>
+<li>只有见遍了好东西，才能有自己好的产出</li>
+</ul>
+<p>对心学一些理解仍在与自己的生活验证，而心学中的观点有些也无法完全认同。但是这种体察本心的过程，确实让我多了那么一丢丢对自己的生活的控制和专注。不过一旦遇到比较棘手的事情的时候，还是很容易乱了方寸。比如近期家中的杂事，时常让自己如热锅上的蚂蚁，想做却又无可奈何，这种情况下，对自己心态的磨砺也就尤为重要了。越是此时，越要控制住情绪，越是放任，越容易掉入情绪的大坑，与君共勉！</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/13/life001/" itemprop="url">
                   上海酒店之外滩茂悦
                 </a>
@@ -1808,298 +2248,6 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/05/26/book006/" itemprop="url">
-                  我读清醒思考的艺术 three
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2015-05-26T10:44:02+08:00" content="May 26 2015">
-              May 26 2015
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/书评影评/" itemprop="url" rel="index">
-                    <span itemprop="name">书评影评</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2015/05/26/book006/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/26/book006/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="我读《清醒思考的艺术》three"><a href="#我读《清醒思考的艺术》three" class="headerlink" title="我读《清醒思考的艺术》three"></a>我读《清醒思考的艺术》three</h1><p>应读者反馈，每次十条貌似有些太长了。因此减少至每次六条。同时标注，所用之图，均来自《清醒思考的艺术》原书。</p>
-<h3 id="选择的悖论-—-为什么更多反而是更少"><a href="#选择的悖论-—-为什么更多反而是更少" class="headerlink" title="选择的悖论 — 为什么更多反而是更少"></a>选择的悖论 — 为什么更多反而是更少</h3><p>现代社会与以前完全不同了，其中重要的一点是，大部分人无需为了果腹而东奔西走。当你在原始丛林中面对烤肉和饥饿，选择是很容易做出的。但是当你打开大众点评，看到八大菜系和一众东西方料理，这时候感受到的，是一种痛苦。。</p>
-<p>尽管有选择让我们幸福，但是太多的选择会降低生活质量，这称为“选择的悖论”。太多的选择给我们带来的第一个影响就是让我们无所适从。商场里琳琅满目，但是很可能导致我们挑花了眼，最终空手而归。</p>
-<p>第二个影响则是选择范围大，导致我们做出更差的决定。假如你问一个小伙子他的择偶标准，那可能从思想到品德，从气质到人品，当然还有长相。但是接触到的女性太多，又无法一一了解，为了省力，所以只好归为单一的标准：好身材。</p>
-<p>第三个影响则是，选择范围大让我们不满。不满的原因是，选择后的后悔。</p>
-<p>为了克服这些影响，我们必须明白，永远作不出完美的选择。想要作出在事后看来无懈可击的选择是非理性的，因为事情的发展永远有无数种可能性。你必须定好一个标准，然后坚持它。是最好的才适合你么？恐怕不是，因为适合你的，才是最好的。</p>
-<h3 id="讨喜偏误-—-你行为不理性，是因为你想讨别人喜欢"><a href="#讨喜偏误-—-你行为不理性，是因为你想讨别人喜欢" class="headerlink" title="讨喜偏误 — 你行为不理性，是因为你想讨别人喜欢"></a>讨喜偏误 — 你行为不理性，是因为你想讨别人喜欢</h3><p>讨喜偏误很应景最近的流行词：“这是一个看脸的世界”。 因为：</p>
-<blockquote>
-<p>某人越讨喜，我们就越倾向于从这个人那儿买点东西或者帮助他。</p>
-</blockquote>
-<p>这种偏误是一种心态，同时也被广泛的用于各类销售技巧中。那么什么是讨喜呢？</p>
-<ol>
-<li>颜值高</li>
-<li>在出身、个性和兴趣上与我们相似</li>
-<li>他觉得我们讨人喜欢</li>
-</ol>
-<p>广告中对此偏误的使用比比皆是。为什么偏偏“你值得拥有”，因为这会讨你的喜。恭维是种神奇的武器，“复制”对方的行为，也是销售中常见的技巧。为什么你会保护大熊猫而不是珍贵的蜘蛛，当然是因为大熊猫更可爱。</p>
-<p>政治家对此的应用更加纯熟，他们会在面向不同人群的演讲中强调不同的共性。渲染一样的经历，从而让听众感同身受。“你的投票非常重要”，确实重要，但是微不足道。</p>
-<p>所以当我们在判断一笔生意时应该坚持不受卖方影响。请你不要考虑他，更好的办法是：请你想象他是个不讨人喜欢的家伙。</p>
-<h3 id="禀赋效应-—-请不要死抱着某种东西不放"><a href="#禀赋效应-—-请不要死抱着某种东西不放" class="headerlink" title="禀赋效应 — 请不要死抱着某种东西不放"></a>禀赋效应 — 请不要死抱着某种东西不放</h3><p>禀赋效应听起来可能有点绕口，但是这个效应在这个物质的年代无时无刻不包围着我们：“我们感觉我们拥有的东西比我们没有拥有的更有价值”。直白点说，结合最近看房子的经历，房东标价200万卖出去，那90%的可能他自己作为买主肯定不舍得出这个价！</p>
-<p>所以呢，因为拥有，故而珍贵。房东在房价上加上了自己情感的价值，这显然是并不合理的。为什么最近“断舍离”这么风靡，就是因为大家都意识到了这个问题。买东西容易，但是要丢东西，难上加难！</p>
-<p>发明拍卖的人，一定是天才。那些竞价到最后的人，因为感觉到马上要获得，所以增加了额外的情感因素，忽视了拍卖品的真实价值。所以很多时候，清醒过来之后，往往后悔不迭。</p>
-<p>当我们应聘工作的时候，简历被筛掉和面试到最后一轮被pk给我们的感觉是完全不同的。但仔细想想，我们失去的其实是同一次的工作机会。所以请不要死抱着某种东西不放，请将你拥有“断舍离”的精神，这样能够更加轻松自如。</p>
-<h3 id="奇迹-–-不可能事件的必然性"><a href="#奇迹-–-不可能事件的必然性" class="headerlink" title="奇迹 – 不可能事件的必然性"></a>奇迹 – 不可能事件的必然性</h3><p>我们时常会听到各种各样的奇迹，比如奇迹生还，奇迹般地心灵感应之类的。这些事情听来令人惊叹，感染力极大。尤其如果是宗教中涉及此类事件，一定是大书特书。</p>
-<p>但是不可思议的意外事件就是虽然少见但完全可能发生的事情。它们的发生不是因为奇迹，而是因为我们忽略了同样情况下它们不发生的概率，因为那样就太正常了，也就没啥可宣扬的了:)</p>
-<h3 id="团体迷思-—-共识为什么有可能是危险的"><a href="#团体迷思-—-共识为什么有可能是危险的" class="headerlink" title="团体迷思 — 共识为什么有可能是危险的"></a>团体迷思 — 共识为什么有可能是危险的</h3><p>从小到大我们参与了无数个会议，但我肯定你有过在会议上克制自己，不说出你的意见的时候。原因可能有很多，你可能缺少在公众前发言的经验和勇气，你可能不想做那个出头鸟，你可能单纯的就在发呆。同时还有一个重要原因是：“别人都不傻，他们都没意见，我怎么有意见？”</p>
-<p>这种情况非常容易导致团体迷思：一群智慧的人做出愚蠢的决定。这种失败的案例非常多，而且都是精英做出的错误决定。团队很容易出现这样的弱点，而且凝聚力越强的团队，越容易。每个人都为属于一个团队而高兴，异议则有可能意味着被隔离在团队之外，这是我们从原始社会开始就努力规避的风险。万一酋长不带我打猎了。。估计就饿死了。。</p>
-<p>假若你的工作是智囊团，那么最好你要讲出你的看法，即使并不中听。假若你领导了一支团队，最好有个敢于唱反调的人，可能他不是团队最受欢迎的人，但是却有可能是最重要的人。一往无前是重要的，但是方向比向前，重要的多。</p>
-<h3 id="忽视概率偏误-—-累计奖金为什么会越来越多"><a href="#忽视概率偏误-—-累计奖金为什么会越来越多" class="headerlink" title="忽视概率偏误 — 累计奖金为什么会越来越多"></a>忽视概率偏误 — 累计奖金为什么会越来越多</h3><p>人士感性的，同时又有些盲目。这在概率偏误中，得以体现。面对1000万的奖金和1万的奖金，更多的人选择购买第一种的彩票。即使第二中概率看起来更大。我们不管概率，管得是中了1000万之后，给我们的生活带来的翻天覆地的变化。</p>
-<p>很多人会在投资热中选择创立一家公司，美好的蓝图近在眼前，利润仿佛唾手可得。但是我们忘了，或者懒得去查一家初创企业获得预期利润的概率。类似错误的决定数不胜数，这会导致我们的选择不堪推敲。</p>
-<p>我们心理上很难区分各种不同程度的风险，除非风险为0. 因此由于直觉帮不了我们，我们必须尽可能的区估计和计算风险，这能帮我们更好的规避他们。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/05/26/book005/" itemprop="url">
-                  我读清醒思考的艺术 四
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2015-05-26T10:41:27+08:00" content="May 26 2015">
-              May 26 2015
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/书评影评/" itemprop="url" rel="index">
-                    <span itemprop="name">书评影评</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2015/05/26/book005/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/26/book005/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="我读《清醒思考的艺术》-four"><a href="#我读《清醒思考的艺术》-four" class="headerlink" title="我读《清醒思考的艺术》 four"></a>我读《清醒思考的艺术》 four</h1><p>其实上次的文章发出来之后，还有读者反馈，6条太少了。T T 所以做一个简单地投票，权当丰富了内容啦！</p>
-<h2 id="27-零风险偏误-–-你为什么会为零风险支付过多"><a href="#27-零风险偏误-–-你为什么会为零风险支付过多" class="headerlink" title="27. 零风险偏误 – 你为什么会为零风险支付过多"></a>27. 零风险偏误 – 你为什么会为零风险支付过多</h2><p>曾出现在无数电影中的经典桥段就是俄罗斯轮盘赌。一个左轮手枪，如果你可以付钱将4颗上膛的子弹拿出两颗，或者把唯一的一颗子弹拿出来。那么相信大多数人都会选择对第二种情况付出更多。尽管从概率上来看，第一种把你死亡的概率降低的更多。但是管他呢，选了第二种，就肯定不会死。</p>
-<p>人类确实很难区分各种风险。风险越大的时候，其中包含的感情成分越多，而风险单纯从概率上得降低给我们的安慰也越小。北京的雾霾致病率假如是50%还是1%，都会让人觉得担忧不已。但是如果是0%，那么立刻就是另一种感受。</p>
-<p>但事实上，零概率是很难达到的，而且多数时候是不现实的。我们可能会为了零风险付出很多，但是到最后才会意识到，“没有什么是安全的”。无论是积蓄、健康、婚姻、友谊、敌人还是土地。但是请满足于至少有东西让你保持相对稳定并体验自身的快乐。其实不管发生什么事，快乐的人照样快乐，不快乐的人依旧如此，这在后文中会有更深刻的讨论。</p>
-<h2 id="28-稀少性谬误-–-为什么饼干越少越好吃"><a href="#28-稀少性谬误-–-为什么饼干越少越好吃" class="headerlink" title="28. 稀少性谬误 – 为什么饼干越少越好吃"></a>28. 稀少性谬误 – 为什么饼干越少越好吃</h2><p>“物以稀为贵”，这句话无论从古至今，还是西方东方，都是颠不破的真理。从受邀请才能加入的谷歌邮箱，到房产中介频频放出的此房热门马上要被抢购的消息，还有那万年不变的“清仓大处理”甩卖。无一不在透露着这个信息。</p>
-<p>尤其是，当我们的一个物品被夺走了，更显得它的珍贵。“失去的，才知道珍惜”。有趣的时，这在心理学里被称为“罗密欧朱丽叶效应”。越是反对，就越要在一起。</p>
-<p>我们对稀少性的典型反应，就是丧失了清晰思考的能力。价值的观点被混淆，满目里都被稀少蒙蔽，所以呀，让我们只按照价格和作用来评判一样东西吧，它少不少，跟你又有什么关系呢？</p>
-<h2 id="29-忽视基本概率-–-当你在怀俄明州听到马蹄声、见到白色条纹时。。。"><a href="#29-忽视基本概率-–-当你在怀俄明州听到马蹄声、见到白色条纹时。。。" class="headerlink" title="29. 忽视基本概率 – 当你在怀俄明州听到马蹄声、见到白色条纹时。。。"></a>29. 忽视基本概率 – 当你在怀俄明州听到马蹄声、见到白色条纹时。。。</h2><p>忽视基本概率，是最常见的思维错误之一。原因就在于，我们很容易被精确的描述误导。举个例子，马克是个男人，他爱听莫扎特，戴着眼镜，那么哪种概率大？</p>
-<ol>
-<li>他是卡车司机</li>
-<li>他是法兰克福的文学教授</li>
-</ol>
-<p>乍一看是2，但是事实上，卡车司机比法兰克福的文学教授要多得多。这就是一种基本概率。这在医学中比比皆是，发烧可能是病毒感染或者恶性肿瘤导致的，但是一个合格的医生，肯定不会先帮你进行全身的肿瘤扫描。他必须认识到基本概率，并且对症下药。</p>
-<p>基本概率是清晰的，基本概率是残酷的。那么多公司在互联网的浪潮中异军突起，但是谷歌只有一个。从概率上来看，很多人或者大部分人，根本无法达到这样的高度。忽视基本概率的投资人，肯定会变成乱投医的冤大头。</p>
-<p>对基本概率的忽视，在象牙塔中比比皆是。每个未出校门的大学生都是志向高远，瞄准董事。而单从概率上来看，他们成为中年中层大叔的概率，远大于此。</p>
-<h2 id="30-赌徒谬误-–-为什么没有一种平衡命运的力量"><a href="#30-赌徒谬误-–-为什么没有一种平衡命运的力量" class="headerlink" title="30. 赌徒谬误 – 为什么没有一种平衡命运的力量"></a>30. 赌徒谬误 – 为什么没有一种平衡命运的力量</h2><p>如果你是个赌徒，或者你喜欢看关于赌徒的电影。你会知道，赌徒总是输多赢少。而且输得越多，他们越相信，根据硬币一体两面的概率，他们一定会赢回来。但是可惜的是，概率只有在大统计样本的前提下才有意义，对于赌徒尝试的那些次来说，还没达到那么多的抽样样本，他们就输的底裤都没了。。。</p>
-<p>当然，只有一种情况，那就是回归均值的时候。连续的极端天气之后，肯定会缓和。这是趋向均值的表现。不过大部分情况下，请不要迷信于概率论中得独立事件概率的论述，趁你还没输光之前。</p>
-<h2 id="31-锚定效应-–-数字轮盘如何搞得我们晕头转向"><a href="#31-锚定效应-–-数字轮盘如何搞得我们晕头转向" class="headerlink" title="31. 锚定效应 – 数字轮盘如何搞得我们晕头转向"></a>31. 锚定效应 – 数字轮盘如何搞得我们晕头转向</h2><p>锚定效应，指的是很多时候我们进行推论的时候，都是基于一定的锚作为标准的。或者就叫做基准。这对我们推论一些不了解的知识非常的有用，但是有的时候要是选错了锚，那可就麻烦了。</p>
-<p>如果你在小学中因为几次超长发挥被认定为优秀学生，那么中学的老师在评判你的作文的时候，就可能另眼相待。很多商品上也标满了“建议零售价”，看了之后，似乎我们对付出这个价格，就感觉特别的合理。这是一种心理上得暗示和误导，而且常常用于销售与谈判的技巧中。选中了合适的锚，就能让客户付出超出实际商品价值的价格来。</p>
-<h2 id="32-归纳法-–-如何把别人的钱弄进自己的口袋"><a href="#32-归纳法-–-如何把别人的钱弄进自己的口袋" class="headerlink" title="32. 归纳法 – 如何把别人的钱弄进自己的口袋"></a>32. 归纳法 – 如何把别人的钱弄进自己的口袋</h2><p>归纳法，乃至于数学归纳法，是我们认知事物的自然过程。因为我们的认知从观察开始，逐渐形成自己的结论，继而变成习惯影响我们。殊不知，很多时候一叶障目，不见泰山，个例被我们归纳成了公理，这就十分危险了。</p>
-<p>一只连续暴跌的股票可能被投资者认为跌无可跌，全部身家投进去，结果打了水漂。一个从没出过事故的航空公司，也可能因为特殊因素，而发生悲剧。归纳法是需要的，但是不能忘记“所有确信都是暂时的”，一次例外，就足以毁掉经过上千次证明的理论。</p>
-<p>“由于人类一直都是成功的，所以我们也将征服未来的挑战”，听起来不错，但是似乎只有幸存的物种，才能这么说。</p>
-<p>今天，仍然是六个思维错误，那么大家在实际的生活中，曾经遇到过哪条，或者说对哪条印象特别深刻呢？可以通过下面的投票反馈一下，或是留言进行分享，一同克服思维错误。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2145,7 +2293,7 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">45</span>
+              <span class="site-state-item-count">47</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2162,7 +2310,7 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">7</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
