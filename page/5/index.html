@@ -250,6 +250,257 @@
             
               
                 
+                <a class="post-title-link" href="/2014/11/24/c和c-面试常见问题总结/" itemprop="url">
+                  c和c++面试常见问题总结
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-24T23:11:54+08:00" content="Nov 24 2014">
+              Nov 24 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/笔试面试/" itemprop="url" rel="index">
+                    <span itemprop="name">笔试面试</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/24/c和c-面试常见问题总结/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/24/c和c-面试常见问题总结/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="c和c-面试常见问题总结"><a href="#c和c-面试常见问题总结" class="headerlink" title="c和c++面试常见问题总结"></a>c和c++面试常见问题总结</h1><h2 id="list-vector-set-map"><a href="#list-vector-set-map" class="headerlink" title="list vector set map"></a>list vector set map</h2><p>List封装了链表，vector封装了数组，list不支持下标操作，一个是离散存储，一个是连续存储。<br>set和map属于标准关联容器，使用的是高效的平衡检索二叉树：红黑树。插入删除效率高，因为不需内容拷贝和移动，只需直接替换指向节点的指针。<br>Set不包含重复的元素，hash_map用空间换了时间。</p>
+<h2 id="template"><a href="#template" class="headerlink" title="template"></a>template</h2><p>包括函数模板和类模板。<br>类模板是允许用户为类定义一种模式，使得类中的某些数据成员、成员函数的参数、或成员函数的返回值能够取任意类型。 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">template &lt;typename T&gt;</div><div class="line">inline const T&amp; maximum(const T&amp; x,const T&amp; y)&#123;</div><div class="line">  if(y &gt; x)</div><div class="line">      return y;</div><div class="line">  else</div><div class="line">      return x;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="static和const的区别"><a href="#static和const的区别" class="headerlink" title="static和const的区别"></a>static和const的区别</h2><ul>
+<li>const就是只读的意思，只在声明中使用。static一般有两个作用，规定作用域和存储方式，对于局部变量，static规定其为静态存储方式，每次调用的初始值为上一次调用的值，调用结束后存储空间不释放。</li>
+<li>对于全局变量，如果以文件划分作用域的话，此变量只在当前文件可见，对于static函数也是在当前模块内函数可见。</li>
+<li>static的作用是把一个变量设置为静态。函数内部声明的static变量可作为对象间的一种通信机制。如果一个变量是类的一部分却不是该类的各个对象的一部分，就成为一个static静态成员。同理，一个需要访问类成员，而不需要针对特定对象去调用的函数，也被称为一个static成员函数。类的静态成员函数只能访问类的静态成员。</li>
+<li>const是设置常量，也就是只读。</li>
+</ul>
+<h2 id="为什么函数加了static之后不能加virtual了："><a href="#为什么函数加了static之后不能加virtual了：" class="headerlink" title="为什么函数加了static之后不能加virtual了："></a>为什么函数加了static之后不能加virtual了：</h2><p>  因为静态成员函数可以不通过对象来进行调用，即没有隐藏的this指针。而virtual函数则一定需要通过对象来调用，即有隐藏的this指针。</p>
+<h2 id="const-char-p-（char-const-p）和-char-const-p-有什么差别"><a href="#const-char-p-（char-const-p）和-char-const-p-有什么差别" class="headerlink" title="const char p （char const p）和 char * const p 有什么差别"></a>const char <em>p （char const </em>p）和 char * const p 有什么差别</h2><pre><code>const char *p 可对数组指向的任意位置做只读操作。char * const p 只能对某个固定的位置进行读写操作，定义了一个固定的地址，而且定义p的时候必须初始化。
+</code></pre><h2 id="c的struct和c-的class有什么异同"><a href="#c的struct和c-的class有什么异同" class="headerlink" title="c的struct和c++的class有什么异同"></a>c的struct和c++的class有什么异同</h2><ul>
+<li>相同处<ul>
+<li>都是Contrainer类型，意味着都可以将其它类型作为成员</li>
+<li>都可以有成员，所包括构造函数，方法，属性，域，常量，枚举，事件和事件Handler</li>
+<li>成员可设成Public或Private</li>
+<li>都可以实现接口</li>
+</ul>
+</li>
+<li>不同处<ul>
+<li>Structure是值类型，class是引用类型（返回类型）</li>
+<li>structure的成员默认情况下是公共的，而Class的成员变量和常量默认情况下是私有的而其它成员默认情况下是公共的（默认成员属性）</li>
+<li>structure必须至少有一个非共享的成员变量或事件成员，class可以完全是空的.</li>
+<li>Structure的成员不能声明成Protected; class成员可以.</li>
+</ul>
+</li>
+</ul>
+<h2 id="值类型和引用类型的区别"><a href="#值类型和引用类型的区别" class="headerlink" title="值类型和引用类型的区别"></a>值类型和引用类型的区别</h2><pre><code>值类型是现金，要用直接用，引用类型是存折，得先取再用。     声明一个值类型变量，编译器会在栈上分配一个空间，这个空间对应着该值类型变量，空间里存储的就是该变量的值。引用类型的实例分配在堆上，新建一个引用类型实例，得到的变量值对应的是该实例的内存分配地址
+</code></pre><h2 id="引用运算符和引用分别表示什么"><a href="#引用运算符和引用分别表示什么" class="headerlink" title="引用运算符和引用分别表示什么"></a>引用运算符和引用分别表示什么</h2><p>引用引入了对象的一个同义词，声明引用时必须对其进行初始化，引用本身不占用存储单元，它只是一个别名。引用一般有两个用途： 作为函数参数和从函数中返回左值。</p>
+<ul>
+<li>作为函数参数相当于是赋予了它返回值的能力，更改有效了</li>
+<li>给函数传递大型对象时，使用引用也可以提高效率。（比如拷贝构造函数）</li>
+<li>引用返回值</li>
+<li>常引用 const &amp; 引用名=目标变量名 ，不能通过引用对目标变量进行修          改了。</li>
+<li>利用引用产生多态效果： B是A的子类， B b； A &amp; Ref = b；那么ref只能用来访问派生类对象中从基类继承下来的成员，是基类引用指向派生类。如果A类中定义有虚函数，并且在B类中重写了这个虚函数，就可以通过Ref产生多态效果。（使用指针的话就是用基类指针指向子类的对象们），算是实现多态的两种方式吧。</li>
+</ul>
+<h2 id="C和C-的关系"><a href="#C和C-的关系" class="headerlink" title="C和C++的关系"></a>C和C++的关系</h2><ul>
+<li>c++语言支持函数重载，c语言不支持。函数被c++编译后在库中的名字与c语言不同。提供extern “C”来解决名字匹配的问题。</li>
+<li>c是一种结构化语言，重点在于算法和数据结构。 c程序的设计首先考虑的是如何通过一个过程，对输入进行运算处理得到输出。</li>
+<li>c++首先考虑的是如何构造一个对象模型，让这个模型能够契合与之对应的问题域，这样就可以通过获取对象的状态信息得到输出或实现过程控制。</li>
+</ul>
+<h2 id="对于宏的理解"><a href="#对于宏的理解" class="headerlink" title="对于宏的理解"></a>对于宏的理解</h2><pre><code>#define 不能以分号结束，预处理器会帮你计算常数表达式的值，要把参数用括号括起来。
+</code></pre><h2 id="const的主要用法有哪些？"><a href="#const的主要用法有哪些？" class="headerlink" title="const的主要用法有哪些？"></a>const的主要用法有哪些？</h2><ul>
+<li>定义常量，修饰函数参数，修饰函数返回值， 在c++中还可以修饰函数的定义体。被const修饰的就是只读，防止意外的变动，提高程序的健壮性。</li>
+<li>与#define定义常量相比，const常量有数据类型，而宏常量没有。编译器可以对前者进行类型安全检查，而对后者只是进行字符替换，没有类型安全检查。</li>
+<li>使用调试工具可以对const常量进行调试，宏常量肯定不行。</li>
+<li>在c++程序中，类里面的数据成员加上mutable之后，修饰为const的成员函数，就可以对其进行修改了。</li>
+</ul>
+<h2 id="各类的sizeof"><a href="#各类的sizeof" class="headerlink" title="各类的sizeof"></a>各类的sizeof</h2><ul>
+<li>指针的4字节，每个字符1字节，每个int类型4字节，short 两个字节，long四个字节，struct注意要补空，float四个字节。空类所占空间1，虚继承的类涉及指针，大小为4.</li>
+<li>sizeof和strlen的区别：<ul>
+<li>sizeof操作符的结构类型是size_t, 它在头文件中的typedef为unsigned int类型，该类型保证能容纳实现所建立的最大对象的字节大小</li>
+<li>sizeof是运算符，strlen是函数</li>
+<li>sizeof可以用类型做参数，strlen只能用char* 做参数，而且必须以’\0’结尾</li>
+<li>数组做sizeof的参数不退化，传递给strlen就退化为指针</li>
+<li>数组作为参数传递给函数时传的是指针而不是数组，传递的是数组的首地址。在c++中传递数组永远都是传递指向数组首元素的指针</li>
+</ul>
+</li>
+</ul>
+<h2 id="内联函数和宏的差别是什么"><a href="#内联函数和宏的差别是什么" class="headerlink" title="内联函数和宏的差别是什么"></a>内联函数和宏的差别是什么</h2><ul>
+<li>内联函数在编译的时候可以直接被镶嵌到目标代码中，而宏只是一个简单的替换</li>
+<li>内联函数要做参数类型检查。</li>
+<li>inline是指嵌入代码，对于短小的代码而言，这样可以带来效率提升，不过有一定的空间消耗，主要用于一个函数被重复调用而且函数只有简单几行的情况</li>
+<li>宏是在代码处不加任何验证的简单替代，而内联函数是将代码直接插入调用处。</li>
+</ul>
+<h2 id="指针和引用的区别"><a href="#指针和引用的区别" class="headerlink" title="指针和引用的区别"></a>指针和引用的区别</h2><ul>
+<li>非空区别：任何时候都不能使用指向空值的引用。一个引用必须总是指向某些对象。如果使用一个变量并让它指向一个对象，但是该变量在某些时候也可能不指向任何对象，这是应该把变量声明为指针。而当确定这个变量不可能指向空的时候，可以声明为引用，这意味着引用的代码效率比使用指针要高。</li>
+<li>合法性区别：在使用引用之前不需要检测其合法性，而指针则总应该被测试，防止其为空。</li>
+<li>可修改区别：指针可以被重新赋值以指向另一个不同的对象，但是引用总是指向初始化时被指定的对象，之后不能改变，但对象的内容可以被改变</li>
+</ul>
+<p>应用区别：以下情况应该使用指针：</p>
+<ul>
+<li>考虑到存在不指向任何对象的可能时</li>
+<li>需要能够在不同时刻指向不同的对象时。 否则应该使用引用。</li>
+</ul>
+<h2 id="java和c-的区别"><a href="#java和c-的区别" class="headerlink" title="java和c++的区别"></a>java和c++的区别</h2><pre><code>java是完全的面向对象，封装、继承和多态。
+</code></pre><ul>
+<li>指针： java使用自动的内存管理功能，不同于c++的指针</li>
+<li>多重继承： c++支持多重继承 允许许多父类派生一个类，。java不支持多重继承，但允许一个类继承多个接口（extends+implement）。</li>
+<li>数据类型和类： java是完全面向对象的语言，所有的函数和变量都必须是类的一部分。除了基本的数据类型之外，其余的都作为类对象。而c++允许将函数和变量定义为全局的。</li>
+<li>java自动内存管理，无需程序员删除</li>
+<li>java不支持操作符重载</li>
+<li>预处理功能 java不支持预处理</li>
+</ul>
+<h2 id="实参和形参的差别"><a href="#实参和形参的差别" class="headerlink" title="实参和形参的差别"></a>实参和形参的差别</h2><ul>
+<li>形参出现在函数定义中，在整个函数体内都可以使用， 离开该函数则不能使用。</li>
+<li>实参出现在主调函数中，进入被调函数后，实参变量也不能使用。 形参和实参的功能是作数据传送。发生函数调用时， 主调函数把实参的值传送给被调函数的形参从而实现主调函数向被调函数的数据传送。</li>
+</ul>
+<h2 id="指针数组和数组指针的差别"><a href="#指针数组和数组指针的差别" class="headerlink" title="指针数组和数组指针的差别"></a>指针数组和数组指针的差别</h2><ul>
+<li>指针数组是一个数组里面装着指针</li>
+<li>指向数组的指针，代表它是指针，指向整个数组。</li>
+<li>空指针和迷途指针 delete之后内存虽然被释放但指针本身仍然存在。</li>
+</ul>
+<h2 id="malloc-free-和-new-delete的区别"><a href="#malloc-free-和-new-delete的区别" class="headerlink" title="malloc/free 和 new/delete的区别"></a>malloc/free 和 new/delete的区别</h2><p>对于非内部数据类型而言，malloc/free 无法满足动态对象的要求。对象在创建的时候要自动执行构造函数，在消亡之前要析构函数。由于 malloc/free是库函数而不是运算符，不在编译器控制权限内，因此需要一个能够完成动态内存分配和初始化工作的运算符new 以及完成清理和释放内存工作的运算符delete。 new/delete不是库函数，而是运算符。</p>
+<h2 id="什么是面向对象"><a href="#什么是面向对象" class="headerlink" title="什么是面向对象"></a>什么是面向对象</h2><p>将现实世界的物抽象成对象。<br>     面向对象技术的基本概念必须提供对象 类 和继承<br>     三个特性 封装，多态和继承</p>
+<ul>
+<li>封装，类定义将其说明(用户可见的外部接口)与实现（用户不可见的内部接口）显示的分开了。</li>
+<li>面向对象了之后具有良好的可复用性，易维护以及良好的扩充性。</li>
+<li>必须使用静态成员函数在一个类的所有实例之间共享数据。如果想限制对静态成员的变量的访问，则必须把它们声明为保护型或私有型。</li>
+</ul>
+<h2 id="重载和覆盖有什么差别"><a href="#重载和覆盖有什么差别" class="headerlink" title="重载和覆盖有什么差别"></a>重载和覆盖有什么差别</h2><pre><code>覆盖是对成员函数的重写，而重载则是有着不同的参数列表或者参数类型的函数。重载的优点主要在于可以在一个类中定义功能类似的函数，属于静态绑定的范畴。    
+</code></pre><h2 id="什么是虚函数，为什么需要虚函数-什么是多态"><a href="#什么是虚函数，为什么需要虚函数-什么是多态" class="headerlink" title="什么是虚函数，为什么需要虚函数 什么是多态"></a>什么是虚函数，为什么需要虚函数 什么是多态</h2><pre><code>多态就是一个接口，多种方法。在程序运行的过程中才决定调用的函数。多态性允许你将父对象设置成为和它的一个或更多的子对象相等的技术，赋值之后，父对象就可以根据当前赋值给它的子对象的特征以不同的方式运作。使用的时候先用父类指针指向子类型的对象，然后直接或间接使用基类指针调用虚函数，静态成员函数不能定义为虚函数因为它不用对象就可以访问，构造函数不能定义为虚函数，因为定义了没有意义因为构造函数不被继承。
+</code></pre><h2 id="面向对象的主要思想是什么，什么是多态，为什么要有“多态”-“接口”。什么是好的面向对象设计，虚函数-多重继承，这是JAVA没有的，为什么JAVA没有的原因。"><a href="#面向对象的主要思想是什么，什么是多态，为什么要有“多态”-“接口”。什么是好的面向对象设计，虚函数-多重继承，这是JAVA没有的，为什么JAVA没有的原因。" class="headerlink" title="面向对象的主要思想是什么，什么是多态，为什么要有“多态”,“接口”。什么是好的面向对象设计，虚函数 多重继承，这是JAVA没有的，为什么JAVA没有的原因。"></a>面向对象的主要思想是什么，什么是多态，为什么要有“多态”,“接口”。什么是好的面向对象设计，虚函数 多重继承，这是JAVA没有的，为什么JAVA没有的原因。</h2><p>所谓“好的面向对象设计”是那些可以满足“应对变化，提高复用”的设计。面向对象三大机制的支持，即： “封装、继承、多态”。</p>
+<ul>
+<li>封装，隐藏内部实现</li>
+<li>继承，复用现有代码</li>
+<li>多态，改写对象行为</li>
+</ul>
+<h2 id="char与int的转换"><a href="#char与int的转换" class="headerlink" title="char与int的转换"></a>char与int的转换</h2><pre><code>char也是一种整型 从-128 到 127之间 与整型数其实有种一一对应的关系。
+char到数字的话减去’0’
+</code></pre><h2 id="A-copy-constructor-is-called-whenever-a-new-variable-is-created-from-an-object"><a href="#A-copy-constructor-is-called-whenever-a-new-variable-is-created-from-an-object" class="headerlink" title="A copy constructor is called whenever a new variable is created from an object."></a>A copy constructor is called whenever a new variable is created from an object.</h2><ul>
+<li>拷贝构造；</li>
+<li>深拷贝和浅拷贝的定义可以简单理解成：如果一个类拥有资源(堆，或者是其它系统资源)，当这个类的对象发生复制过程的时候，这个过程就可以叫做深拷贝，反之对象存在资源，但复制过程并未复制资源的情况视为浅拷贝, 在定义类的时候要写的一个函数，用来提供类的一份拷贝的功能。<br>   对对象的复制。that’s a copy of itself. 所做的事情包括复制常规的成员，复制指针的空间。</li>
+</ul>
+<h2 id="运算符重载"><a href="#运算符重载" class="headerlink" title="运算符重载"></a>运算符重载</h2><p>为什么要运算符重载呢，那是因为c++预定义的运算符只是适用于基本的数据类型，对于许多用户自定义的类型（比如类）在需要类似的运算操作的时候就要自己进行定义了。其实质还是函数重载，提供了c++的可扩展性。</p>
+<p>通过创建运算符函数实现，其定义了重载的运算符将要进行的操作。与其他函数的定义相比，运算符函数的函数名是由关键字operator和其后要重载的运算符符号构成。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&lt;返回类型说明符&gt;operator&lt;运算符符号&gt;（&lt;参数表&gt;）</div><div class="line"> &#123;</div><div class="line"> &lt;函数体&gt;</div><div class="line"> &#125;</div></pre></td></tr></table></figure>
+<p>可以选择把重载函数定义为成员函数或者是非成员的友元函数，如果定义为成员函数，那么参数列表中会少一个，因为可以用this指针隐式的访问类的一个对象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">bool operator&lt;(const test &amp;t1) const&#123;</div><div class="line">    return (v &lt; t1.v);//第一个v应该是this指针隐式访问的。</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>友元函数：比较一个int对象和类对象的大小。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">    friend inline bool operator&lt;(const int &amp;a, const test &amp; t1)&#123;</div><div class="line">    return (a &lt; t1.v);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="对一个类的拷贝构造函数，赋值运算符到底是传值还是传引用，怎么返回？返回值还是引用。"><a href="#对一个类的拷贝构造函数，赋值运算符到底是传值还是传引用，怎么返回？返回值还是引用。" class="headerlink" title="对一个类的拷贝构造函数，赋值运算符到底是传值还是传引用，怎么返回？返回值还是引用。"></a>对一个类的拷贝构造函数，赋值运算符到底是传值还是传引用，怎么返回？返回值还是引用。</h2><ul>
+<li>比如String &amp; String::operate=(const String &amp;other)的const是干嘛的？</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">MyString s3(pello)</div><div class="line">const MyString s4(qello)</div><div class="line">s3=s4</div></pre></td></tr></table></figure>
+<ul>
+<li><p>除非使用const，否则就会出错。一个const常量不能随意转化成非const常量。<br>   或者</p>
+   <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">MyString s7（adf）；</div><div class="line">MyString s8（adf）；</div><div class="line">MyString s9（adf）；</div><div class="line">s9 = s8 + s7</div></pre></td></tr></table></figure>
+<p>   不用const也会报错，因为+赋值必须返回一个操作值已知的MyString对象。</p>
+</li>
+</ul>
+<h2 id="x是否为2的若干次幂的判断"><a href="#x是否为2的若干次幂的判断" class="headerlink" title="x是否为2的若干次幂的判断"></a>x是否为2的若干次幂的判断</h2><p><code>cout &lt;&lt; boolalpha &lt;&lt; ((i &amp; (i – 1)) ? false : true) &lt;&lt; endl;</code></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2014/11/24/mysql反模式-5-第四部分应用程序开发反模式/" itemprop="url">
                   mysql反模式(5)--第四部分应用程序开发反模式
                 </a>
@@ -1723,7 +1974,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">47</span>
+              <span class="site-state-item-count">48</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1731,7 +1982,7 @@
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-count">16</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>

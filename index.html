@@ -250,6 +250,173 @@
             
               
                 
+                <a class="post-title-link" href="/2017/04/11/redis001/" itemprop="url">
+                  《Redis入门指南》之基本的数据结构
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-11T21:44:10+08:00" content="Apr 11 2017">
+              Apr 11 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index">
+                    <span itemprop="name">redis</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/11/redis001/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/11/redis001/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>《redis入门指南》这本书入门不错，值得推荐，每一章都有些干活。这里分别加以总结，并增加了自己的一些理解。</p>
+<h2 id="常见数据结构"><a href="#常见数据结构" class="headerlink" title="常见数据结构"></a>常见数据结构</h2><h3 id="字符串类型"><a href="#字符串类型" class="headerlink" title="字符串类型"></a>字符串类型</h3><p>这是最常见的key-value的结构，但是现在的no-sql远不止于此：</p>
+<p>我们来看看四个使用字符串类型的场景：</p>
+<ul>
+<li>INCR num： 进行文章的访问pv统计；</li>
+<li>INCR num： 生成自增ID，类似于mysql的auto_increment；</li>
+<li>SET key value：存储序列化的json或其他数据结构；</li>
+<li>GETBIT key offset: 通过bit位来记录大批量用户的单个状态，如性别，方便快速读取和修改，占用空间小，性能高。必须采用预分配+用户id映射，避免不必要的内存消耗；</li>
+</ul>
+<h3 id="散列类型"><a href="#散列类型" class="headerlink" title="散列类型"></a>散列类型</h3><p>散列类型略微复杂一些，对应的是mysql中的列数据，但是有对比，才有伤害：</p>
+<p>假设双方都要存储一张Person表，具有如下的属性：</p>
+<ul>
+<li>性别</li>
+<li>身高</li>
+<li>拥有车的品牌</li>
+</ul>
+<p>这就尴尬了，不是每个人都有车，哪来品牌呢？mysql一定要有冗余的字段，但是redis的散列类型就不需要。<br><code>hset richwang sex male height 180 carbrand bmw</code><br><code>hset poolgeorage set male height 170</code></p>
+<p>我们再来看看散列常见的两个场景：</p>
+<ul>
+<li>HKEYS key | HVALS key | HLEN key : 不在使用结构化的数据来进行key-value存储，而是分字段更灵活的存储，方便单独的修改和更新，每次不需要全量json的更新</li>
+<li>HEXISTS key | HSETNX: 存储某一类映射关系，确保一一对应，比如person和身份证，一旦添加之后，无法用相同的身份证再次添加。</li>
+</ul>
+<p>再提一句，散列是redis中唯一支持数据类型嵌套的类型。</p>
+<h3 id="列表类型"><a href="#列表类型" class="headerlink" title="列表类型"></a>列表类型</h3><p>列表类型主要是进行数组的描述，一般常见的操作就是向列表两端添加元素，或者获得列表的某一个片段。</p>
+<p>从实现上来讲的话：双向链表实现，头尾插入非常方便，头尾获取也非常快，但是对中间元素的读取和写入都比较慢，所以在使用的时候也应该尤其注意这一点。</p>
+<p>另外还有一个值得注意的性能指标，LLEN命令会直接读取现成算好的长度，而不是像mysql那样<code>select count(*)</code>进行遍历数据表。</p>
+<p>下面来看看列表类型的场景，还是很多的：</p>
+<ul>
+<li>新鲜事Feeds，对于一个SNS而言，新鲜事的场景很多，用户每次打开，总是要拉取朋友的新鲜事。对于每个用户而言，使用一个列表存储用户能看到的动态十分方便。每次只要给出当前的index，就可以拉取其新鲜事，而且头尾存储，性能很高。</li>
+<li>日志记录：将日志记录到列表中，方便进行头尾查看。</li>
+<li>ID列表，通过固定顺序将id存储列表类型，使用 LRANGE numbers 0 2 进行分页读取，缺点在于已有顺序不太方便调整。结合活动中心的案例，如果是一枪头发布，使用这个方案没有问题，但是如果活动有上线下线的过程，那么最好还是不要使用这个。</li>
+<li>队列循环：RPOPLPUSH source destination，如果source和dest相同的话，那就是一个循环。非常适合进行url的监控，循环的同时还可以不断的加入新的网址。整个系统容易扩展，允许多个客户端同时处理队列；</li>
+<li>评论列表：如果评论一经发布不可修改，那么也比较适合序列化之后，存入列表，进行插入和拉取。</li>
+</ul>
+<h3 id="集合类型"><a href="#集合类型" class="headerlink" title="集合类型"></a>集合类型</h3><p>对于那些元素不可重复的场景，集合类型是必不可少的。很多时候在一些场景下，容易把集合和列表类型混用，所以最好对其两者特性都能够有所了解。集合的主要应用场景一个是不重复，另一个是集合之间的交集、并集、差集。</p>
+<p>一个非常常见的场景就是标签的存储。使用两个集合类型：<br>集合1：标签集合<br><code>SADD labels teacher students worker engineer</code><br>集合2：标签下属人群集合<br><code>SADD teacher tom ted lily</code></p>
+<p>通过这样的设计可以实现如下的几个功能特性：</p>
+<ul>
+<li>通过labels集合保存所有的不重复的标签，方便添加、拉取和删除</li>
+<li>不同的标签对应了不同的下属人群，那么标签之间非常常见的交集、并集、差集操作，都可以很方便的利用集合的SDIFF DINTER SUNION来实现</li>
+</ul>
+<p>针对第二种情况，如果是使用mysql存储的话，就会涉及到一个非常复杂的join的过程：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SELECT p.name FROM person_labels pl, person p, labels l WHERE pl.label_id=l.label_id AND (l.label_name IN (‘teacher’, ‘worker’)) AND p.person_id=pt.person_id GROUP BY p.person_id HAVING COUNT(p.person_id)=3;</div></pre></td></tr></table></figure></p>
+<p>所以在这种场景之下，redis的集合类型还是非常的实用的。</p>
+<h3 id="有序集合列表"><a href="#有序集合列表" class="headerlink" title="有序集合列表"></a>有序集合列表</h3><p>有序集合列表我个人感觉应该是为了互联网的榜单而生，它将每个元素都关联了一个分数。从上文中知道，redis中的列表类型使用了双向链表，获取开头和结尾的元素都是比较容易的，而有序集合则使用了散列表和跳跃表，其中跳跃表就是为了实现查找的log(N)效率而进行的实现。有了优点，不可避免的，它比列表类型更加费内存一些。</p>
+<p>我们来看一个文章按照点击量来排序的实例，新建一个有序集合<code>article:pageview</code>，其中存储的是<code>articleId</code>，而其score就是文章的点击量。<br>每有一篇文章增加了点击，我们就可以使用<code>ZINCRBY article:pageview 1 $articleId</code>，来进行对应的操作。<br>按照访问量来获取所有的文章列表，就可以直接使用<code>ZRANGE article:pageview 0 -1 withscores</code>  加以实现。</p>
+<p>另外一个比较常见的应用就是按照score归档数据，比如score定义为时间戳，那么就可以使用<code>ZREVRANGEBYSCORE articles 六月的timestamp 五月的timestamp limit 0 3</code> 这样就可以获得在六月和五月之间的前三篇文章了。</p>
+<p>同时有序集合也是支持一些集合的操作的。举一个例子，上海市教育局想看看黄浦区的教育水平如何，选取了大同中学和大境中学两个学校，分别对应了两个有序列表：datongScore和dajingScore，分别存储其每个学科的平均分。学科的id是完全一样的。那么想看看黄浦区的学科平均分，但是由于两个学校的考题难度不一样，又需要一定的加权处理的时候，这时候就需要执行：<br><code>ZINTERSCORE huangpuScore 2 datongScore dajingScore WEIGHTS 1 0.8</code></p>
+<p>再获取一下其中的结果：<br><code>ZRANGE huangpuScore 0 -1 WITHSCORES</code> 即可获得想要的结果。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/03/12/book015/" itemprop="url">
                   读《途客圈创业记-不疯魔，不成活》
                 </a>
@@ -1673,150 +1840,6 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/06/travel001/" itemprop="url">
-                  山水游重庆
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-06T12:28:34+08:00" content="Oct 6 2016">
-              Oct 6 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/旅行/" itemprop="url" rel="index">
-                    <span itemprop="name">旅行</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/10/06/travel001/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/06/travel001/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="山城的路"><a href="#山城的路" class="headerlink" title="山城的路"></a>山城的路</h2><p>去重庆之前，听到最多的一句就是不要在重庆使用高德导航，因为这个城市的路从不以常理出牌。咋听下来不以为然，但是因为要租车，所以还是有一些忐忑。第一天刚到酒店，便忙不迭的出门探路，顺便去人气火锅店打个尖。从导航来看，不过一公里直线距离，哪知道刚出门就直呼上当。这一公里是结结实实的跌宕起伏:出门先是一个大环路，然后就是五百米的爬坡，这还不算完，又经过了三百米的六十度登山运动，这才差不多到了终点。待气喘吁吁的登了上去，竟然已经可以俯瞰住处，不禁称奇。</p>
-<p>有了这么一出，却也还没免去第二天取车时的尴尬。大马路进入大名鼎鼎的洪崖洞，抬头一看，竟是十层。离着负一层的停车场差了一个人山人海的电梯。九牛二虎之力之后，终于到达负一层，一抬头竟又是大马路，令人啧啧称奇。所以呢，这座城市永远能给你惊喜，因为楼下有楼，路下有路。更妙的是，楼中有车，轻轨可以穿楼而过。楼中有路，长达二百米的大电梯让你扶层而上，甚至还要你留下两块的买路钱:)</p>
-<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8ig5hdz6mj20zk0zkwle.jpg" alt=""></p>
-<p>不过不得不说的一点是，在通行方面，城市的设计者确实也随性了些。对我一个健康人而言，很多地方的通行已经是一种障碍了。洪崖洞从十层到一层，踩了十几只脚，挤了七八趟电梯，十分不便。山城的魅力虽然是在此，但也确实应当更加对出行的便利性加以考虑。</p>
-<p>山城两字，其实也不足以囊括重庆的精髓，因为地处嘉陵江和长江的两江交汇之处，重庆的水路也是十分的发达。朝天门码头赫赫有名，曾经在历史上承担着无比重要的地位。作为长江黄金水段的源头，碧绿的嘉陵江与浊黄的长江水在此交汇。顺水而下，遍览三峡。</p>
-<p>当然了，山城的交通是立体的，除去水路和陆路，更有别具一格的空路 – 长江索道。在《周渔的火车》《疯狂的石头中》，长江索道亮点十足，最喜得就是在雾蒙蒙的江面上，独坐索道，看雾中有山，雾中有水，心里却思考着远方的感觉。让人能够不由自主的从繁复的生活中抽出，思考着人生的意义。不过在旅游旺季，就没有这么好的待遇了，长达两小时的排队和骤至的暴雨都让人等待的心焦。拥挤的人群和登索道时的忙乱更是有些措手不及，说话间，五分钟的索道就到了终点。不免有些意犹未尽，不过留下点遗憾也好，至少下次来时，还有些心中未完成的事。</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8ig5gsa1uj20zk0zkdj8.jpg" alt=""></p>
-<p>路在脚下，除了用脚去丈量，开车也是一种不错的方式。自驾在重庆，是一种特别的体验。第一个体验就是眼见，重庆的人民感觉特别的随性，不止一次在内环高速或是跨县高速上看到有行人徒步，啧啧称奇。第二个体验就是脚踏，在山城开车，要求很高。尤其是高峰时段，开车排队在上山路上时，为了谨防溜车，脚始终要在刹车和油门之间进行无缝的切换。开了一会儿就要活动那么一下，就怕自己车还没上去，脚已经抽筋了。第三个体验就是路险，s弯、临水临山路、发夹弯、连续下坡都是家常便饭，尤其是当你拐弯拐到自己的右后上方的时候，不禁要感叹，以前古代人民真不容易。</p>
-<h2 id="山城的吃"><a href="#山城的吃" class="headerlink" title="山城的吃"></a>山城的吃</h2><p>每个来山城的人，都怀揣着一颗蠢蠢欲动的吃货心。不过往往发生最多的情况就是，这颗吃货心会迅速的在火锅的刺激下达到顶点，然后在肠胃和口腔的双重作用下，回归成“不吃辣椒我也可以活的很好”的认怂心态。对我来说，对重庆辣度的挑战，在第一天还没开始，就已经结束了。</p>
-<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f8ig5ih34lj20zk0zk7al.jpg" alt=""></p>
-<p>重庆菜能够放上台面来讲的，无非几样。民间的以小面、酸辣粉为首，讲究走入民间，越是平民化，越是环境一般性，越是巷子深，越是来的人络绎不绝。著名的胖妹小面，虽然不知是不是重庆小面二十强，称得上是这么的一个范例。尽管非常可惜的是店主十一休假去了，但是从环境来看，确实只是略好于路边摊，不过味道据吃过的人说，相当的“巴适”。</p>
-<p>用小面解决了早饭，中饭最好来一桌江湖菜。重庆的所谓江湖菜，我的理解，讲究一种取材。因地制宜，食材很关键。因为重庆靠山又临水，所以食材可以说十分丰富。南山上的泉水鸡，一鸡三吃，道道入味，尤其是主菜椒麻鸡，肉质细嫩，入味三分。另一个比较耳熟能详的江湖菜就是毛血旺，各种食材汇聚，鲜香一锅，令人垂涎不已。就是这么些不上大桌的菜，吃的很有味道，吃完酣畅淋漓，十分痛快！</p>
-<p>时间转到黄昏，整个城市起雾了，雾蒙蒙的江岸边，仔细那么一闻，还真有股老火锅的味道。现在重庆火锅主要就是两个流派，一个是新式火锅，处于特别高端的cbd或是商业街区，在口味、环境方面都做了不少的改良。还有就是所谓的“老火锅”，这些火锅店往往是酒香不怕巷子深，隐藏于不同的居民区、街区。其中有在地下室的，有在山头上的，还有在山洞里面的。家家都有那么几样经典：黄喉 牛肚 鸭肠，谁也不让谁。但是家家也都有自己的汤底独家秘方，往往那饕餮的食客们，就是闻着这么股夹杂着海椒、花椒和各式香料的味道作为导航，在一桌桌麻辣鲜香中大快朵颐。</p>
-<h2 id="文化自然双遗"><a href="#文化自然双遗" class="headerlink" title="文化自然双遗"></a>文化自然双遗</h2><p>一通山城的饮食三板斧之后，驱车一路向西，不出200公里，就是世界文化遗产，大足石刻。一路向东，也是200公里上下，就是世界自然遗产，武隆天坑。一文一武，既有自然界的鬼斧神工，也有宗教人文的源远流长。</p>
-<p>来了大足石刻，一圈下来，可以说是应接不暇。每一座石刻都有故事，每一处设置都有出处。雕刻家与修行者兢兢业业，为的是将他们心中的佛法留存和流传，为此殚精竭力。比如著名的九龙浴太子图，出处乃是释迦摩尼的降生故事：</p>
-<p>净饭王之妻摩耶夫人身怀有孕，出游兰毗尼园中，手攀树枝，太子悉达多从其右腋下降生。太子降生即能行走七步，步步生莲，并一手指天，一手指地说：天上地下，唯我独尊。时有九蛇至太子头顶，口吐香水，为太子洗浴，诸天护俱来守护。</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8ig5sxgouj21kw16otwi.jpg" alt=""></p>
-<p>这样的一个雕塑，体现了匠人的匠心独运，与自然水势相结合，引用山泉之水，为太子沐浴。正所谓因地制宜，顺势而为。而由于中国人认为蛇是邪恶的，所以故事在中国进行了进一步的演化，蛇变成了神龙。这种佛教的本地化，在佛教传入中国的过程中比比皆是。这种演化，是宗教在传播过程中遇到阻碍产生的自适应。便览大足石刻，你就能看到这种变化，从单纯的佛教主题石刻，到带有中国特色孝道的佛教石刻，再到佛、道、儒三者融合的石刻，看着这些石刻，就像是层叠的历史，完整的展现在你的面前，说真的，比大片还要过瘾。</p>
-<p> 大足石刻多不胜数，而且各个内涵深意，再提一个六道轮回图，这是第一次完整的看到所谓的六道轮回及其深意。其中必须要说的是左下角那个竹林猫鼠相戏图。</p>
-<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f8ig5jzf7zj21kw2dme81.jpg" alt=""></p>
-<p>猫于竹林下，看着竹上的老鼠，想吃却吃不到，心急如焚。老鼠在竹子上瑟瑟发抖，想求生却又无处可逃。正所谓：</p>
-<p>欲求不得，苦之本也<br>看完人文景观，不妨转战天坑地缝芙蓉洞。自然的鬼斧神工，在这里几乎全部集齐。既有天生三桥这样的峡谷，又有芙蓉洞这样的山体溶洞。古人云，天人合一，请看下图，确实很适合修炼:)</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8ig5g8kqmj20zk0zktfl.jpg" alt=""></p>
-<p>此地可以说在我第一次看到时，就觉得满足了我心中隐居的所有想象。深山之中，树影婆娑，一座小院，修生养性，尽管参观时人流滚滚，但站在庭院中心，一停一转，吸收天地灵气，确实又忘我之感。</p>
-<p>山城来也匆匆，去也匆匆，仍有不少魅力值得探寻，但留下遗憾，即是留下再访的理由。重庆，再见！</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1862,7 +1885,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">47</span>
+              <span class="site-state-item-count">48</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1870,7 +1893,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-count">16</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
