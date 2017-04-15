@@ -250,6 +250,178 @@
             
               
                 
+                <a class="post-title-link" href="/2014/11/30/php扩展与嵌入-如何在linux下配置LAMP环境/" itemprop="url">
+                  php扩展与嵌入-如何在linux下配置LAMP环境
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-30T12:51:46+08:00" content="Nov 30 2014">
+              Nov 30 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/php扩展/" itemprop="url" rel="index">
+                    <span itemprop="name">php扩展</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/30/php扩展与嵌入-如何在linux下配置LAMP环境/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/30/php扩展与嵌入-如何在linux下配置LAMP环境/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="php扩展与嵌入-–-如何在linux下配置LAMP环境"><a href="#php扩展与嵌入-–-如何在linux下配置LAMP环境" class="headerlink" title="php扩展与嵌入 – 如何在linux下配置LAMP环境"></a>php扩展与嵌入 – 如何在linux下配置LAMP环境</h1><p>在linux下面，使用源码包编译的方式安装LAMP，可以对内部的编译机制和php的模块加载等方面有更加深入的了解。</p>
+<p>所谓LAMP指的是Linux+Apache+Mysql+Php，这些软件安装完毕了之后，就算是成功搭建了进行php开发的环境了。</p>
+<h2 id="下载源码包："><a href="#下载源码包：" class="headerlink" title="下载源码包："></a>下载源码包：</h2><ul>
+<li>apache：wget <a href="http://apache.dataguru.cn//httpd/httpd-2.4.7.tar.bz2" target="_blank" rel="external">http://apache.dataguru.cn//httpd/httpd-2.4.7.tar.bz2</a></li>
+<li>mysql：直接用apt-get安装好了，这个源码新版本的比较难找。</li>
+<li>php：wget <a href="http://cn2.php.net/distributions/php-5.5.7.tar.bz2" target="_blank" rel="external">http://cn2.php.net/distributions/php-5.5.7.tar.bz2</a></li>
+</ul>
+<p>下载完了源码包之后，要进行解压缩，基本的解压缩命令如下：<br><a href="http://www.cnblogs.com/eoiioe/archive/2008/09/20/1294681.html" target="_blank" rel="external">解压命令</a></p>
+<p>针对.tar.bz2就是 tar jxvf<br>针对.tar.gz 就是tar zxvf</p>
+<h2 id="安装mysql"><a href="#安装mysql" class="headerlink" title="安装mysql"></a>安装mysql</h2><p>首先说安装mysql。因为对于mysql来说，源码包比较难找，其实也没必要通过编译的方式安装。所以最方便的方式就是直接使用apt-get的安装方式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo apt-get install mysql-client</div><div class="line">sudo apt-get install mysql-server</div></pre></td></tr></table></figure>
+<p>按照提示操作了之后，就完成了安装的大部分。在提示中要求设定用户名和密码，这个是连接数据库主要所需要的参数。<br>接下来就用这个命令进行一下检测：</p>
+<p><code>mysql -uusername -ppassword</code></p>
+<p>把username和password换成本来设置的值，然后看一下mysql是否安装成功了。<br>正常情况下mysql应该是被注册为linux的服务了。可以通过如下命令察看一下：</p>
+<p><code>chkconfig --list</code><br>查看所有已注册的服务。</p>
+<h2 id="安装apache"><a href="#安装apache" class="headerlink" title="安装apache"></a>安装apache</h2><p>安装apache的时候，首先解压缩并且进入源码目录：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">tar jxvf apache-version.tar.bz2</div><div class="line">cd apache-version/</div></pre></td></tr></table></figure>
+<p>然后对apache进行配置：</p>
+<p><code>./configure --prefix=/usr/local/apache --enable-module=so --enable-module=rewrite --enable-shared=max</code></p>
+<ul>
+<li>这里给出的prefix参数代表安装的目录。</li>
+<li>htdocsdir参数代表apache服务器的localhost文件位置。</li>
+<li>enable-module参数则启动和so和rewrite两个模块。so是用来提供DSO支持的apache核心模块。rewrite是实现地址重写的模块。像这些模块都是不能动态的加载进去的，以后需要的话还得重新编译源码，所以推荐都加载进去。</li>
+<li>enable-shared=max参数是指定把so以外所有的apache标准模块都编译成DSO模块，而不是apache核心内。<br>然后就开始：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">make</div><div class="line">make install</div></pre></td></tr></table></figure>
+<p>接下来需要把apache设定为linux的服务：<br>首先复制启动文件到服务目录下：</p>
+<p><code>cp /usr/local/apache2/bin/apachectl /etc/init.d/httpd</code></p>
+<p>然后打开服务文件：<br>vim /etc/init.d/httpd</p>
+<p>在#!/bin/sh 后面加上下面两行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">#chkconfig:345 85 15</div><div class="line">#description: Start and stops the Apache HTTP Server.</div></pre></td></tr></table></figure>
+<ul>
+<li>chkconfig:后面定义的使启动服务的运行级别(例子中使2345启动改服务),以及关闭和启动服务的顺序,(上例中关闭服务的顺序使8,启动的顺序使92)</li>
+<li>descriptions:对改服务的描述</li>
+</ul>
+<p>接下来更改文件的执行权限，并且增加服务：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chmod +x /etc/rc.d/init.d/httpd</div><div class="line">chkconfig –add httpd</div></pre></td></tr></table></figure>
+<p>这样对apache的配置就完成了。</p>
+<p>注意：在apache配置的时候可能会出现出现缺包的情况，我之前碰到的是zlib，可以通过下载zlib的源码包，并且同样进行配置安装的形式，在配置的时候可以指定安装目录，比如是/usr/local/zlib<br>那么再次配置apahce的时候就要加上<br>–with-zlib=/usr/loca/zlib<br>来把这个依赖添加上。<br>别的包也是同样的道理。</p>
+<h2 id="php安装"><a href="#php安装" class="headerlink" title="php安装"></a>php安装</h2><p>同样要执行解压缩和进入目录的操作。<br>接下来是配置的过程：</p>
+<p><code>./configure --prefix=[php安装目录] --with-config-file-path=[php安装目录] --with-apxs2=[apache安装目录]/bin/apxs  --with-mysql=[mysql安装目录] --enable-debug --enable-maintainer-zts</code></p>
+<p>如果还想要添加别的库的话，就用–with-库名=[库安装目录]<br>–enable-debug参数会在出错的时候输出很多有用的信息，从而快速定位错误。<br>而-enable-maintainer-zts则会让PHP思考在多线程环境中的行为，并且可以让你捕获常见的程序错误，这些错误在非线程环境中不会引起问题，但在多线程环境中却使你的扩展变得不可用。<br>接下来进入</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">make</div><div class="line">make install</div></pre></td></tr></table></figure>
+<p>常见的错误可以看下面这个链接：<br><a href="http://lyp.cn/350_how-to-fix-php-compile-errors" target="_blank" rel="external">http://lyp.cn/350_how-to-fix-php-compile-errors</a><br>如果没有yum包的话，找到相应的apt-get包也ok的。</p>
+<p>接下来在apache中进行配置：<br>vim  /usr/local/apache/conf/httpd.conf<br>然后在AddType中添加：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">AddType application/x-httpd-php .php</div><div class="line">AddType application/x-httpd-php-source .phps</div></pre></td></tr></table></figure>
+<p>在DirectoryIndex增加 index.php，以便Apache识别PHP格式的index</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&lt;IfModule dir_module&gt;</div><div class="line">    DirectoryIndex index.html index.php</div><div class="line">&lt;/IfModule&gt;</div></pre></td></tr></table></figure>
+<p>重启apache服务使更改生效：<br><code>sudo /etc/init.d/httpd restart</code></p>
+<p>再之后，要拷贝php的配置文件：<br><code>cp ../php-5.2.10/php.ini.dist /usr/local/php/lib/php.ini</code></p>
+<p>然后就可以进行验证了，在网络文件夹下建立info.php：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line">phpinfo();</div><div class="line"><span class="meta">?&gt;</span></div></pre></td></tr></table></figure>
+<p>接着打开浏览器，输入localhost/info.php<br>如果输出正常，那么配置就完成了。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2014/11/24/c和c-面试常见问题总结/" itemprop="url">
                   c和c++面试常见问题总结
                 </a>
@@ -1974,7 +2146,7 @@ char到数字的话减去’0’
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">48</span>
+              <span class="site-state-item-count">49</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1982,7 +2154,7 @@ char到数字的话减去’0’
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-count">17</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
@@ -1991,7 +2163,7 @@ char到数字的话减去’0’
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

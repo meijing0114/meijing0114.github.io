@@ -250,6 +250,166 @@
             
               
                 
+                <a class="post-title-link" href="/2017/04/15/redis002/" itemprop="url">
+                  《redis入门指南》之事务、缓存、排序、消息通知与空间节约
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-15T14:58:20+08:00" content="Apr 15 2017">
+              Apr 15 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/存储/" itemprop="url" rel="index">
+                    <span itemprop="name">存储</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/15/redis002/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/15/redis002/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><p>在我固有的印象中，事务是属于sql数据库才专有的特权，不过随着no-sql数据库的逐步成熟，这点确实有所变哈。</p>
+<p>redis的事务功能，简单、直观，并且能够在实际的业务中发挥作用。一般的事务用法有两种：</p>
+<h3 id="使用Multi关键字包裹"><a href="#使用Multi关键字包裹" class="headerlink" title="使用Multi关键字包裹"></a>使用Multi关键字包裹</h3><p>使用multi关键字，可以将需要一起执行的语句，保证同时发送到redis-server侧进行处理。如果说语句中存在语法错误，那么会全部终止（redis 2.6.5 以后）。<br>但是如果在执行的时候出现了运行时错误，比如set了一个哈希map的key，那么这时候就无法进行回滚操作了，这点需要尤其注意。不过一般而言，这类错误应该在测试阶段就能够被发现并规避了。</p>
+<p>这里举一个使用redis保存微博中的关注关系的实例：<br>每个用户都有一个关注的集合<code>followingSet</code>，对应的被关注的用户也有一个被关注的集合<code>followedSet</code>, 那么每次有关注关系发生的时候，绑定关系一定要是双向的：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ret = $redis-&gt;multi()</div><div class="line">    -&gt;SADD(&quot;&#123;$userIdA&#125;:followingSet&quot;,userIdB)</div><div class="line">    -&gt;SADD(&quot;&#123;$userIdB&#125;followedSet&quot;,userIdA)</div><div class="line">    -&gt;exec();</div></pre></td></tr></table></figure></p>
+<h3 id="使用watch关键字"><a href="#使用watch关键字" class="headerlink" title="使用watch关键字"></a>使用watch关键字</h3><p>很多时候我们希望对一些独占的变量进行修改的过程中，不希望被打断，因为一旦变量的值被他人更改，很容易出现不一致的问题。这在一些抢占邀请码、领礼券等常见的业务场景中都有需求。所以这个时候一般就会使用watch与multi关键字结合。</p>
+<p>举一个领礼券的例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">// 假设有100个礼物 关注礼物数量这个key</div><div class="line">$redis-&gt;watch(&quot;giftcnt&quot;);</div><div class="line">// 用户领一个礼物，礼物数量减1，同时标识用户已经领过礼物了</div><div class="line">$ret = $redis-&gt;multi()</div><div class="line">    -&gt;incrBy(&quot;giftcnt&quot;,-1)</div><div class="line">    -&gt;set(&quot;user:hasgift&quot;,1)</div><div class="line">    -&gt;exec();</div></pre></td></tr></table></figure></p>
+<p>假如说出现了静态条件，用户A在进行执行事务操作的时候，发现giftcnt已经不是自己获取的那个了，那么他的操作就需要终止，从而保证数量和表示状态的一致性。<br>Watch的思想，即是乐观锁，重试一次，希望不再遇到静态条件。一般事务成功的执行了之后，那么watch的过程也就完成了。</p>
+<h2 id="过期时间"><a href="#过期时间" class="headerlink" title="过期时间"></a>过期时间</h2><p>在过期时间这个点上，最能体现redis作为缓存的功用。这也是我在深入了解redis之前唯一有概念的点。由于之前一直在用腾讯自研的CKV，其中用到最多的，确实也是这个expire的特性。</p>
+<p>应该说，key的expire特性最能够体现大家使用缓存的普遍方式。那就是被动缓存，数据落地在mysql，同时缓存一份有过期时间的在redis，一旦过期之后，client再重新获取，继而写入到缓存中。一旦数据变更，则写入mysql，再写入缓存。<br>不过根据左耳朵耗子在博客中的分享，这种做法尽管能够满足一些常见的访问量不高的场景，但是在高并发的情况下是有问题的。设想client A访问cache，发现miss了，读取mysql，写入cache。但是与此同时，client B写入了mysql，而这个时间是在A已经把旧的数据灌入cache之后的。这就出现了问题。关于这个问题，不再深究，但是可以看看<a href="http://coolshell.cn/articles/17416.html" target="_blank" rel="external">http://coolshell.cn/articles/17416.html</a> 这篇文章。</p>
+<p>redis中expire命令，针对string类型的键：<br><code>EXPIRE key seconds</code><br><code>PEXPIRE key miliseconds</code></p>
+<p>也可以使用<code>PERSIST/SET key</code>命令把key恢复成永久。</p>
+<p>从使用场景上面来看的话，比较常见的场景之一，就是<strong>实现访问的频率控制</strong>。针对唯一的用户+接口，我们希望限制他的访问频率在每分钟固定次数，比如100次。那么就可以通过如下的方式实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">$listLength = LLEN rate.limiting:$IP</div><div class="line">if $listLength &lt; 100</div><div class="line">    LPUSH rate.limiting:$IP, noew()</div><div class="line">else</div><div class="line">    $time = LINDEX rate.limiting:$IP, -1</div><div class="line">    if now() - $time &lt; 60</div><div class="line">        print &quot;访问频率超过限制&quot;</div><div class="line">    else</div><div class="line">        MULTI</div><div class="line">        LPUSH rate.limiting:$IP, now()</div><div class="line">        LTRIM rate.limiting:$IP, 0, 99</div><div class="line">        EXEC</div></pre></td></tr></table></figure>
+<p>另外非常常见的场景，就是用作纯粹的缓存，这里需要注意两点：</p>
+<ul>
+<li>缓存时间的设置expire命令需要单独执行，并非原子操作，最好使用事务进行包装</li>
+<li>在用作缓存服务器的时候，必须限制redis使用的最大内存，并且使用一定的策略进行键值的淘汰，从而实现内存利用的最大化<ul>
+<li>maxmemory</li>
+<li>memory-policy</li>
+</ul>
+</li>
+</ul>
+<h2 id="排序"><a href="#排序" class="headerlink" title="排序"></a>排序</h2><p>说老实话，在接触这部分内容之前，我以为redis的排序仅仅是使用有序集合来进行排列。但是其实redis内置了非常强大的SORT等命令，来完成各种排序，尤其是连接查询排序的功能。</p>
+<p>如果我们相对包含了所有文章id的有序集合排序，那么就可以直接使用:<br><code>SORT articles:score DESC LIMIT 1 2</code><br>这样不但能够根据文章id的大小降序排列，还能limit返回的数量来方便翻页。</p>
+<p>而对于更复杂的排序需求，则就需要使用BY关键字了。假如说，我们需要按照article的时间排序，那么就需要用到article的hashmap的结构了：<br><code>SORT articles:score BY article:*-&gt;time DESC</code><br>其中的<code>*</code>号就会被集合中的元素来替代，你可以理解成对articles:score做了一个foreach，然后被通配符<code>*</code>给替代了。这个用法确实令人耳目一新。</p>
+<p>而除了使用哈希表中的元素，一个字符串类型的键同样也能被用作排序的key。</p>
+<p>另外一个使用排序经常关心的问题，就是返回的结果的格式。按照上文中SORT的用法，会返回一系列排序好的文章id，然后需要手动的去hget其中的数据。而GET关键字就能够解决这个问题：</p>
+<p><code>SORT articles:score BY article:*-&gt;time DESC GET article&quot;*-&gt;title GET article&quot;*-&gt;time GET #</code><br><code>#</code>号表示获取id。</p>
+<p>如果想把返回的结果以列表的形式存储，那么可以使用：<br><code>SORT articles:score BY article:*-&gt;time DESC GET article&quot;*-&gt;title GET article&quot;*-&gt;time GET # STORE sort.result</code></p>
+<p>再配合EXPIRE命令，就可以进行缓存，从而保证SORT这类高耗时的操作不那么频繁的执行。</p>
+<p>从性能来来讲，SORT的时间复杂度是<code>O(n+mlog(m))</code>, 同时redis也会提前建立一个长度为n的容器来存储待排序的元素。所以使用时一定注意：</p>
+<ul>
+<li>尽可能减少待排序键中元素的数量（减少N）</li>
+<li>使用LIMIT参数只获取需要的数据（减少M）</li>
+<li>充分利用STORE命令进行必要的缓存</li>
+</ul>
+<h2 id="消息通知"><a href="#消息通知" class="headerlink" title="消息通知"></a>消息通知</h2><p>除了缓存，另外一个redis被流传最广的用法就是实现一个简易的队列。尽管从业界的使用来看，越来越专业的如rabbitMQ、rocketMQ、CMQ、KAFUKA等队列实现方案已经越来越成熟了。但是redis用作队列的简洁高效，仍然是很多队列处理能力要求不高的场景下的不二之选。</p>
+<p>一个比较常见的场景是用户注册后，发送验证的邮件。那么定义一个队列 <code>queue:verifymail</code>，那么只需要开一个进程，阻塞的去等待队列，然后决定如何处理即可:<br><code>BRPOP queue:verifymail 0</code></p>
+<p>但是有的时候，队列也会分优先级，比如找回密码的邮件和注册成功的通知邮件，其实优先级不同。所以可以进行优先级队列的阻塞等待：<br><code>BRPOP queue:findpassword queue:verifymail 0</code></p>
+<p>除了实现队列任务之外，redis还可以用来实现不同频道的发布与订阅，从而实现后台任务更加顺畅的流转。<br>而对于发布者和订阅者的定义就是使用<code>PUBLISH和SUBSCRIBE</code>。而不同的频道则可以实现业务的隔离。</p>
+<p>比如定义个一个频道是用户发评论，那么可能有积分服务、审核服务等都订阅了这个频道，那么在收到相应的通知之后，就可以进行相应的操作了，比如进行审核，或者是增加用户的积分等等。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/04/11/redis001/" itemprop="url">
                   《Redis入门指南》之基本的数据结构
                 </a>
@@ -1676,170 +1836,6 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/11/26/book013/" itemprop="url">
-                  读《成为乔布斯》
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-11-26T12:01:36+08:00" content="Nov 26 2016">
-              Nov 26 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/书评影评/" itemprop="url" rel="index">
-                    <span itemprop="name">书评影评</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/11/26/book013/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/11/26/book013/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>《乔布斯传》的热潮似乎在慢慢的过去，人们已经逐渐淡忘了那位乔帮主，只是在每年苹果推出新产品的时候，会对tim cook 有一种矛盾的心情，既期待又担心他无法达到乔帮主的水准，愁煞了一帮果粉。</p>
-<p>我是在12年才开始接触苹果的产品，对乔布斯的了解同样也是差不多时间，如今五年左右过去，回过头看看这本《成为乔布斯》，能够得到很多不同的体悟。</p>
-<p>这本书作者的背景是曾任财富、华尔街日报的记者，他是能够得到乔布斯信任的不多的记者之一。要知道在很长一段时间里，乔帮主与媒体的关系并不好，这也是造成他“孤傲天才”固定形象的重要原因。</p>
-<p>下面来看媒体对他的固有描述：</p>
-<blockquote>
-<p>史蒂夫是一位天才，在设计方面天赋过人，讲故事的能力超凡脱俗，可以产生“扭曲现实”的魔力；他就是个自以为是的混蛋，一味地追求完美，完全不顾他人的感受；他觉得自己比任何人都聪明，从来听不进任何建议，而且从出生伊始，就是天才与混蛋的结合体。</p>
-</blockquote>
-<p>但妖魔化的描述从来不能代表一个人的真实与多面性。本书的核心在于凸显乔布斯不服输的精神 永不满足的追求 不断学习的渴望。他绝非孤独的天才，职业生涯刚起步的乔布斯羽翼未丰、鲁莽冲动、傲慢无礼，但带领苹果扭转乾坤、重登巅峰的乔布斯却成熟稳重、思虑周全。而这种质的转变不是一蹴而就的，从1085-1997的12年时间，他都在蛰伏和不断打磨自己，理解他的成长尤为可贵。</p>
-<p>要理解他的这种转变，就不能不看看他人生的各个阶段：</p>
-<p>1955 出生<br>1969 结识史蒂夫沃兹尼亚克<br>1976 苹果成立<br>1979 AppleII：软驱和visiCalc<br>1980 苹果上市<br>1984 麦金塔电脑<br>1995 四年制作的玩具总动员 皮克斯上市<br>1997 重回苹果，苹果收购NeXT（OS 操作系统）<br>2000 ipod<br>2002 cancer<br>2005 迪斯尼收购皮克斯<br>2007 iphone<br>2010 ipad<br>2011 去世</p>
-<h2 id="少年得志与重大挫折-1976-1985"><a href="#少年得志与重大挫折-1976-1985" class="headerlink" title="少年得志与重大挫折 1976-1985"></a>少年得志与重大挫折 1976-1985</h2><p>认识史蒂夫沃兹尼亚克给乔布斯的人生带来了第一个小高潮，凭借着他在市场营销和表达能力上的满点技能和沃兹尼亚克几乎无解的技术能力，一个个创意的小产品出现。从最早的“blue box”，到完整强大的电路板，直到appleI的出现。完全是工程师的匠心独运和市场产品人员的敏锐嗅觉的结合。</p>
-<p>苹果公司正是在这种场景下应运而生。但是乔布斯却没有运营公司的经验，从租办公楼、厂房、设备，设计可靠的生产流程，组建销售团队，引入质量控制，监管工程设计，建立管理信息系统，指定财务和人事负责人，着手与主要供应商和软件开发商建立联系。这都不是他擅长的。</p>
-<p>按照他自己在这个阶段的说法，他擅长创新，擅长改变世界。但却还没有达到能够捕捉业界趋势的境界。尽管他和比尔盖茨都到施乐查看了惊为天人的图形化界面和鼠标，但是如何应用仍是四处碰壁。所以这个阶段的产品，从AppleIII，到面对企业市场却费尽心思实现图形界面的Lisa，再到雷声大雨点小的麦金塔，都未能在个人电脑市场掀起波澜。而是一枝独秀的AppleII，坚挺了很长的时间。</p>
-<p>ps：经典的1984广告：<a href="http://v.youku.com/v_show/id_XMTY1MzU5OTY4.html" target="_blank" rel="external">http://v.youku.com/v_show/id_XMTY1MzU5OTY4.html</a></p>
-<p>这些经历表明，这个阶段的乔布斯根本不知道如何管理一家大的公司，他沉迷于小细节，逼疯工程师，用完美主义为自己的错误决策打掩护，这对苹果对团队，都是非常大的伤害。所以，不可避免的，他与董事会的冲突让他不得不黯然辞职。而逼他辞职的，就是他亲手请来的，曾经是”卖糖水”的前百事ceo john Sculley.</p>
-<h2 id="十年磨一剑-1985-1997"><a href="#十年磨一剑-1985-1997" class="headerlink" title="十年磨一剑 1985-1997"></a>十年磨一剑 1985-1997</h2><p>这十二年的时间，是乔布斯转变、蛰伏、成长的时间。绝非是一帆风顺，而是仍充满着各种挫折和挑战，甚至财务危机。</p>
-<p>他在NeXT苦心经营，定位便宜的工作站，面向被他称为“隐形五百强”的大学研究市场，却从未取得突破性的进展。苦心推出的第一代工作站，不但被竞争公司sun嗤之以鼻，而且甚至被比尔盖茨称为马桶一样的产品，并不愿为它开发软件。<br>由此打造一家伟大的企业成为空谈， 宏大的产品发布会成了一场看似成功却失败的秀，六年后的NeXT团队已经失去了原有的元老们。媒体开始将他与过气的失败者联系在一起。脾气暴躁，缺乏耐心，伤仲永成为了他新的标签。</p>
-<p>此时时代已变，机器不重要，软件才重要，比尔盖茨最先意识到了这一点，所以他独霸九十年代。但是在Next他逐渐学会了对产品的更为理性的判断，更重要的是，在NeXT，他打造了OS X的雏形，这为他苹果的回归奠定了基础。</p>
-<p>而皮克斯则是无心插柳柳成荫，遇见最佳创意管理者卡特穆尔和最佳动画师拉塞特是他最大的幸运，或者说是一种注定的相互成全。ps. 推荐卡特穆尔的《创意公司》。被离婚缠身的卢卡斯将皮克斯抛售给他，而他本想将皮克斯的3D技术用作商业化，但拉塞特的小台灯改变了一切，在图像专业大会上，人们排队六个小时，只为看几分钟的小台灯和《锡铁小人》。这甚至为他赢得了好斯卡。《玩具总动员》一鸣惊人，与迪斯尼的合作成功，皮克斯也成功上市，至少，这让他的财务又自由了。他也懂得了如何与最杰出的人进行合作，而不是总觉得自己是世上最特别的哪一个。</p>
-<p>这个阶段他的转变可以概括为：</p>
-<ul>
-<li>从认为自己可以取代任何一个人，胜任任何一份工作到分工的理解</li>
-<li>从不分轻重缓急，盲目追求视觉效果到理解人们的基本诉求</li>
-<li>从追求完美，而不在意市场，慢慢的学会适应和融合</li>
-<li>而他一以贯之的非常理解工程师的情感诉求，这就是为什么很多人愿意为他工作</li>
-</ul>
-<h2 id="扭转乾坤-1997-2011"><a href="#扭转乾坤-1997-2011" class="headerlink" title="扭转乾坤 1997-2011"></a>扭转乾坤 1997-2011</h2><p>之后的故事，大家都知道了。靠着NeXT，他重回苹果，此时的苹果，按照一些记者的说法，已经“内部腐烂”。</p>
-<p>所以他：</p>
-<ul>
-<li>炒掉不称职的CEO</li>
-<li>快刀斩乱麻的解决与微软的纠纷，推动微软为麦金塔开发软件</li>
-<li>重塑企业形象，发布广告《非同凡想》，宣布苹果的价值观： <a href="http://v.youku.com/v_show/id_XMzIyNTM3MzQ0.html" target="_blank" rel="external">http://v.youku.com/v_show/id_XMzIyNTM3MzQ0.html</a></li>
-<li>关掉无用的newton掌上电脑和eMate电脑产品线</li>
-<li>裁员1900</li>
-<li>明确只提供四种基本产品：两种台式机 两种笔记本，分别针对个人和专业人士</li>
-<li>试水iMac + powerbook + OSX</li>
-<li>一步一个脚印构建消费电子时代：iMovie-&gt;iTunes-&gt;iPod(johnny ive 拇指轮盘设计)-&gt;苹果专卖店-&gt;音乐电子化-&gt;safari-&gt;iphone(多点触控+触摸屏)-&gt;ipad-&gt;mac系列</li>
-</ul>
-<p>从下面几张图可以慢慢看到苹果的变化和不断推陈出新，走在创新边缘的步骤</p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-6a1815bc36af2e09.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="ceNcZImdmrU8.jpg"></p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-9c8abfe451219214.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="220px-WallstreetII.jpg"></p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-44c7c00468efcc4a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="ipod-5th-gen.png"></p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-a103d93c6bf7478b.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="ios_6_app_store_steve_jobs_iphone_2007.jpg"></p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-96108f9d0c0ab2f4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="bbd878e2bcae7ec8421e812276e6b57b.png"></p>
-<p>如此高产，如此多的创意，一步一个脚印。从破产的泥潭，到世界上市值最高的科技公司，乔帮主可谓殚精竭虑，他并非外界所想的那般冷酷无情，他不是那么好相处，确实是，但他对整个消费电子时代的推动，对推出创新产品的初心丝毫未变。在此想起乔布斯在<a href="http://open.163.com/special/opencourse/jobs.html" target="_blank" rel="external">斯坦福演讲</a>中对The Whole Earch Catalog的引用: Stay hungry stay foolish，与君共勉。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1885,7 +1881,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">48</span>
+              <span class="site-state-item-count">49</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1893,7 +1889,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-count">17</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
@@ -1902,7 +1898,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
