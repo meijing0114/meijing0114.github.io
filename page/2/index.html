@@ -250,6 +250,159 @@
             
               
                 
+                <a class="post-title-link" href="/2016/12/19/nginx001/" itemprop="url">
+                  Nginx模块之echo
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-12-19T23:17:40+08:00" content="Dec 19 2016">
+              Dec 19 2016
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/接入层/" itemprop="url" rel="index">
+                    <span itemprop="name">接入层</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/12/19/nginx001/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/19/nginx001/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="选择nginx"><a href="#选择nginx" class="headerlink" title="选择nginx"></a>选择nginx</h2><p>Nginx性能为王：</p>
+<ul>
+<li>支持epoll，大规模高并发</li>
+<li>支持Linux的sendfile系统调用，可以高效地把硬盘中数据发送到网络上。</li>
+</ul>
+<p>选择Nginx的原因：</p>
+<ul>
+<li>更快：要理解它怎么做到更快的</li>
+<li>高扩展性：不同模块，大量的第三方模块，并且模块之间具有很好的隔离性；</li>
+<li>高可靠性：来自于核心框架代码的优秀设计、模块设计的简单性。master-worker模式很稳定；</li>
+<li>低内存消耗：10000个非活跃的http keep-alive连接至消耗2.5MB内存！精细的数据结构控制，c语言精华的体现；</li>
+<li>单机支持10万以上的并发连接：上限只取决于内存</li>
+<li>热部署，从没见过这么顺滑的reload</li>
+<li>BSD许可协议的自由性</li>
+</ul>
+<h2 id="echo模块-debug利器"><a href="#echo模块-debug利器" class="headerlink" title="echo模块 - debug利器"></a>echo模块 - debug利器</h2><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>github开源，openresty作者推荐<br><a href="https://github.com/openresty/echo-nginx-module" target="_blank" rel="external">https://github.com/openresty/echo-nginx-module</a></p>
+<h3 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h3><h4 id="Location测试："><a href="#Location测试：" class="headerlink" title="Location测试："></a>Location测试：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">location /test &#123;</div><div class="line">        echo &quot;test here&quot;;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/test&quot;</code></p>
+<h4 id="计算后端请求时间："><a href="#计算后端请求时间：" class="headerlink" title="计算后端请求时间："></a>计算后端请求时间：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">location /timed_hello &#123;</div><div class="line">     # 计时器重置</div><div class="line">     echo_reset_timer;</div><div class="line">     echo hello world;</div><div class="line">     # 休眠2.5s</div><div class="line">     echo_sleep   2.5;</div><div class="line">     # 打印最终耗时</div><div class="line">     echo &quot;&apos;hello world&apos; takes about $echo_timer_elapsed sec.&quot;;</div><div class="line">     echo_reset_timer;</div><div class="line">     echo hiya igor;</div><div class="line">     echo_sleep 1;</div><div class="line">     echo &quot;&apos;hiya igor&apos; takes about $echo_timer_elapsed sec.&quot;;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/timed_hello&quot;</code></p>
+<h4 id="请求代理："><a href="#请求代理：" class="headerlink" title="请求代理："></a>请求代理：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">location /echo_proxy &#123;</div><div class="line">       # 修改向下游请求的body</div><div class="line">       echo_before_body hello;</div><div class="line">       echo_before_body world;</div><div class="line">       # 进行proxy pass的请求</div><div class="line">       proxy_pass $scheme://10.247.165.120:10090/monitor/monitor.html;</div><div class="line">       # 修改返回到client端的body</div><div class="line">       echo_after_body hiya;</div><div class="line">       echo_after_body igor;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/echo_proxy&quot;</code></p>
+<h4 id="发起子请求："><a href="#发起子请求：" class="headerlink" title="发起子请求："></a>发起子请求：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"># 子请求1，充分利用epoll的优势</div><div class="line">location /main1 &#123;</div><div class="line">    echo_reset_timer;</div><div class="line">    echo &quot;start takes about $echo_timer_elapsed sec.&quot;;</div><div class="line"></div><div class="line">    # subrequests in parallel，并发子请求</div><div class="line">    echo_location_async /sub1;</div><div class="line">    echo_location_async /sub2;</div><div class="line">    # 打印结果为0s 请求耗时为2s</div><div class="line">    echo &quot;took $echo_timer_elapsed sec for total.&quot;;</div><div class="line">&#125;</div><div class="line"># 子请求2，并未发挥子请求优势</div><div class="line">location /main2 &#123;</div><div class="line">    echo_reset_timer;</div><div class="line">    echo &quot;start takes about $echo_timer_elapsed sec.&quot;;</div><div class="line"></div><div class="line">    # 同步的进行请求</div><div class="line">    echo_location /sub1;</div><div class="line">    echo_location /sub2;</div><div class="line">    # 打印结果为3s 最终耗时3s</div><div class="line">    echo &quot;took $echo_timer_elapsed sec for total.&quot;;</div><div class="line">&#125;</div><div class="line"># 子请求1</div><div class="line">location /sub1 &#123;</div><div class="line">    echo_sleep 2;</div><div class="line">    echo hello;</div><div class="line">&#125;</div><div class="line"># 子请求2</div><div class="line">location /sub2 &#123;</div><div class="line">    echo_sleep 1;</div><div class="line">    echo world;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/main1&quot;
+curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
+<h4 id="同时发起多个子请求："><a href="#同时发起多个子请求：" class="headerlink" title="同时发起多个子请求："></a>同时发起多个子请求：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">location /multi &#123;</div><div class="line">    # 指定请求方式 参数等</div><div class="line">    echo_subrequest_async POST &apos;/tools&apos; -q &apos;foo=Foo&apos; -b &apos;hi&apos;;</div><div class="line">    echo_subrequest_async PUT &apos;/tools&apos; -q &apos;bar=Bar&apos; -b &apos;hello&apos;;</div><div class="line">&#125;</div><div class="line">location /tools &#123;</div><div class="line">    # 支持打印打印多个nginx的内建变量</div><div class="line">    echo &quot;querystring: $query_string&quot;;</div><div class="line">    echo &quot;method: $echo_request_method&quot;;</div><div class="line">    echo &quot;body: $echo_request_body&quot;;</div><div class="line">    echo &quot;content length: $http_content_length&quot;;</div><div class="line">    echo &apos;///&apos;;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/multi&quot;</code></p>
+<h4 id="静态资源合并："><a href="#静态资源合并：" class="headerlink" title="静态资源合并："></a>静态资源合并：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># 不多说，和combo扩展非常的类似</div><div class="line">location /merge &#123;</div><div class="line">       default_type &apos;text/javascript&apos;;</div><div class="line">       echo_foreach_split &apos;&amp;&apos; $query_string;</div><div class="line">           echo &quot;/* JS File $echo_it */&quot;;</div><div class="line">           echo_location_async $echo_it;</div><div class="line">           echo;</div><div class="line">       echo_end;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/merge?/foo.js&amp;/test.js&quot;</code></p>
+<h4 id="if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"><a href="#if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的" class="headerlink" title="if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"></a>if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">location ^~ /if &#123;</div><div class="line">     set $res miss;</div><div class="line">     if ($arg_val ~* &apos;^a&apos;) &#123;</div><div class="line">         set $res hit;</div><div class="line">         echo $res;</div><div class="line">     &#125;</div><div class="line">     echo $res;</div><div class="line"> &#125;</div></pre></td></tr></table></figure>
+<p><code>curl &quot;http://testecho.qidian.com/if?val=abc&quot;</code><br><code>curl &quot;http://testecho.qidian.com/if?val=ddd&quot;</code></p>
+<h3 id="其中涉及的一些nginx模块的开发概念"><a href="#其中涉及的一些nginx模块的开发概念" class="headerlink" title="其中涉及的一些nginx模块的开发概念"></a>其中涉及的一些nginx模块的开发概念</h3><h4 id="subrequest与upstream"><a href="#subrequest与upstream" class="headerlink" title="subrequest与upstream"></a>subrequest与upstream</h4><p>upstream：<br>提供了一种访问后端服务的能力。更加基础，同时充分利用了nginx优秀设计中的epoll模型，从而做到了异步和无阻塞. 通信方式不限，通信协议不限。常见的就是udp和tcp，同时再配合二进制的一些高校打包协议，这时候你就可以让nginx和后端服务无缝的衔接在一起了。</p>
+<p>subrequest： 子请求<br>针对的是第三方的服务，举个例子，你的网站导航服务依赖于第三方服务比如新浪天气的返回结果，那么可以使用子请求的方式。<br>但是第三方的服务协议局限于http，同时它的底层也是由upstream实现的。但是相比之下概念和出发点有所不同。</p>
+<h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><p>几个名词：IO多路复用、高性能网络模型、同步异步、阻塞非阻塞、协程与并发。<br>推荐篇文章：<a href="http://blog.csdn.net/tianmohust/article/details/6677985" target="_blank" rel="external">http://blog.csdn.net/tianmohust/article/details/6677985</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/11/26/book013/" itemprop="url">
                   读《成为乔布斯》
                 </a>
@@ -2016,289 +2169,6 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/01/17/translate001/" itemprop="url">
-                  译术 | SQL vs NoSQL：异同比较
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-01-17T23:46:38+08:00" content="Jan 17 2016">
-              Jan 17 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/译术/" itemprop="url" rel="index">
-                    <span itemprop="name">译术</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/01/17/translate001/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/01/17/translate001/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <blockquote>
-<p>译者按：SQL与NoSQL之争近年来十分受到关注，既存在“SQL吃遍天下”这种理念，也不乏“NoSQL一定代表着先进生产力”这种谬误。争者往往不求甚解，为弄潮而争，忽略了本质。这篇文章原文地址：<a href="http://www.sitepoint.com/sql-vs-nosql-differences/" target="_blank" rel="external">http://www.sitepoint.com/sql-vs-nosql-differences/</a> 作者对SQL与NoSQL在多个层面进行了细致的比较。值得一读。</p>
-</blockquote>
-<p>SQL（结构化查询语言）数据库成为主流的数据存储机制已经存在了80余年。在1990年代末，随着web应用和诸如MySQL、PostgreSQL和SQLite这类开源项目的兴起，SQL随之得到爆发式应用。</p>
-<p>NoSQL数据库产生于1960年代，但是最近才出现了一些类似于MongoDB、CouchDB、Redis和Apache Cassandra这样的流行选择。</p>
-<p>你可能会看到很多探讨如何使用SQL或NoSQL的某个特性的文章。对如何从中二选一的讨论却并不多见。我希望能填补这个空白。这篇文章中，我们会覆盖到最基本的差异。而接下来会有一篇文章针对典型的场景讨论数据存储的最优选择。</p>
-<p>大多数例子适用于流行的MySQL SQL数据库和MongoDB NoSQL数据库。其他的SQL/NoSQL数据库是类似的，但是在特性和语法上可能略有不同。</p>
-<h2 id="SQL与NoSQL的神圣战争"><a href="#SQL与NoSQL的神圣战争" class="headerlink" title="SQL与NoSQL的神圣战争"></a>SQL与NoSQL的神圣战争</h2><p>在进一步讨论之前，让我们先来修正一些普遍的谬误：</p>
-<h3 id="谬误：-NoSQL比SQL更好-差"><a href="#谬误：-NoSQL比SQL更好-差" class="headerlink" title="谬误： NoSQL比SQL更好/差"></a>谬误： NoSQL比SQL更好/差</h3><p>有些项目更适合使用SQL数据库。有些则更适合NoSQL。 还有些则能配合使用。这篇文章不是想在两者之间决出一个胜者，因为你不可能在所有的场景下都应用同样的假设。</p>
-<h3 id="谬误：-NoSQL和MySQL之间有着清晰的鸿沟"><a href="#谬误：-NoSQL和MySQL之间有着清晰的鸿沟" class="headerlink" title="谬误： NoSQL和MySQL之间有着清晰的鸿沟"></a>谬误： NoSQL和MySQL之间有着清晰的鸿沟</h3><p>这不一定是对的。有些SQL数据库正在加入NoSQL的特性，反之亦然。这两者的界限很可能会越来越模糊。而新的混合数据库能在未来提供有趣的选择。</p>
-<h3 id="谬误：编程语言-框架-决定了数据库"><a href="#谬误：编程语言-框架-决定了数据库" class="headerlink" title="谬误：编程语言/框架 决定了数据库"></a>谬误：编程语言/框架 决定了数据库</h3><p>我们越来越习惯各种各样的技术栈：</p>
-<ul>
-<li>LAMP: linux, Apache, MySQL(SQL), PHP</li>
-<li>MEAN: MongoDB(NoSQL), Express, Angular, Node.js</li>
-<li>.NET, IIS和SQL Server</li>
-<li>Java, Apache和Oracle</li>
-</ul>
-<p>这些技术栈产生可以归于应用的，历史上的和商业上的原因，但别被限死了。 你当然可以在你的PHP或.NET项目使用MongoDB的NoSQL数据库。你也可以在Node.js里面连接MySQL或SQL SERVER。可能你没法找到那么多教程和资源，但是你的需求本身应该决定数据库的类型，而不是编程语言。<br>（这意味着，别给自己故意挖坑！原则一个不常见的技术组合或SQL和NoSQL的混合式可能的，但是在寻求帮助和找到有经验的开发者方面会遇到不少困难<br>）<br>记住了这些，让我们来看看异同的比较。</p>
-<h2 id="SQL的表-vs-NoSQL的文档"><a href="#SQL的表-vs-NoSQL的文档" class="headerlink" title="SQL的表 vs NoSQL的文档"></a>SQL的表 vs NoSQL的文档</h2><p>SQL数据库提供了一族相关的数据表。举例来说，如果你在运营一个线上的书店，书的信息可以被加入到一个叫<strong>book</strong>的表。</p>
-<table>
-<thead>
-<tr>
-<th>ISBN</th>
-<th style="text-align:center">title</th>
-<th style="text-align:right">author</th>
-<th style="text-align:right">format</th>
-<th style="text-align:right">price</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>9780992461225</td>
-<td style="text-align:center">JavaScript: Novice to Ninja</td>
-<td style="text-align:right">Darren Jones</td>
-<td style="text-align:right">ebook</td>
-<td style="text-align:right">29.00</td>
-</tr>
-<tr>
-<td>9780994182654</td>
-<td style="text-align:center">Jump Start Git</td>
-<td style="text-align:right">Shaumik Daityari</td>
-<td style="text-align:right">ebook</td>
-<td style="text-align:right">29.00</td>
-</tr>
-</tbody>
-</table>
-<p>每一行都是一条不同的书德尔记录。这种设计是比较苛刻的，你没法使用同样的表去存储不同的信息或者在是数字类型的字段插入字符串。</p>
-<p>NoSQL数据库存储类JSON的键值对文档：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    ISBN: 9780992461225, </div><div class="line">        title: &quot;JavaScript: Novice to Ninja&quot;, </div><div class="line">            author: &quot;Darren Jones&quot;, </div><div class="line">                format: &quot;ebook&quot;, </div><div class="line">                    price: 29.00</div><div class="line">                    &#125;</div></pre></td></tr></table></figure>
-<pre><code>相似的文档可以被存储进一个**集合**，这跟SQL表十分类似。但是，在文档里面你可以存储任何形式的数据，NoSQL数据库并不会抱怨：
-
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    ISBN: 9780992461225, </div><div class="line">        title: &quot;JavaScript: Novice to Ninja&quot;, </div><div class="line">            author: &quot;Darren Jones&quot;, </div><div class="line">                year: 2014, </div><div class="line">                    format: &quot;ebook&quot;, </div><div class="line">                        price: 29.00, </div><div class="line">                            description: &quot;Learn JavaScript from scratch!&quot;, </div><div class="line">                                rating: &quot;5/5&quot;, </div><div class="line">                                    review: [ </div><div class="line">                                            &#123; name: &quot;A Reader&quot;, text: &quot;The best JavaScript book I&apos;ve ever read.&quot; &#125;, </div><div class="line">                                                    &#123; name: &quot;JS Expert&quot;, text: &quot;Recommended to novice and expert developers alike.&quot; &#125; </div><div class="line">                                                        ]</div><div class="line">                                                        &#125;</div></pre></td></tr></table></figure>
-
-                                                        SQL表创建的是严格的数据模板，所以你很难犯错。而NoSQL更加灵活，但是能够在任何地方存储数据可能会导致持续的问题。
-
-                                                        ## SQL架构 vs NoSQL去架构
-                                                        在一个SQL数据库中，在你确定表和字段类型这些架构之前是无法添加数据的。SQL架构还可能包括其他的信息：
-                                                        * primary keys: 主键，就像ISBN一样标示了唯一的一条记录
-                                                        * indexs: 索引，经常被查询的字段会被加上索引来提高检索速度
-                                                        * relationships: 关系，数据字段之间的逻辑联系
-                                                        * 诸如存储过程和触发器这样的机制
-
-                                                        你的数据架构一定要在实现任何操作数据的应用逻辑之前被设计和实现出来。尽管之后再修改是可行的，但是大量的变更会非常复杂。
-
-                                                        在NoSQL数据库中，数据可以被非常灵活的添加。并不需要事先进行字段设计和表的设计。比如说，在MongoDB中，下面的命令会在**book**表中创建一条新的记录，如果**book**表不存在，那它也会被同时创建：
-                                                        <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">db.book.insert(</div><div class="line">    ISBN: 9780994182654, </div><div class="line">        title: &quot;Jump Start Git&quot;, </div><div class="line">            author: &quot;Shaumik Daityari&quot;, </div><div class="line">                format: &quot;ebook&quot;, </div><div class="line">                    price: 29.00</div><div class="line">                    );</div></pre></td></tr></table></figure>
-
-                                                                            (MongoDB会自动在表中添加一条唯一的_id字段，随后你也可以对索引进行定义。)
-
-                                                                            一个NoSQL数据库可能更适合初始数据形式很难确定的项目中。但这并不意味着，你可以因此而偷懒：在项目开始的时候忽视设计正确的数据表，可能会在之后引入问题。
-
-                                                                            ## SQL 中心化 vs NoSQL去中心化
-                                                                            假定我们需要往book数据库中添加出版社信息。在SQL数据库中，一个出版社会包含多个标题，我们创建了一张新的**publisher**表：
-
-                                                                            | id | name | country | email | 
-                                                                            | ------------- |:-------------:| -----:| -----:| 
-                                                                            | SP001 | SitePoint | Australia | feedback@sitepoint.com | 
-
-                                                                            我们可以在**book**表里面添加一个**publisher_id**字段，来作为**publisher.id**的外键。
-
-                                                                            | ISBN | title | author | format | price | publisher_id|
-                                                                            | ------------- |:-------------:| -----:| -----:| -----:| ----:|
-                                                                            | 9780992461225 | JavaScript: Novice to Ninja | Darren Jones | ebook | 29.00| SP001|
-                                                                            | 9780994182654 | Jump Start Git | Shaumik Daityari | ebook | 29.00| SP001|
-
-                                                                            这使得数据冗余被最小化，我们不必为每本书重复出版社的信息--只需要创建外键就行了。这种技术被称为中心化，而且也确实很有益处。我们可以在不用修改**book**的数据的前提下更新出版社信息。
-
-                                                                            在NoSQL中我们也可以使用中心化的技术。看一下在**book**集合中得一条文档：
-                                                                            <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    ISBN: 9780992461225, </div><div class="line">        title: &quot;JavaScript: Novice to Ninja&quot;, </div><div class="line">            author: &quot;Darren Jones&quot;, </div><div class="line">                format: &quot;ebook&quot;, </div><div class="line">                    price: 29.00, </div><div class="line">                        publisher_id: &quot;SP001&quot;</div><div class="line">                        &#125;</div></pre></td></tr></table></figure>
-
-                                                                                                    -- 引用了一条在**publisher**集合中得一条文档：
-                                                                                                    <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    id: &quot;SP001&quot; </div><div class="line">        name: &quot;SitePoint&quot;, </div><div class="line">            country: &quot;Australia&quot;, </div><div class="line">                email: &quot;feedback@sitepoint.com&quot;</div><div class="line">                &#125;</div></pre></td></tr></table></figure>
-
-                                                                                                                    然而这有的时候却并不实际。更希望的是能够把数据去中心化，对每一个**book**重复冗余的**publisher**.
-
-                                                                                                                    <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&#123; </div><div class="line">    ISBN: 9780992461225, </div><div class="line">        title: &quot;JavaScript: Novice to Ninja&quot;, </div><div class="line">            author: &quot;Darren Jones&quot;, </div><div class="line">                format: &quot;ebook&quot;, </div><div class="line">                    price: 29.00, </div><div class="line">                        publisher: </div><div class="line">                            &#123; </div><div class="line">                                    name: &quot;SitePoint&quot;, </div><div class="line">                                            country: &quot;Australia&quot;, </div><div class="line">                                                    email: &quot;feedback@sitepoint.com&quot; </div><div class="line">                                                        &#125;</div><div class="line">                                                        &#125;</div></pre></td></tr></table></figure>
-
-                                                                                                                                                                            这会使我们查询的更快，但是再多条记录中更新publisher信息，会非常的慢。
-
-                                                                                                                                                                            ## SQL关系型的JOIN vs NoSQL
-                                                                                                                                                                            SQL查询提供了强劲的JOIN语法。我们可以使用一条SQL语句在多个数据表中获取关系数据库。举例来说:
-                                                                                                                                                                            <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SELECT book.title, book.author, publisher.nameFROM bookLEFT JOIN book.publisher_id ON publisher.id;</div></pre></td></tr></table></figure>
-
-                                                                                                                                                                            这个语句会返回所有的书的标题，作者以及相关的出版人姓名。（假设出版人姓名存在）
-                                                                                                                                                                            NoSQL没有相对应的JOIN，这可能对那些熟练使用SQL的人非常不习惯。如果我们使用中心化的NoSQL集合，那我们需要拉取所有的book文档，再获取所有的publisher文档，再手动的通过程序逻辑来把两者联系起来。这也是为什么对NoSQL往往使用去中心化的方式很有必要。
-
-
-                                                                                                                                                                            ## SQL vs NoSQL 数据完整性
-                                                                                                                                                                            大部分的SQL数据库允许你通过外键限制的方式来强制的保证数据完整性。（除非你还在使用MySQL中得陈旧 不再被维护的MyISAM引擎）我们的book数据表能够：
-                                                                                                                                                                            * 保证所有的book数据能够有一个合法的对应在pubilisher表中得publisher_id
-                                                                                                                                                                            * 如果有book数据引用了publisher信息，那么这条数据不能被删除
-                                                                                                                                                                            这种模式强制了数据库应该遵循的规范。对于开发者或者用户而言，无法在可能引入孤儿数据或非法数据的情况下，对数据条目进行编辑或删除。但是在NoSQL中却没有类似的数据完整性保证。你可以不管其他的文档，只存储你想要存储的内容。理想的情况下，一个数据条目应该成为关于一个事物的唯一信息来源。
-
-                                                                                                                                                                            ## SQL vs NoSQL 事务
-                                                                                                                                                                            在SQL数据库中，两条或多条更新语句能够在一个事务（保证成功或失败回滚的机制）中被同时执行。举例来说，假设book数据库包含订单和库存两张表。当一本书被订购的时候，我们需要往订单表添加一条数据，然后在库存表中将库存字段减一。如果我们把这两条更新语句独立执行，一条可能失败，另一条可能成功。因此会造成数据的不同步。而把他们通过事务的方式执行，就能保证一起成功或一起失败。
-                                                                                                                                                                            在NoSQL数据库中，对单个文档的修改是原子的。也就是说，如果你在文档中更新三个字段，那么要么三个字段同时更新，要么都不变。但是对于多条文档的更新而言却没有事务。不过有一个类事务的选项（http://docs.mongodb.org/manual/core/write-operations-atomicity/）。不过在写这篇文章的时候，这些还都需要你在代码里自行处理。
-
-                                                                                                                                                                            ## SQL vs NoSQL CRUD 语法
-                                                                                                                                                                            创建、读取、更新和删除数据是所有数据库系统的基础。本质上来说：
-                                                                                                                                                                            * SQL是轻量级的解释性语言。语法强大，并且已经成为了国际标准。尽管大多数系统实现语法的时候略有不同。
-                                                                                                                                                                            * NoSQL数据库使用带json参数的类javascript语言一样的查询。基本的操作比较简单，但是对于更复杂的查询来说，嵌套的JSON会非常的繁复。
-                                                                                                                                                                            一个快速的对比：
-
-                                                                                                                                                                            | SQL | NoSQL  | 
-                                                                                                                                                                            | ------------- |:-------------:| 
-                                                                                                                                                                            | SP001 | SitePoint | 
-                                                                                                                                                                            |插入一条book记录|
-                                                                                                                                                                            |```INSERT INTO book ( `ISBN`, `title`, `author`)VALUES ( &apos;9780992461256&apos;, &apos;Full Stack JavaScript&apos;, &apos;Colin Ihrig &amp; Adam Bretz&apos;);```|```db.book.insert({ ISBN: &quot;9780992461256&quot;, title: &quot;Full Stack JavaScript&quot;, author: &quot;Colin Ihrig &amp; Adam Bretz&quot;});```|
-                                                                                                                                                                            |更新一条book记录|
-                                                                                                                                                                            |```UPDATE bookSET price = 19.99WHERE ISBN = &apos;9780992461256&apos;```|```db.book.update( { ISBN: &apos;9780992461256&apos; }, { $set: { price: 19.99 } });```|
-                                                                                                                                                                            |返回所有$10以上的书的标题|
-                                                                                                                                                                            |```SELECT title FROM bookWHERE price &gt; 10;```|```db.book.find( { price: { &amp;gt;: 10 } }, { _id: 0, title: 1 });```第二个JSON对象就是所谓的**projection**: 它设置了哪些字段要被返回 (_id字段是被默认返回的，所以需要覆盖它).|
-                                                                                                                                                                            |计算所有SitePoint网站的书的数量|
-                                                                                                                                                                            |```SELECT COUNT(1) FROM bookWHERE publisher_id = &apos;SP001&apos;;```|```db.book.count({ &quot;publisher.name&quot;: &quot;SitePoint&quot;});```这条语句假定使用了NoSQL的去中心化设计|
-                                                                                                                                                                            |返回book的格式类型的数量|
-                                                                                                                                                                            |```SELECT format, COUNT(1) AS `total`FROM bookGROUP BY format;```|```db.book.aggregate([ { $group: { _id: &quot;$format&quot;, total: { $sum: 1 } } }]);```这就是所谓的聚合：一个新的文档集合从原始的文档集合计算出来。|
-                                                                                                                                                                            |删除所有的SitePoint书|
-                                                                                                                                                                            |```DELETE FROM bookWHERE publisher_id = &apos;SP001&apos;;```|```db.book.remove({ &quot;publisher.name&quot;: &quot;SitePoint&quot;});```|
-
-                                                                                                                                                                            ## SQL vs NoSQL 性能表现
-                                                                                                                                                                            或许这是最有争议性的比较。NoSQL通常被认为势必SQL更快的。这并不奇怪。NoSQL更简单的去中心化存储允许你在单词请求中获取一个条目的所有信息。因此并不需要相关的JOIN或复杂的SQL查询。
-                                                                                                                                                                            也就是说，你的项目设计和数据库设计的影响很大。一个被设计的很好的SQL数据库肯定比设计的很差的NoSQL数据库性能好很多，当然反之亦然。
-
-                                                                                                                                                                            ## SQL vs NoSQL 扩容
-                                                                                                                                                                            随着你数据的增加，你可能会觉得有必要把负载分布到多台服务器。对于基于SQL的系统来说，这有时候没那么容易。你如何分配相关的数据呢？集群化可能是最简单的选项；多个服务器访问相同的中心化存储 -- 但是即使这样也会有挑战。
-                                                                                                                                                                            NoSQL简单地数据模型会使得扩容简单一些，很多NoSQL数据库一开始就自建了扩容的功能。不过当你遇到实际问题的时候，还是最好寻求专家的建议。
-
-                                                                                                                                                                            ## SQL vs NoSQL 实用性
-                                                                                                                                                                            最终，来考虑下安全和系统的问题。最流行的NoSQL数据库已经有几年了。不过它们相比于成熟的SQL产品，问题还是较多。不过大多数被报告的问题，还是因为一个原因：*知识不足*.
-                                                                                                                                                                            开发者和系统管理者对新的数据库系统经验不足，因此不免会犯错误。如果因为NoSQL比较新鲜或者因为你想避免最终必会发生的范式设计而使用它，那么之后你很可能会遇到问题。
-
-                                                                                                                                                                            ## SQL vs NoSQL 总结
-                                                                                                                                                                            SQL和NoSQL数据库用不同的方式做着同样的事情。在刚开始选择一种，之后在进行切换时完全可行的，但是预先设计肯定会节省时间和金钱。
-                                                                                                                                                                            **适用于SQL的项目：**
-                                                                                                                                                                            * 可以被预先确定的逻辑相关的离散数据
-                                                                                                                                                                            * 数据完整性是必须的
-                                                                                                                                                                            * 需要具有丰富开发者经验和支持的标准技术的项目
-
-                                                                                                                                                                            **适用于NoSQL的项目:**
-                                                                                                                                                                            * 非关系型的、模糊的或是不断演进的数据存储需求
-                                                                                                                                                                            * 简单、宽松的项目目标，能够快速的开始编程
-                                                                                                                                                                            * 速度和可扩展性很有必要
-
-                                                                                                                                                                            在
-</code></pre>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2344,7 +2214,7 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-count">50</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2352,7 +2222,7 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-count">18</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
@@ -2361,7 +2231,7 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-count">7</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

@@ -250,6 +250,185 @@
             
               
                 
+                <a class="post-title-link" href="/2017/04/29/architect001/" itemprop="url">
+                  从头替换一个2000万pv的站点，需要注意些什么？
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-29T17:20:57+08:00" content="Apr 29 2017">
+              Apr 29 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/架构/" itemprop="url" rel="index">
+                    <span itemprop="name">架构</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/29/architect001/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/29/architect001/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="正确的评估你需要多少台机器"><a href="#正确的评估你需要多少台机器" class="headerlink" title="正确的评估你需要多少台机器"></a>正确的评估你需要多少台机器</h2><p>现有一个网站pv在2000万左右，最高峰值的访问是五分钟一百万，相当于每秒3000左右，现有部署十六台web后台机器，每台每秒二百多，考虑到机器上另有差不多访问量级的服务在，暂时无压力。</p>
+<p>这个量级的访问对静态资源一定要使用CDN了，在正确使用CDN的前提之下，两台QPS在2k左右的静态资源服务器不会成为瓶颈。</p>
+<p>在一些关键的页面的关键接口上，需要使用wrk工具进行压测性能，从而避免后端的存储服务发生问题。</p>
+<h2 id="善用缓存"><a href="#善用缓存" class="headerlink" title="善用缓存"></a>善用缓存</h2><p>缓存是解决高性能问题的利器，但是缓存同时也比直接的落地存储如Mysql要贵很多。所以，选择将什么样的内容进行缓存以及缓存的命中率就是使用缓存的重要考量。</p>
+<p>一般而言，主动缓存相比于被动缓存更加的可靠。被动缓存是先尝试缓存，如果没有内容还是会向后端存储请求。而主动缓存可以理解成缓存和后端存储为一个整体，只需要放心大胆的请求缓存即可，保证数据是有效的。</p>
+<p>热点数据肯定是缓存的重点，这个根据不同的业务形态而异。详情页肯定比积分页更容易达到访问高峰，而热门书也比冷门书的pv要高，这些都是根据业务产生的缓存需求。</p>
+<p>缓存命中率的评估，需要有强有力的运维工具的支持。比如大量使用memcache的reddit，他们就有命中率统计工具diamond以及自研的追踪memcache的slads的工具，保证缓存命中率。对于Redis而言，我了解的有facebook在用的redis-faina，来查看redis的请求状态。</p>
+<h2 id="善用负载均衡"><a href="#善用负载均衡" class="headerlink" title="善用负载均衡"></a>善用负载均衡</h2><p>负载均衡的层面有很多，我们使用核心的主要有几个：</p>
+<ul>
+<li>DNS解析的负载均衡</li>
+<li>反向代理的负载均衡</li>
+<li>后台服务的负载均衡</li>
+</ul>
+<h3 id="DNS解析的负载均衡"><a href="#DNS解析的负载均衡" class="headerlink" title="DNS解析的负载均衡"></a>DNS解析的负载均衡</h3><p>所谓dns解析的域名负载均衡，能解决的最大问题，一个是尽量的放置运营商的劫持，腾讯自建了一套GSLB的域名解析统一服务，通过与运营商的紧密合作，可以保证qq域名最大限度的不被运营商恶意劫持，而是通过GSLB的域名解析服务，顺利的进入腾讯的统一接入层TGW。</p>
+<p>还有一个是进入了统一接入层之后，需要就近接入。即根据不同的运营商，分流到不同的接入机器中，如移动、联通、电信这三家，就要分别接入到不同的运营商的接入机器，然后再通过内网的方式进入腾讯的机房，保证请求链路的最优化。</p>
+<h3 id="反向代理的负载均衡"><a href="#反向代理的负载均衡" class="headerlink" title="反向代理的负载均衡"></a>反向代理的负载均衡</h3><p>反向代理的负载均衡是提的最多的，也是部署和维护的成本最低的一种负载均衡的方式。最常用的方式就是使用nginx，对于一大批无状态的web服务器进行基于权重的请求分发和负载均衡。稍微复杂一点会增加nginx的模块，对web服务进行自动的端口监测，如果不通就会自动下线，一段时间后重试如果通了，再重新上线。不过这个需要一些适当的策略决策，防止临时的异常，导致机器被下掉太多，最终雪崩。</p>
+<h3 id="后台服务的负载均衡"><a href="#后台服务的负载均衡" class="headerlink" title="后台服务的负载均衡"></a>后台服务的负载均衡</h3><p>后台服务的负载均衡，使用的是腾讯的L5方案，这套方案基本使用起来与外面通用的LB方案比较类似，就是支持tcp四层和http的透明代理。一个虚拟ip和端口对应后面多台机器，这样对业务来说就是透明的。同时它的中央决策机制更为复杂一些，调用者可以进行服务状态的上报，这再由中央服务器统一调度，剔除不可靠的机器。</p>
+<h2 id="动静分离"><a href="#动静分离" class="headerlink" title="动静分离"></a>动静分离</h2><p>动静分离的理念已经深入人心了，主要分离的原因无非如下：</p>
+<ul>
+<li>减少不必要的cookie传输</li>
+<li>接入CDN需要区分域名</li>
+<li>防止遍历攻击</li>
+<li>静态资源单独配置压缩和编码</li>
+<li>独立部署，团队职责划分清晰</li>
+</ul>
+<p>我们也是基本按照这个思路在做，静态资源方面，接入CDN，同时前端架构上做好刷新CDN的工作。再引入前端资源的压缩，以及接入统一的图片平台和小文件平台。再加上该静态化的页面果断的静态化，基本上能够支撑一个中大型网站的日常运营。</p>
+<h2 id="支撑系统"><a href="#支撑系统" class="headerlink" title="支撑系统"></a>支撑系统</h2><p>一个中大型的网站，对应的额支撑系统肯定少不了。我们使用的支撑系统包括而不限于：</p>
+<ul>
+<li>数据监控与告警平台</li>
+<li>数据上报与统计平台</li>
+<li>日志上报与分析平台</li>
+<li>发布系统（可回滚，可追溯，可前后置脚本，可独立文件发布，四可准则）</li>
+<li>机器监控平台</li>
+<li>服务发布、监控与重启平台</li>
+<li>配置维护与发布平台</li>
+<li>CDN</li>
+<li>项目管理系统</li>
+<li>用户反馈系统</li>
+</ul>
+<p>支撑越多，上线之后的系统，越放心！</p>
+<h2 id="做好运营支持与SEO"><a href="#做好运营支持与SEO" class="headerlink" title="做好运营支持与SEO"></a>做好运营支持与SEO</h2><p>好的网站需要运营，其中运营系统和SEO专项的优化非常重要。有的时候可以说是至关重要的。<br>我们的运营系统主要包括了常规的推荐位处理，运营活动的配置，以及UGC内容的审核，针对网站的功能，快速的迭代出运营系统，就能为网站的发展提供不断的助力。</p>
+<p>SEO专项优化，十分重要，基本思路就是按照百度的站长平台撸一遍。</p>
+<ul>
+<li>设计清晰的网站架构，</li>
+<li>在每个页面进行单独的SEO内容埋入，</li>
+<li>主动推送sitemap，</li>
+<li>持续的产出高质量的内容，</li>
+<li>与百度进行商务合作，</li>
+<li>尽量规避死链的出现，</li>
+<li>与其他高权重网站合作。</li>
+</ul>
+<p>这些都是利器，同时在进行域名切换的时候，尤其要注意SEO的权重转移：</p>
+<ul>
+<li>首先将新网站上线，进行自然流量和自然权重的积累</li>
+<li>排名攀升之后，将老站进行301跳转</li>
+<li>在搜索引擎后台进行改版配置，保证权重的最大化转移</li>
+</ul>
+<h2 id="做好信息架构与数据上报"><a href="#做好信息架构与数据上报" class="headerlink" title="做好信息架构与数据上报"></a>做好信息架构与数据上报</h2><p>一个好的网站，它的信息架构一定是十分突出的。用户想去哪，该去哪儿，从哪儿返回，这都对于用户的留存和使用都非常的重要。所以在设计一个网站的时候，一定要对网站的信息架构进行充分的讨论，以及对优秀网站的信息架构进行借鉴。同时如果有条件的话，选取一部分用户进行灰度，通过数据埋点的方式追踪用户的行为，从而决定什么样的信息架构是最适合网站的发展的。</p>
+<p>数据上报方式有很多，前端埋点是最基本的，对用户点击和行为的追踪，更接近用户本身。</p>
+<h2 id="测试与不断的回归测试"><a href="#测试与不断的回归测试" class="headerlink" title="测试与不断的回归测试"></a>测试与不断的回归测试</h2><p>测试这块的话，还是手工测试的成分最多。但是同时也在做一些基本的代码检查、以及接口自动化测试和页面逻辑自动化测试。老实说，做的还是非常不够的。对于网站的持续优化而言，如果能做到每一个特性上线，都能将核心功能自动的check一遍，那么对于人力成本和开发成本而言，都能得到很大的优化。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/04/15/redis002/" itemprop="url">
                   《redis入门指南》之事务、缓存、排序、消息通知与空间节约
                 </a>
@@ -1683,159 +1862,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/12/19/nginx001/" itemprop="url">
-                  Nginx模块之echo
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-12-19T23:17:40+08:00" content="Dec 19 2016">
-              Dec 19 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/接入层/" itemprop="url" rel="index">
-                    <span itemprop="name">接入层</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/12/19/nginx001/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/19/nginx001/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="选择nginx"><a href="#选择nginx" class="headerlink" title="选择nginx"></a>选择nginx</h2><p>Nginx性能为王：</p>
-<ul>
-<li>支持epoll，大规模高并发</li>
-<li>支持Linux的sendfile系统调用，可以高效地把硬盘中数据发送到网络上。</li>
-</ul>
-<p>选择Nginx的原因：</p>
-<ul>
-<li>更快：要理解它怎么做到更快的</li>
-<li>高扩展性：不同模块，大量的第三方模块，并且模块之间具有很好的隔离性；</li>
-<li>高可靠性：来自于核心框架代码的优秀设计、模块设计的简单性。master-worker模式很稳定；</li>
-<li>低内存消耗：10000个非活跃的http keep-alive连接至消耗2.5MB内存！精细的数据结构控制，c语言精华的体现；</li>
-<li>单机支持10万以上的并发连接：上限只取决于内存</li>
-<li>热部署，从没见过这么顺滑的reload</li>
-<li>BSD许可协议的自由性</li>
-</ul>
-<h2 id="echo模块-debug利器"><a href="#echo模块-debug利器" class="headerlink" title="echo模块 - debug利器"></a>echo模块 - debug利器</h2><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>github开源，openresty作者推荐<br><a href="https://github.com/openresty/echo-nginx-module" target="_blank" rel="external">https://github.com/openresty/echo-nginx-module</a></p>
-<h3 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h3><h4 id="Location测试："><a href="#Location测试：" class="headerlink" title="Location测试："></a>Location测试：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">location /test &#123;</div><div class="line">        echo &quot;test here&quot;;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
-<p><code>curl &quot;http://testecho.qidian.com/test&quot;</code></p>
-<h4 id="计算后端请求时间："><a href="#计算后端请求时间：" class="headerlink" title="计算后端请求时间："></a>计算后端请求时间：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">location /timed_hello &#123;</div><div class="line">     # 计时器重置</div><div class="line">     echo_reset_timer;</div><div class="line">     echo hello world;</div><div class="line">     # 休眠2.5s</div><div class="line">     echo_sleep   2.5;</div><div class="line">     # 打印最终耗时</div><div class="line">     echo &quot;&apos;hello world&apos; takes about $echo_timer_elapsed sec.&quot;;</div><div class="line">     echo_reset_timer;</div><div class="line">     echo hiya igor;</div><div class="line">     echo_sleep 1;</div><div class="line">     echo &quot;&apos;hiya igor&apos; takes about $echo_timer_elapsed sec.&quot;;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
-<p><code>curl &quot;http://testecho.qidian.com/timed_hello&quot;</code></p>
-<h4 id="请求代理："><a href="#请求代理：" class="headerlink" title="请求代理："></a>请求代理：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">location /echo_proxy &#123;</div><div class="line">       # 修改向下游请求的body</div><div class="line">       echo_before_body hello;</div><div class="line">       echo_before_body world;</div><div class="line">       # 进行proxy pass的请求</div><div class="line">       proxy_pass $scheme://10.247.165.120:10090/monitor/monitor.html;</div><div class="line">       # 修改返回到client端的body</div><div class="line">       echo_after_body hiya;</div><div class="line">       echo_after_body igor;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
-<p><code>curl &quot;http://testecho.qidian.com/echo_proxy&quot;</code></p>
-<h4 id="发起子请求："><a href="#发起子请求：" class="headerlink" title="发起子请求："></a>发起子请求：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"># 子请求1，充分利用epoll的优势</div><div class="line">location /main1 &#123;</div><div class="line">    echo_reset_timer;</div><div class="line">    echo &quot;start takes about $echo_timer_elapsed sec.&quot;;</div><div class="line"></div><div class="line">    # subrequests in parallel，并发子请求</div><div class="line">    echo_location_async /sub1;</div><div class="line">    echo_location_async /sub2;</div><div class="line">    # 打印结果为0s 请求耗时为2s</div><div class="line">    echo &quot;took $echo_timer_elapsed sec for total.&quot;;</div><div class="line">&#125;</div><div class="line"># 子请求2，并未发挥子请求优势</div><div class="line">location /main2 &#123;</div><div class="line">    echo_reset_timer;</div><div class="line">    echo &quot;start takes about $echo_timer_elapsed sec.&quot;;</div><div class="line"></div><div class="line">    # 同步的进行请求</div><div class="line">    echo_location /sub1;</div><div class="line">    echo_location /sub2;</div><div class="line">    # 打印结果为3s 最终耗时3s</div><div class="line">    echo &quot;took $echo_timer_elapsed sec for total.&quot;;</div><div class="line">&#125;</div><div class="line"># 子请求1</div><div class="line">location /sub1 &#123;</div><div class="line">    echo_sleep 2;</div><div class="line">    echo hello;</div><div class="line">&#125;</div><div class="line"># 子请求2</div><div class="line">location /sub2 &#123;</div><div class="line">    echo_sleep 1;</div><div class="line">    echo world;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><code>curl &quot;http://testecho.qidian.com/main1&quot;
-curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
-<h4 id="同时发起多个子请求："><a href="#同时发起多个子请求：" class="headerlink" title="同时发起多个子请求："></a>同时发起多个子请求：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">location /multi &#123;</div><div class="line">    # 指定请求方式 参数等</div><div class="line">    echo_subrequest_async POST &apos;/tools&apos; -q &apos;foo=Foo&apos; -b &apos;hi&apos;;</div><div class="line">    echo_subrequest_async PUT &apos;/tools&apos; -q &apos;bar=Bar&apos; -b &apos;hello&apos;;</div><div class="line">&#125;</div><div class="line">location /tools &#123;</div><div class="line">    # 支持打印打印多个nginx的内建变量</div><div class="line">    echo &quot;querystring: $query_string&quot;;</div><div class="line">    echo &quot;method: $echo_request_method&quot;;</div><div class="line">    echo &quot;body: $echo_request_body&quot;;</div><div class="line">    echo &quot;content length: $http_content_length&quot;;</div><div class="line">    echo &apos;///&apos;;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><code>curl &quot;http://testecho.qidian.com/multi&quot;</code></p>
-<h4 id="静态资源合并："><a href="#静态资源合并：" class="headerlink" title="静态资源合并："></a>静态资源合并：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># 不多说，和combo扩展非常的类似</div><div class="line">location /merge &#123;</div><div class="line">       default_type &apos;text/javascript&apos;;</div><div class="line">       echo_foreach_split &apos;&amp;&apos; $query_string;</div><div class="line">           echo &quot;/* JS File $echo_it */&quot;;</div><div class="line">           echo_location_async $echo_it;</div><div class="line">           echo;</div><div class="line">       echo_end;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
-<p><code>curl &quot;http://testecho.qidian.com/merge?/foo.js&amp;/test.js&quot;</code></p>
-<h4 id="if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"><a href="#if-由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的" class="headerlink" title="if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的"></a>if: 由于nginx的if语法支持的太差，因此debug在配置的时候还是非常有必要的</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">location ^~ /if &#123;</div><div class="line">     set $res miss;</div><div class="line">     if ($arg_val ~* &apos;^a&apos;) &#123;</div><div class="line">         set $res hit;</div><div class="line">         echo $res;</div><div class="line">     &#125;</div><div class="line">     echo $res;</div><div class="line"> &#125;</div></pre></td></tr></table></figure>
-<p><code>curl &quot;http://testecho.qidian.com/if?val=abc&quot;</code><br><code>curl &quot;http://testecho.qidian.com/if?val=ddd&quot;</code></p>
-<h3 id="其中涉及的一些nginx模块的开发概念"><a href="#其中涉及的一些nginx模块的开发概念" class="headerlink" title="其中涉及的一些nginx模块的开发概念"></a>其中涉及的一些nginx模块的开发概念</h3><h4 id="subrequest与upstream"><a href="#subrequest与upstream" class="headerlink" title="subrequest与upstream"></a>subrequest与upstream</h4><p>upstream：<br>提供了一种访问后端服务的能力。更加基础，同时充分利用了nginx优秀设计中的epoll模型，从而做到了异步和无阻塞. 通信方式不限，通信协议不限。常见的就是udp和tcp，同时再配合二进制的一些高校打包协议，这时候你就可以让nginx和后端服务无缝的衔接在一起了。</p>
-<p>subrequest： 子请求<br>针对的是第三方的服务，举个例子，你的网站导航服务依赖于第三方服务比如新浪天气的返回结果，那么可以使用子请求的方式。<br>但是第三方的服务协议局限于http，同时它的底层也是由upstream实现的。但是相比之下概念和出发点有所不同。</p>
-<h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><p>几个名词：IO多路复用、高性能网络模型、同步异步、阻塞非阻塞、协程与并发。<br>推荐篇文章：<a href="http://blog.csdn.net/tianmohust/article/details/6677985" target="_blank" rel="external">http://blog.csdn.net/tianmohust/article/details/6677985</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1881,7 +1907,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-count">50</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1889,7 +1915,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-count">18</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
@@ -1898,7 +1924,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-count">7</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
