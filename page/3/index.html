@@ -250,6 +250,145 @@
             
               
                 
+                <a class="post-title-link" href="/2016/02/21/book009/" itemprop="url">
+                  书影 | 管中窥豹，读《淘宝技术这十年》 上
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-02-21T17:22:02+08:00" content="Feb 21 2016">
+              Feb 21 2016
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/书评影评/" itemprop="url" rel="index">
+                    <span itemprop="name">书评影评</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/02/21/book009/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/02/21/book009/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>这本书断断续续，竟然读过了一个新年的时间跨度。并非是要找借口，但自己的感觉：这种书其实读起来蛮累的，碎片化的时间加上作者东一耙，西一铲的叙述，还有以下两点：</p>
+<ul>
+<li>首先如果你把它当一本励志故事书来看的话，这本书可没那么轻松，间或夹杂着马云爸爸、淘宝初创人员的励志与猎奇的故事，但是还没等你那碗鸡汤入口，一个不小心，就是技术细节了。</li>
+<li>而如果你把它当一本技术书来看的话，这本书更不轻松。淘宝技术的十年发展，从一个人的眼中望去，就像多汁但难以消化的顶级牛排，很多地方浅尝辄止，一口咬下去，得消化半天。观者一方面是开了眼界，觉得这些技术简直不是一般的牛，细节都不敢想。另一方面，想再深入了解一些的时候，却发现少了一些深度，留下了太多的开放式问题，让你觉得不知道简直不好意思。双重折磨之下，只好抓嘴挠腮，只恨自己在技术上的积累太少。</li>
+</ul>
+<p>所以说，如果你既想要看故事，又想要了解细节。<a href="http://book.douban.com/subject/2343878/" target="_blank" rel="external">《阿里巴巴神话》</a> 和<a href="http://book.douban.com/subject/25723064/" target="_blank" rel="external">《大型网站技术架构》</a> 是两道非常不错的佐料。想看故事的人，搭配第一本，这样高层和底层都看到了。想看技术的人，把《架构》这本书当做工具书，不懂翻一下，收益也是颇多。</p>
+<p>淘宝网从买来的网站框架起步，到如今这样的一个复杂的架构。经历了好几轮的重构和优化。对于想了解其中波折的人来说，值得一看。但对技术同学来说，对其过往需要的是理顺，知其所以然，但更应该把重心放在现有的淘宝比较成熟的架构的研究上面来，考虑如何取其精华，为我所用。</p>
+<p>纵观整个淘宝的发展历程，启示颇多：</p>
+<h2 id="首先技术上不要想着一口吃个胖子，最适应现有业务发展的技术才是好技术。"><a href="#首先技术上不要想着一口吃个胖子，最适应现有业务发展的技术才是好技术。" class="headerlink" title="首先技术上不要想着一口吃个胖子，最适应现有业务发展的技术才是好技术。"></a>首先技术上不要想着一口吃个胖子，最适应现有业务发展的技术才是好技术。</h2><p>淘宝网也不是一天建成的，架构在最初也无法做到最合理，技术应该以满足业务为第一要务，以适应业务发展为加分项，以盲目追求技术为大忌。</p>
+<p>03年，刚开始做淘宝的时候，考虑的一个因素就是快。所以网站的第一版是买来的“php auction”。那些参与第一版的开发人员，每个人都是技术牛人，从实力上来说，都可以独立写出php auction，但不这么做的原因，是这样只会拖累业务发展的后腿。我个人感觉这是淘宝技术的第一阶段，叫做业务撵着技术走。技术可以说是疲于奔命，速度第一，埋下不少坑是肯定的，但是关键顶住了。<br>这个阶段同时也包括淘宝的硬件升级，从mysql到oracle，硬盘和小型机，各种商用，怎么贵怎么来。这个阶段，兵来将挡水来土掩，技术上算是顶住了。</p>
+<p>但是随着业务的发展，单纯的累加已经不起作用了，必须从底层改造。这才触及了第一次到Java网站的升级。这次升级更多是语言层面的，复用了非常多优秀的java组件。技术在业务的压力下被迫忍痛切换，但是这却为之后的扩展打下了坚实的基础。这个阶段，技术不再那么滞后于业务，而是迎头赶上了。优秀的DBA，优秀的MVC架构，都是在这个阶段打下的，逻辑层可以说已经能够完全支持到业务了。</p>
+<p>而现行的阶段，则是技术不断突破，创造自己的技术，并且在很多方面走到了业务的前面。这个阶段我们看到大量优秀的技术创新组件出现了。如淘宝文件系统TFS，淘宝KV缓存系统Tair。同时，分布式电子商务操作系统的理念也被提出。通过服务化的设计，辅以高性能中间件的支撑，开始给业务发展提供动力。</p>
+<p>从这几个阶段可以看出，不断发展的业务和技术必须相辅相成，很难说是哪一方造就了哪一方。但是对我们来说，从中汲取的更应该是在技术选型和架构时的思考和审慎。好的架构不应拖业务后腿，而应不断提供向前的助力。</p>
+<h2 id="其次都说外来的和尚会念经，淘宝几次牛人的引入，新的思想完全起到了给业务助力的作用。"><a href="#其次都说外来的和尚会念经，淘宝几次牛人的引入，新的思想完全起到了给业务助力的作用。" class="headerlink" title="其次都说外来的和尚会念经，淘宝几次牛人的引入，新的思想完全起到了给业务助力的作用。"></a>其次都说外来的和尚会念经，淘宝几次牛人的引入，新的思想完全起到了给业务助力的作用。</h2><p>比如开发和引入了LVS的章文蒿博士，他的贡献在于对高性能、高扩展性、高可用和低成本的基础平台的打造。尤其是他提出的GreenCompute项目，以节省能源为目的来不断的提升整个系统方方面面的性能，从CDN到低功耗到高性能，不得不说令人耳目一新。</p>
+<p>而提出了开放平台的淘宝首席架构师王文彬，为淘宝的针对B侧市场的开发助力很多。他并发第一个提出，但却践行的非常好。一个开放平台，脏活累活很多。一方面需要对接大量的内部业务，说服、推动他们开放，有时候甚至要思考让他们如何开放。另一方面，则是开放到外部之后，稳定性和安全性比其他任何的业务都要更加保证。面对流水般的api调用，一旦稳定性不好，大量第三方应用都会挂掉。一旦安全性没保障，大量用户数据可能泄露。这都对开放的决心和技术提出了很高的挑战。进来风头比较劲的微信开放平台，也是如走钢丝一般，逐步开放自己的体系。可以说开放共赢创建生态是大势，而技术必须要为之保驾护航。</p>
+<p>不得不提的还有顶住压力引入规范研发流程的空闻大师。从硅谷空降而来的他践行了持续集成、自动化测试和回归的研发流程。很多时候在业务的催促之下，会产生很多烂代码。但与其让不稳定的代码污染线上，造成往复的开发，还不如从一开始就杜绝。能够承担这种业务的压力，并做到这么果断的，确实值得佩服。看似业务的上线时间在短期因此而被延长了，但可靠性却大大提高了。这是个典型的，“长痛不如短痛”的例子。</p>
+<p>这也说明了不断吸取新的思想多么重要，固守老的流程往往会拖业务的后腿。不敢尝试新的技术也会让技术停滞不前。</p>
+<h2 id="从产品的创新性上来看，淘宝更多是顺应时势。"><a href="#从产品的创新性上来看，淘宝更多是顺应时势。" class="headerlink" title="从产品的创新性上来看，淘宝更多是顺应时势。"></a>从产品的创新性上来看，淘宝更多是顺应时势。</h2><p>2004年，成功的阿里巴巴，马云产生了做淘宝的想法。而在ebay和易趣激战正酣的时候通过技术人员封闭开发推出淘宝网，足以显示其快准狠的特性。尽管大网站被ebay封杀，但中小网站投放的广告策略、灵活的决策和与ebay的重重审批流程相比而言高效的执行效率，最终杀出了淘宝这么一匹黑马。从创新上而言，淘宝做了一些适应国内情况的优化，比如商家不收费，允许买卖双方沟通、交易，这些都是煽风点火，促使淘宝网不断发展壮大。</p>
+<p>而在salesforce风头正劲的时候提出“work at Alibaba”的工作平台。并且一旦认准了之后，大力投入。现在淘宝的生态体系中，B侧开发的商家和企业非常之多，他们利用了淘宝提供的各种各样的数据，组合出用户需要的各式功能，充分丰富了整个生态，这也是淘宝让人感觉无可撼动的重要原因之一。</p>
+<p>总体而言，淘宝发展亦步亦趋，始终不离大势，不犯大错，在牛掰技术的支撑下最终形成现在这样的一个庞大、复杂、但流转顺畅的生态系统。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/01/17/translate001/" itemprop="url">
                   译术 | SQL vs NoSQL：异同比较
                 </a>
@@ -1460,7 +1599,7 @@
 <p><strong>展示效果</strong>：</p>
 <p>还有一些其他的功能：</p>
 <ul>
-<li>邮件：An email <a href="&#x6d;&#97;&#x69;&#108;&#116;&#111;&#x3a;&#101;&#x78;&#97;&#x6d;&#112;&#x6c;&#101;&#x40;&#101;&#120;&#x61;&#109;&#112;&#x6c;&#x65;&#46;&#99;&#x6f;&#109;">&#101;&#x78;&#97;&#x6d;&#112;&#x6c;&#101;&#x40;&#101;&#120;&#x61;&#109;&#112;&#x6c;&#x65;&#46;&#99;&#x6f;&#109;</a> link. 点击直接呼起邮件应用。</li>
+<li>邮件：An email <a href="&#x6d;&#x61;&#105;&#x6c;&#x74;&#111;&#x3a;&#101;&#x78;&#x61;&#109;&#112;&#x6c;&#x65;&#64;&#x65;&#120;&#x61;&#109;&#112;&#108;&#101;&#x2e;&#x63;&#111;&#x6d;">&#101;&#x78;&#x61;&#109;&#112;&#x6c;&#x65;&#64;&#x65;&#120;&#x61;&#109;&#112;&#108;&#101;&#x2e;&#x63;&#111;&#x6d;</a> link. 点击直接呼起邮件应用。</li>
 <li>图片：<img src="http://ww4.sinaimg.cn/mw690/a0788e3bgw1f74swdtnbrj20iw0doq4y.jpg" alt="Alt text"><ul>
 <li>支持嵌套<ul>
 <li>daf</li>
@@ -1688,145 +1827,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2015/02/19/feel001/" itemprop="url">
-                  我在鹅厂这一年
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2015-02-19T22:39:52+08:00" content="Feb 19 2015">
-              Feb 19 2015
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/生活随感/" itemprop="url" rel="index">
-                    <span itemprop="name">生活随感</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2015/02/19/feel001/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/02/19/feel001/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>掐指算来，自从四月份入职，我在鹅厂已经待了将近一年啦。羊年将近，心中有不少的感悟，不吐不快。<br>这一年的时光可以用几个关键词来概括：成长、职场、家庭、理想、影响力。</p>
-<p><img src="http://40.media.tumblr.com/f01468689b6e02c65bf84beb4676eb7f/tumblr_njzwh7dsUx1rel1ijo1_500.jpg" alt=""><br><strong>成长</strong>肯定是多方面的，公司在个人发展方面分的很细，我觉得很好，也可以拿来做一下对照。我选取出其中一些个人认为比较重要的部分做讨论：</p>
-<ul>
-<li>学习能力：对个人来说，学习能力有一定的增长，但并不太多。主要的提高在于更新了自己的方法论，重新从零开始，意识到很多学习时常见的谬误并且在日常学习中尽量避免之。一方面是方法上的，触类旁通以及从基本的开始学，追本溯源，不断深化。令一方面是情绪上的，更加开放自己的心态，坦然面对分歧，以共赢的态度进行探讨。同时注意不要让错误蔓延，及时制止之。</li>
-<li>创新能力：本来一直想写个专利，有了不少想法，但是在起初的两个被毙掉之后，之后的都没有深入去讨论。在创新能力方面，应该说没有太多进步。更多的是一种保持。工作中小微的创新比较多，能够用到创造力的地方也不太多，更多的是一种按部就班的工作。回顾起来，脑洞大开最多的时候是在做mini-project的时候，那真是招之即用，发挥自己最大的想象力，而且优化起来动力足，无止境。这种感觉是最佳状态，但是可惜很难在工作中复制这种感觉，这需要我和同事都具有更高的水平和更多的投入感。</li>
-<li>运营运维能力：通过运维一个老的项目，充分意识到了文档、注释、代码可维护性以及成熟的运营工具对老项目的重要性。同时也充分的意识到，一个赶出来的项目，一定是不够好的，需要多次优化的项目。很多时候，这种维护成本取决于程序员的自觉，对代码和项目的责任心，以及吃过暗亏之后不想让别人再吃暗亏的国际主义精神。。</li>
-<li>业务能力，后台开发：业务能力肯定是有大幅度提高的，前后端分离、接口约定的合理性、代码的质量、数据库设计、自测用例的完善性、解耦是否彻底、工具使用，这些应该都从属于后台能力。从这个角度上来看的话，在这个方面进步应该是最大的。</li>
-<li>项目管理能力：在这一年间，有几个子项目作为Feature Owner进行了一些初步的统筹和管理的事宜。收获很多，至少保证能够做到，对这个项目最了解的人是我。同时也深深的感受到项目统筹的辛苦和繁琐，一个项目的成功，必须依赖于可靠而又核心的人员。这些人员应该具有的特质是负责任、能力强、善于解决问题并且有足够的耐心。通过这些骨干人员，各个团队才能够串联起来，团队的氛围也会非常向上，通力合作，最终把一个项目成功的做起来。但是这其实并非个人兴趣所在，更希望的是能够和聪明人合作，这样就能够最大程度的减少这些沟通上面花费的时间。更多的把精力放在自己感兴趣的地方。</li>
-<li>解决问题能力：解决问题的能力是全方位的，不仅仅是技术问题的解决。一些与外部门的沟通问题，或者是产品上面的一些问题都考验着自己。其中印象最深的是与外部门的一次沟通，对方态度很差，出言不逊。但是还好hold住了，从解决问题的角度出发，比较耐心的沟通了一下，事情解决的还算好。很多时候都是非常需要相互理解的，换位思考之后，去了心结，沟通和解决问题也会更加顺畅。</li>
-<li>知识传承：主要是通过分享的方式进行知识的一种分享，一直说要写一篇新人必备的文档，梳理一下，应该是非常适合新人的。</li>
-<li>高性能与高可用性：这一个阶段还主要停留在简单实现出来，并没有考虑太多性能与可用性方面的因素。因为看到的系统不够多，所以对瓶颈和实用性并没有特别深入的影响。这个是硬实力，自己一定要好好加强。<br><img src="http://41.media.tumblr.com/e5b7d8e8fb2c96fa27da4bf1cfb11a7c/tumblr_nh9atbj52G1sf1m92o1_500.jpg" alt=""><br>进入<strong>职场</strong>短短一年的时间，的确有很多体会。与同事、领导之间的相处，一些职业的礼仪和规范、公众前演讲的能力、得体的衣着打扮，对我来说都是很新的领域。在这一年中，碰到最欣赏的同事是那种比较聪明，但不钻牛角尖，负责任，就事论事的人。最讨厌的就是自作聪明，不会思考，脾气暴躁代码质量极差的那种。不过职场中，各种人都有，相处中时时自省，当做鞭策自己的动力吧。作为IT部门，大家都比较随意一点，不过倒也符合自己性格。另外，最近对衣服搭配也稍有兴趣，多尝试一下，穿的得体，让自己和他人都舒服才是最好的。</li>
-</ul>
-<p>工作之后，与<strong>家庭</strong>的关系和学生时代完全不同。进入社会之后，更能够理解父母的辛苦，也会多想想能够为家里做些什么。同时年龄越来越大，谈婚论嫁之事也不可避免的来到了。这样一种新的时期下，会更多更实际的去想一些事情的可行性。而不是停留在以前的那种纸上谈兵。这对自己是好事，因为只有认真地考虑了之后，你才会知道自己到底有没有准备好。<br><img src="http://40.media.tumblr.com/1c71f5f827260f74b77c168c0e91239c/tumblr_njrn9fmsgU1qaatj7o1_500.jpg" alt=""><br><strong>理想</strong>很丰满，现实也不算太骨感。在这样一种情况下，就很容易温水煮青蛙了。当你对自己的反思不够的时候，太多的停留在comfort zone会让你失去一些前进的动力。误打误撞的进入互联网行业之后，当初push自己进入的原动力：“用技术创造出真正改善人们生活的产品”，是否已经都忘记了呢？你的追求卓越之路，是否停顿的太久了？要加油啊。</p>
-<p><strong>影响力</strong>是一个让我非常困惑的点，在部门内我的理解是技术上更多的影响他人，能够发出自己的声音并被最终采纳。公司内的影响力应该是你所做的组件能否被更多的人所采纳，这点其实做的不太好，没有利用好现有的code平台，而且部门内似乎也没有去做过类似的推动。至于业界的影响力，从身边的人看来应该是结交更多的人，将自己的解决方案打包推广出去，或者在某个领域为大多数人所熟知。这一年，第一点做的还不错，后两点几乎没什么进展，这可能会让自己变得有些狭隘。所做的东西只适用于一处，拿着肯定不是一个足够优雅和通用的方案。新的一年，希望能够在后两点有所突破。</p>
-<p>总结来看，我还是觉得自己承担的不够多，进步的不够快，但是误打误撞之下，取得了一些成绩，新的一年就要到了，给自己加油！</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1867,7 +1872,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">50</span>
+              <span class="site-state-item-count">51</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1875,7 +1880,7 @@
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>

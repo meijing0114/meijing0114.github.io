@@ -250,6 +250,155 @@
             
               
                 
+                <a class="post-title-link" href="/2017/05/06/architect002/" itemprop="url">
+                  小而美的邀请码设计实现方案
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-05-06T22:35:30+08:00" content="May 6 2017">
+              May 6 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/设计方案/" itemprop="url" rel="index">
+                    <span itemprop="name">设计方案</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/05/06/architect002/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/05/06/architect002/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>互联网公司推出新产品的时候，经常使用邀请码作为一种运营手段，在一定的时间内，只有具有邀请资格的用户，才能参与到早期产品的体验中去。<br>这么做，一方面为了体现产品体验的稀缺性，鼓励用户抢购，造成供不应求的舆论影响。这点小米做的尤为突出，效果也是相当不错的。另一方面，先让一部分比较有热情的早期种子用户进来，也能够充分的对产品的易用性和体验流程进行早期的验证，方便手机用户的反馈之后迭代修改。·</p>
+<p>我们首先来看看根据需求邀请码服务需要提供出哪些接口：</p>
+<ul>
+<li>单个或批量的生成邀请码，要求六位，数字与字符的混合，供运营和用户使用；</li>
+<li>给用户激活邀请码；</li>
+<li>校验用户是否已经激活邀请码；</li>
+<li>批量给已注册用户绑定几个可用的邀请码，方便二次传播；</li>
+<li>查询用户名下已经绑定的邀请码和其被激活的情况，验证二次传播的效果</li>
+</ul>
+<p>根据需求，现有的技术实现方案有很多，核心来讲的话主要有两点：</p>
+<ul>
+<li>邀请码生成算法与唯一性保证</li>
+<li>邀请码高效查询与激活</li>
+</ul>
+<p>另外还有一些其他的点，会在文中慢慢道来。</p>
+<h2 id="邀请码的生成方式"><a href="#邀请码的生成方式" class="headerlink" title="邀请码的生成方式"></a>邀请码的生成方式</h2><p>产品的要求是六位，同时字母和数字混合的方式，一共会发放10000个左右。一开始的思路是使用纯算法的方式实现，通过生成唯一的ID，增加一些共性的信息，再根据信息摘要的方式，映射成字母与数字的混合，不过试了一下，算法实现的成本比较高，而且还有借助额外的唯一ID生成的工具，所以有些得不偿失。<br>另外由于不能是纯数字，所以十六进制映射的方案也无法进行。而且也不能是一长串的字符，这样md5的方案也无法实施了。</p>
+<p>所以在这样的前提之下，决定使用简单算法+redis来做整个方案。<br>首先是邀请码的生成，由于生成的过程一般是后台或者手动触发，所以对性能的要求并不太高，也就是说，允许一定程度的碰撞。所谓的碰撞，就是算法算出来的邀请码，和已经生成的邀请码重复了。所以我们来算一下概率：<br>一共是六位的邀请码，每一位的组成是大小写字母+阿拉伯数字，也就是26+26+10=62种可能性。所以六位也就是一共能够产生出<code>62^6=56,800,235,584</code>即560亿个邀请码，产品的要求是一共放出去一万个，所以即使现在已经有一万个邀请码被生成了，那么生成一个邀请码和现有邀请码重复的概率只是<code>10000/560亿</code>, 非常低的概率，如果真的中了大奖，那么就进行二次生成，再次碰撞的概率，恐怕就更低了。</p>
+<p>同时为了保证邀请码看起来更真实，再增加一个连续两位不能重复的验证，同时每次生成结束之后，使用redis验证是否唯一，即可实现整个邀请码的生成过程。</p>
+<h2 id="数据结构的设计"><a href="#数据结构的设计" class="headerlink" title="数据结构的设计"></a>数据结构的设计</h2><p>上文说到为了保证邀请码的唯一性，必须使用redis，redis中的集合数据结构就提供了很好支持。每次生成完成后，只需要调用<code>isMember validatorSet</code>方法，即可根据返回判断是否已经生成了邀请码。</p>
+<p>同时使用集合存储邀请码，也能够满足统计的需求，只需要定时执行<code>smembers validatorSet</code>，即可统计出所有生成出来的邀请码。</p>
+<p>另外，由于存在用户激活邀请码，和查询是否已经激活邀请码的寻求，所以必须对此设计专门的数据结构。查询需求是高频需求，在用户量比较大的情况下，会有比较大的访问压力。同时为了扩展可能存储的用户其他信息，所以使用散列的数据类型进行存储。<br>每次查询用户是否已经激活，只需要执行<code>hget user:$guid validator</code> 即可获取其中的邀请码信息，从而判断出用户是否已经激活。</p>
+<p>而用户激活的过程，涉及的数据结构稍多，每次激活的过程，都需要分成几步：<br>第一步是查询这个邀请码是否是合法有效的邀请码，需要使用<code>ismember validatorSet</code>进行判断;<br>如果合法有效，第二步是设置用户的激活状态，即上文中所用到的这个散列<code>hset user:$guid validator {$validator}</code>;<br>第三步则是设置邀请码本身的状态，即这个邀请码被哪个用户用了，方便之后查询 <code>set validator:{$validator}:status {&#39;userName&#39;:ted,&#39;avatar&#39;:&#39;http://test.com&#39;}</code></p>
+<p>由于第二步和第三步必须保证数据的幂等性，因此需要使用redis的事务来进行执行，保证两者能够同时成功的被执行：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$redis-&gt;Multi()</div><div class="line">-&gt;set validator:&#123;$validator&#125;:status &#123;&apos;userName&apos;:ted,&apos;avatar&apos;:&apos;http://test.com&apos;&#125;</div><div class="line">-&gt;hset user:$guid validator &#123;$validator&#125;</div><div class="line">-&gt;exec()</div></pre></td></tr></table></figure></p>
+<p>但是除了使用事务，还需要规避的就是两个用户同时取到了同一个邀请码，在同一时间进行了激活的操作，在高并发的情况下，会有原子性的问题。所以必须引入redis中的watch命令，监控邀请码的status这个key，保证一旦它被变更了，那么当前的事务就不再执行，从而避免给用户带来错误的反馈：<br><code>redis-&gt;watch validator:{$validator}:status</code></p>
+<p>由此，就完成了用户邀请码的激活过程。</p>
+<p>除此之外，还有个小功能，那就是给一批种子用户绑定几个邀请码，并在邀请码被激活之后，展示出相应的状态。刚刚说到了用户为维度的那个哈希表结构，是时候给它再加一个field了，这个field就叫boundValidators，专门用来存储用户名下被绑定的邀请码：<br><code>hset user:$guid boundValidators $validator1|$validator2...</code></p>
+<p>那么查询的时候只需要进行两次查询：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">// 查询用户名下绑定的邀请码</div><div class="line">hset user:$guid boundValidators</div><div class="line">// 查询邀请码是否以及被谁激活了</div><div class="line">mget $boundValidators</div></pre></td></tr></table></figure></p>
+<p>为了降低网络延时，完全可以通过一个pipeline实现，从而使得网络交互从两次变成一次。</p>
+<h2 id="接口性能验证"><a href="#接口性能验证" class="headerlink" title="接口性能验证"></a>接口性能验证</h2><p>由此已经大功告成，简单的使用wrk测试一下性能，服务器相比之前的差一些，一共是4核16G内存。使用<code>wrk -t12 -c100 -d10s http:ip:port/queryActivate</code>，<br>海外内网、同步的redis调用：<br><img src="http://wx3.sinaimg.cn/mw690/67ad48bbgy1ffc0r3lz22j20oi07a0u0.jpg" alt="Alt text"></p>
+<p>QPS在5000左右，完全满足了本次邀请码的需求，事实上，如果能超过这个量，估计睡觉都要笑醒了:)</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/04/29/architect001/" itemprop="url">
                   从头替换一个2000万pv的站点，需要注意些什么？
                 </a>
@@ -1698,175 +1847,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/12/25/php002/" itemprop="url">
-                  关于php的共享内存的使用和研究之由起
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-12-25T15:43:48+08:00" content="Dec 25 2016">
-              Dec 25 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/php/" itemprop="url" rel="index">
-                    <span itemprop="name">php</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/12/25/php002/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/25/php002/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>最近遇到一个场景，服务寻址的时候，需要请求远程的服务，获取一批可用的ip和端口地址及其权重。根据权重和随机算法选择最合适的一个服务地址，进行请求。由于服务地址在短时间之内不会发生变化，因此为了避免无限制的进行寻址的请求，有必要将地址缓存至本地。</p>
-<p>对于php而言，说到用户数据缓存本地，第一反应出来的就是APC。但是APC首先被创建出来是给php做内部缓存的，其次才是提供给用户态使用的。根据laruence在博客的说法，opcache出现了之后，对zend编译的opcode做了缓存，实际上解决了apc被创建出来想要解决的问题。因此现在APC已经处于不再更新维护的状态了。</p>
-<p>对于想使用opcache，又要使用用户态的APC的同学，就需要额外的配置，同时性能上也会比原来的APC要差，差不多相当于本机的memcache。这显然就无法达到本机内存访问的效率了，因此需要寻求其他的解决方案。</p>
-<h2 id="php的共享内存API"><a href="#php的共享内存API" class="headerlink" title="php的共享内存API"></a>php的共享内存API</h2><p>随后我就想到了使用php的共享内存API，反正只是缓存非常少的路由信息，加在一起不超过1k，尽管是多读多写的场景，但是覆盖了也没关系，出于这种出发点，我就开始了对php的共享内存API的研究。</p>
-<p>php中操作共享内存的方式一共有两组：</p>
-<ul>
-<li>System V IPC<ul>
-<li>编译增加 –enable-sysvshm</li>
-</ul>
-</li>
-<li>Shared Memory<ul>
-<li>–enable-shmop</li>
-</ul>
-</li>
-</ul>
-<p>先来看一个shmop的例子：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line">// 从系统获取一个共享内存的id</div><div class="line">$key = ftok(__FILE__, &apos;test&apos;);</div><div class="line">$size = 1024;</div><div class="line">// 打开1024字节的共享内存(如果不存在则申请)</div><div class="line">$shm_h = @shmop_open($key, &apos;c&apos;, 0644, $size);</div><div class="line">if($shm_h === false) &#123;</div><div class="line">    echo &quot;shmop open failed&quot;;</div><div class="line">    exit;</div><div class="line">&#125;</div><div class="line">// 读取共享内存中的数据</div><div class="line">$data = shmop_read($shm_h, 0, $size);</div><div class="line">// 对读取的数据进行反序列化</div><div class="line">$data = unserialize($data);</div><div class="line">//如果没有数据则写入</div><div class="line">if(empty($data)) &#123;</div><div class="line">    echo &quot;there is no data&quot;;</div><div class="line">    $data = &quot;imdonkey&quot;;</div><div class="line">    //所有写入的数据，都必须提前序列化</div><div class="line">    $write_size = shmop_write($shm_h, serialize($data), 0);</div><div class="line">    if($write_size === false) echo &quot;shmop write failed!&quot;;</div><div class="line">&#125;</div><div class="line">//如果有，显示出来，之后删掉</div><div class="line">else &#123;</div><div class="line">    echo &quot;shared memory data: &quot;;</div><div class="line">    print_r($data);</div><div class="line">    shmop_delete($shm_h);</div><div class="line">&#125;</div><div class="line">shmop_close($shm_h);</div><div class="line">?&gt;</div></pre></td></tr></table></figure>
-<p>使用shmop扩展，必须要注意数据的大小，以及读写时候的偏移量。同时，不管你写入的是什么数据类型，都必须进行序列化和反序列化。</p>
-<p>再看一下SysV的例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line">// 从系统获取一个共享内存的id</div><div class="line">$shm_key = ftok(__FILE__, &apos;test&apos;);</div><div class="line">// 获取此共享内存资源的操作句柄</div><div class="line">$memsize = 1024;</div><div class="line">$shm_h = shm_attach($shm_key, $memsize, 0644);</div><div class="line">if($shm_h === false) &#123;</div><div class="line">    echo &quot;shmop open failed&quot;;</div><div class="line">    exit;</div><div class="line">&#125;</div><div class="line">// 获取共享内存中key=222时的内容</div><div class="line">$var_key = 222;</div><div class="line">$data = @shm_get_var($shm_h, $var_key);</div><div class="line">if(empty($data)) &#123;</div><div class="line">    $data = [&apos;test&apos;=&gt;&apos;here&apos;];</div><div class="line">    echo &quot;there is no data, insert $data.\n&quot;;</div><div class="line">    // 如果数据不存在，写入数据，可以是任意类型，无需初始化</div><div class="line">    shm_put_var($shm_h, $var_key, $data);</div><div class="line">&#125; else &#123;</div><div class="line">    // 否则，输出数据，并清理相关内存</div><div class="line">    echo &quot;find data: $data\n&quot;;</div><div class="line">    shm_remove_var($shm_h, $var_key);</div><div class="line">&#125;</div><div class="line">// 断开资源的链接</div><div class="line">shm_detach($shm_h);</div><div class="line">?&gt;</div></pre></td></tr></table></figure></p>
-<p>原理上来讲并无不同，只是SysV做了更多的封装，让你使用起来更加方便一些。不用自己控制偏移量，也不用进行序列化和反序列化。同时对于每个数据，都设置了对应的<code>var_key</code>, 这样在同一个区域可以保存多个数据，而无需再次申请另一片共享内存。</p>
-<h2 id="业务中的使用"><a href="#业务中的使用" class="headerlink" title="业务中的使用"></a>业务中的使用</h2><p>在使用两者的时候，都要注意对数据大小的估算。否则很容易出现共享内存溢出的情况。而我在使用的时候，充分评估了要存储的数据结构的大小，我需要存储的内容是：<br><code>ip(15个字节以内)+port(8字节以内)+timestamp(15字节以内)+分隔符(3字节)=41字节</code><br>假设我调用100个后端服务。那么最高需要存储的路由信息就是<code>4.1k</code>大小。</p>
-<p>出于这种考虑，我申请了1M的内存，觉得应该是够够的了。就这么悠哉哉的在线上跑了一个星期左右，有天没事到线上看了下php的错误日志，结果一脸懵逼：</p>
-<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1fb331st5c1j20ze046wgt.jpg" alt=""></p>
-<p>什么情况，调用的后端服务一共才5个，共享内存这么快就写满了？？经过一个初步的判断之后，我得出的结论是：sysV的接口能力太差，对于shareKey没有做去重处理，而是每次都写入了新的key，这样就导致了共享内存的写入指针尽管是相同的shareKey，但是却不断的后移，最终导致共享内存被写爆，而寻址的请求全部都打到了寻址服务，还好它比较健壮，也有短时的缓存，才没有产生运营事故。</p>
-<p>在得出了这么个结论之后，我修改了我的代码，在每次完成对shareKey内容的获取之后，增加了一行</p>
-<p><code>shm_remove_var($shareKey)</code></p>
-<p>同时写了一个脚本，把原有的共享内存id对应的内容清空，经过手工处理十台机器之后，再全量替换一把代码，打卡下班，感觉自己棒棒哒。</p>
-<p>没想到，这才是悲剧的开始。就在当周的周六，吃着火锅，突然就有一台线上机器罢工了。机器服务狂core不止，打开系统配置的core文件输出之后，迅速占满磁盘，无奈之下，先让运维把机器摘掉，再进一步的分析。其他机器也出现了不同程度的core，线上失败率直线上升。</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1fb331ryw78j20yi0ceafh.jpg" alt="Alt text"></p>
-<p>再把机器摘下来之后，看了一眼core文件，就发现，哎呀，闯祸了。</p>
-<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1fb331qut6tj21kw07r7a3.jpg" alt="Alt text"></p>
-<p>赶快恢复到没有remove的版本，至少还能撑一个星期，不至于程序core掉。</p>
-<h2 id="踩坑与解决"><a href="#踩坑与解决" class="headerlink" title="踩坑与解决"></a>踩坑与解决</h2><p>接下来开始仔细分析源码，发现sysV的扩展中，remove_var实现如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">PHP_FUNCTION(shm_remove_var)</div><div class="line">&#123;</div><div class="line">    zval *shm_id;</div><div class="line">    long shm_key, shm_varpos;</div><div class="line">    sysvshm_shm *shm_list_ptr;</div><div class="line">    // 读取输入参数</div><div class="line">    if (SUCCESS != zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, &quot;rl&quot;, &amp;shm_id, &amp;shm_key)) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    SHM_FETCH_RESOURCE(shm_list_ptr, shm_id);</div><div class="line"></div><div class="line">    // 检查sharekey在共享内存中是否存在</div><div class="line">    shm_varpos = php_check_shm_data((shm_list_ptr-&gt;ptr), shm_key);</div><div class="line"></div><div class="line">    // 如果不存在，返回错误</div><div class="line">    if (shm_varpos &lt; 0) &#123;</div><div class="line">        php_error_docref(NULL TSRMLS_CC, E_WARNING, &quot;variable key %ld doesn&apos;t exist&quot;, shm_key);</div><div class="line">        RETURN_FALSE;</div><div class="line">    &#125;</div><div class="line">    // 如果存在，删除共享内存</div><div class="line">    php_remove_shm_data((shm_list_ptr-&gt;ptr), shm_varpos);</div><div class="line">    RETURN_TRUE;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>咋一看没啥问题，但是深入看一下<code>php_check_shm_data</code>，发现有问题：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">// ptr为整个共享内存区块的头指针</div><div class="line">static long php_check_shm_data(sysvshm_chunk_head *ptr, long key)</div><div class="line">&#123;</div><div class="line">    long pos;</div><div class="line">    sysvshm_chunk *shm_var;</div><div class="line">    // 从头开始寻找</div><div class="line">    pos = ptr-&gt;start;</div><div class="line"></div><div class="line">    for (;;) &#123;</div><div class="line">        // 找到最后了返回</div><div class="line">        if (pos &gt;= ptr-&gt;end) &#123;</div><div class="line">            return -1;</div><div class="line">        &#125;</div><div class="line">        // 向前进一个内存区块，由当前区块的next指针决定</div><div class="line">        shm_var = (sysvshm_chunk*) ((char *) ptr + pos);</div><div class="line">        if (shm_var-&gt;key == key) &#123;</div><div class="line">            return pos;</div><div class="line">        &#125;</div><div class="line">        pos += shm_var-&gt;next;</div><div class="line"></div><div class="line">        if (shm_var-&gt;next &lt;= 0 || pos &lt; ptr-&gt;start) &#123;</div><div class="line">            return -1;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return -1;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这个根本就是线程不安全的版本额，在高并发的场景下，非常有可能出现，对一个shareKey内是否存在数据的错误判断，根据swoole的多进程模型，进程A进行寻址，查看共享内存，发现shareKey对应的区块无数据，所以他准备进行写入，同时进程B之前已经检查了shareKey数据，发现shareKey数据已经过期，执行了remove操作。这时候进程A再想去写入的时候，就会发生不可避免的segmentation fault。</p>
-<p>发现了这个问题之后，反过来去想当时为什么共享内存会被写满，也是一样的问题，都怪<code>php_check_shm_data</code>对key的判断线程不安全，所以不可避免的，高并发下一直会用重复的key不停的向前写入。当时申请了 12M的内存, 每秒500请求，swoole开了24个进程，假设碰撞概率是<code>1/(24*500)=1/12000</code>。每次写入的大小是4k*3（四个服务寻址），程序设计的是五分钟进行一次put。</p>
-<p>那么12M共享内存被写满的时间应该是12M/12k/(60min/5min)/24h = 3.6天左右。基本上只能撑个这么久。</p>
-<p>所以呢，解决方向有两个：</p>
-<ul>
-<li>实现一个有锁的共享内存API版本</li>
-<li>另辟蹊径，使用别的本地内存存储方案</li>
-</ul>
-<p>权衡之下，准备采取第二种做法，预知后事如何，且看下回分解~</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1907,7 +1892,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">50</span>
+              <span class="site-state-item-count">51</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1915,7 +1900,7 @@
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
