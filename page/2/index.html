@@ -250,6 +250,180 @@
             
               
                 
+                <a class="post-title-link" href="/2017/02/01/php003/" itemprop="url">
+                  关于php的共享内存的使用和研究之外部存储
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-02-01T17:54:58+08:00" content="Feb 1 2017">
+              Feb 1 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/php/" itemprop="url" rel="index">
+                    <span itemprop="name">php</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/02/01/php003/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/01/php003/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>上文中提到了针对php的共享内存方案的尝试，最终发现它并不适用于我的场景，如果想要兼容多进程或多线程并发读写的情况下可靠，一定要有适当的机制来保证资源的唯一性。</p>
+<p>加锁肯定是想到的第一选择，对于每次共享内存的时候，先获取一个锁，只有获取成功了之后才允许进行读和写，这应该是最简单的方案，但是同步锁对性能的损耗也是比较大的。APC的user data cache的存储机制对数据要求严格正确，锁比较多，它的效率与本地的memcache相当。既然这样，不如把眼光投向业界，看看大牛们使用什么样的方案来解决这个问题。</p>
+<h2 id="YAC"><a href="#YAC" class="headerlink" title="YAC"></a>YAC</h2><p>原文链接：<a href="http://www.laruence.com/2013/03/18/2846.html" target="_blank" rel="external">http://www.laruence.com/2013/03/18/2846.html</a></p>
+<p>laurance为了解决如下的两个问题，设计出了这个cache：</p>
+<ul>
+<li>想让PHP进程之间共享一些简单的数据</li>
+<li>希望非常高效的缓存一些页面</li>
+</ul>
+<p>同时也是基于如下的经验假设：</p>
+<ul>
+<li>对于一个应用来说, 同名的Cache键, 对应的Value, 大小几乎相当.</li>
+<li>不同的键名的个数是有限的.</li>
+<li>Cache的读的次数, 远远大于写的次数.</li>
+<li>Cache不是数据库, 即使Cache失效也不会带来致命错误.</li>
+</ul>
+<p>实现这个cache，关键是无锁化的设计. 根据laurance的说法，他解决读锁的方式是通过不加锁的读，然后CRC校验。<br>看了一下他代码的实现，是对key中存储的固定size的值进行了CRC的计算，然后把key中附带存储的crc信息和内容计算出来的crc信息进行校验。如果校验成功了，那么认为查询成功，如果校验失败了，那么认为查询失败。其实本质上这是一种使用CPU来换锁的方式，大部分的服务器是多核的，一旦加锁，对CPU是很大的浪费。下面这张图形象的表明了这一点：</p>
+<p><img src="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fcb4h630hgj20nk09amxi.jpg" alt=""></p>
+<p>这个是个不错的trick，能够解决的问题就是在多个进程频繁的写入的时候，可能导致的读出错不会带来错误的结果，因为一旦crc校验不通过，那么读出来的结果就是失效了。这显然比上一篇文章中的共享内存的读的方式要高明一些。不过根据我的观察，使用共享内存的方式，由于一直是向后不停的写入，出现被覆盖的概率几乎没有，而laurance这里之所以要校验，则是因为他会进行内存的回收和循环写入，这点在下文中会继续说明。</p>
+<p>现在重点说说这个YAC的写入的问题，首先启动的时候key空间大小确定，可以通过配置来调整分配给存储key的大小，从而扩展key的个数。4M基本上相当于32768个Cache值。首先第一个很重要的点就是如何设计哈希方法来避免写入冲突，这里他使用的是双散列法的<br><a href="https://en.wikipedia.org/wiki/MurmurHash" target="_blank" rel="external">MurmurHash</a>.</p>
+<p>对于小于4M的内存块的操作由于key不同，根据哈希出来的起始位置也不同。不同key之间冲突的概率，等同于哈希算法冲突的概率，这个还是比较低的。对于大的内存块，这里使用了segment-&gt;pos指针来控制内存的分块。和共享内存扩展的实现方式还是比较类似了，反正就是一个pos指针，找得到就update，找不到就向后写。</p>
+<p>那么如果发生冲突呢，laurance给出了一个例子：</p>
+<blockquote>
+<p>比如A进程申请了40字节, B进程申请了60字节, 但是Pos只增加了60字节. 这个时候有如下几种情况:</p>
+<ol>
+<li>A写完了数据, 返回成功, 但是B进程又写完了数据返回成功, 最终B进程的Cache种上了, 而A进程的被踢出了.</li>
+<li>B进程写完了数据, 返回成功, A进程又写完了数据返回成功, 最终A进程的Cache种上了, B进程的被踢出.</li>
+<li>A进程写一半, B进程写一半, 然后A进程又写一半, B进程又写一半, 都返回成功, 但最终, 缓存都失效.</li>
+</ol>
+<p>可见, 最严重的错误, 就是A和B的缓存都失效, 但是Yac不会把错误数据返回给用户, 当下一次来查询Cache的时候, 因为存在crc校验, 所以都miss.</p>
+</blockquote>
+<p>看到这儿终于明白了，并没有解决多进程写的问题，多进程的写还是可能会有冲突，不仅仅是单key的冲突，不同key之间也可能会有冲突。但是冲突了不怕，会通过校验的方式确保client端能够判断出来自己冲突了，这点对应用程序确实非常重要，因为这不是cache error，而仅仅是cache miss而已，这两种情况的严重程度和处理机制的确完全不同。</p>
+<p>另外还有一个亮点是内存的循环分配，如果一个内存块用完了，那么可以重置pos，从而从头开始分配，有了这种机制，即使并发写导致pos一直后移，也不会出现内存耗尽的情况了，这确实是个不错的特性。</p>
+<p>总结来看，yac两个不错的特性：</p>
+<ul>
+<li>读的CRC校验，保证最严重是cache miss</li>
+<li>写的pos重置，保证内存不被写满</li>
+</ul>
+<p>但是针对我的使用场景，多并发情况下的同key的多写多读，它并没有很好的解决这个问题，而是比较适用于低频的用户数据的缓存，比如登陆用户的头像、昵称这类信息。拉取频次不高，miss了也能向后端请求。所以怎么办呢，只能继续进行求索。</p>
+<p>ps：laurance在文章开头群嘲了一下APC的性能，相当于本地的memcache，结果文末贴出的性能对比，yac完全比不上apc。。有点莫名</p>
+<h2 id="Swoole-table"><a href="#Swoole-table" class="headerlink" title="Swoole table"></a>Swoole table</h2><p>接下来说说这两年在社区里面比较火，最近刚刚发布了内置协程2.0版本的swoole. github地址：<a href="https://github.com/swoole/swoole-src" target="_blank" rel="external">https://github.com/swoole/swoole-src</a></p>
+<p>swoole table是swoole中的一个基于共享内存和锁实现的超高性能的并发数据结构，用来解决多进程、多线程数据共享和同步加锁的问题。这不就是我们苦苦寻觅的解决方案么？</p>
+<p>先来看一下swoole table的常见的使用方式，首先它支持三种基本的类型：</p>
+<ul>
+<li><code>swoole_table::TYPE_INT</code> 整形字段</li>
+<li><code>swoole_table::TYPE_FLOAT</code> 浮点字段</li>
+<li><code>swoole_table::TYPE_STRING</code> 字符串字段</li>
+</ul>
+<p>如果想要在各个进程之间共享高性能的本地数据，那么使用的范例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">// 新建swoole table，并且指定类型</div><div class="line">$table = new swoole_table(1024);</div><div class="line">$table-&gt;column(&apos;id&apos;, swoole_table::TYPE_INT, 4);       //1,2,4,8</div><div class="line">$table-&gt;column(&apos;name&apos;, swoole_table::TYPE_STRING, 64);</div><div class="line">$table-&gt;column(&apos;num&apos;, swoole_table::TYPE_FLOAT);</div><div class="line">$table-&gt;create();</div><div class="line"></div><div class="line">// 新建swoole的server</div><div class="line">$serv = new swoole_server(&apos;127.0.0.1&apos;, 9501);</div><div class="line">//将table保存在serv对象上</div><div class="line">$serv-&gt;table = $table;</div><div class="line">$serv-&gt;on(&apos;receive&apos;, function ($serv, $fd, $from_id, $data) &#123;</div><div class="line">    // 使用swoole table存储全局的数据</div><div class="line">    $ret = $serv-&gt;table-&gt;set($key, array(&apos;from_id&apos; =&gt; $data, &apos;fd&apos; =&gt; $fd, &apos;data&apos; =&gt; $data));</div><div class="line">&#125;);</div><div class="line"></div><div class="line">// 这里需要注意的就是一定要在server启动之前创建swoole table，从而保证它能够被全局共享</div><div class="line">$serv-&gt;start();</div></pre></td></tr></table></figure>
+<p>如果只是你自己的一个进程在不同的请求之间共享高性能的本地数据，那么使用的范例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line">class LocalSwooleTable &#123;</div><div class="line">    private static $_swooleTable;// 静态变量，单个进程内共享</div><div class="line"></div><div class="line">    const SWOOLE_TABLE_SET_FAILED = -1001;</div><div class="line">    const SWOOLE_TABLE_GET_FAILED = -1002;</div><div class="line"></div><div class="line">    // swoole table初始化</div><div class="line">    private function __construct() &#123;</div><div class="line">        //预估数据量 100个服务,每个长度30 需要3000个字节,这里申请64k</div><div class="line">        self::$_swooleTable = new \swoole_table(65536);</div><div class="line">        self::$_swooleTable-&gt;column(&apos;ip&apos;,\swoole_table::TYPE_STRING, 64);</div><div class="line">        self::$_swooleTable-&gt;column(&apos;port&apos;,\swoole_table::TYPE_INT, 4);</div><div class="line">        self::$_swooleTable-&gt;column(&apos;timestamp&apos;,\swoole_table::TYPE_INT, 4);</div><div class="line">        self::$_swooleTable-&gt;column(&apos;bTcp&apos;,\swoole_table::TYPE_INT, 4);</div><div class="line">        self::$_swooleTable-&gt;create();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 获取单个swoole的实例</div><div class="line">    public static function getInstance() &#123;</div><div class="line">        if(self::$_swooleTable) &#123;</div><div class="line">            return self::$_swooleTable;</div><div class="line">        &#125;</div><div class="line">        else &#123;</div><div class="line">            new LocalSwooleTable();</div><div class="line">            return self::$_swooleTable;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line">// 获取唯一的实例</div><div class="line">$swooleTableIns = LocalSwooleTable::getInstance();</div><div class="line">$key = &quot;sample&quot;;</div><div class="line">$routeInfo[&apos;timestamp&apos;] = time();</div><div class="line">$routeInfo[&apos;ip&apos;] = &apos;10.25.22.33&apos;;</div><div class="line">$routeInfo[&apos;port&apos;] = 1000;</div><div class="line">$routeInfo[&apos;bTcp&apos;] = 1;</div><div class="line"></div><div class="line">// 设置swoole table中的内容</div><div class="line">$flag = $swooleTableIns-&gt;set($key,$routeInfo);</div><div class="line"></div><div class="line">// 获取swoole table中的内容</div><div class="line">$routeInfo = $swooleTableIns-&gt;get($key);</div></pre></td></tr></table></figure>
+<p>本来，第一种方式应该是我们最好的选择，但是因为我们使用了TSF框架（或者任何不是自己从头裸写swoole的框架），都不会把创建server这一步暴露到业务代码中，这就给我们使用全局的swoole的table带来了很大的难度。换句话说，知道好用，但是就是业务用起来非常的不方便，不具备业务扩展性。</p>
+<p>所以无奈之下，我们还是选取了第二种方案，从性能上面来讲的话，确实是有提升的，不好的地方就是存储资源浪费了一些，每个进程都用了专属自己的swoole table，这当然是无奈之举。还是希望能够之后通过一些改造，把全局的swoole table这种能力能够开放出来。</p>
+<p><img src="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fcb4h6ukbnj21dq00ua9z.jpg" alt="Alt text"></p>
+<p>基本上访问一次是0.03ms，这个性能还是比较突出的。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/12/25/php002/" itemprop="url">
                   关于php的共享内存的使用和研究之由起
                 </a>
@@ -1890,310 +2064,6 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/06/06/book010/" itemprop="url">
-                  读评《web全栈工程师的自我修养》
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-06-06T23:06:43+08:00" content="Jun 6 2016">
-              Jun 6 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/书评影评/" itemprop="url" rel="index">
-                    <span itemprop="name">书评影评</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/06/06/book010/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/06/06/book010/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>这本书年初的时候在班车上面翻了一遍。刚开始的时候对其中很多观点不以为然，认为太浅。不过后来再翻一次的时候，不少东西还是很有启发意义，因此加以推介，涉及到作者观点、大纲，有兴趣的同学可以自行阅读，加以判断。非常适合对全栈感兴趣，但对某一细分技术还不甚了解的同学。</p>
-<h2 id="什么是全栈工程师"><a href="#什么是全栈工程师" class="headerlink" title="什么是全栈工程师"></a>什么是全栈工程师</h2><p>现在，技术其实变得越来越简单。云服务就在提供水和电。<br>所以你需要充分的去了解PAAS服务的平台，amazon的服务，github的服务，让技术不再成为门槛，让事情聚焦在提供专业的价值上面。这也就是世界级的IT支持了，你再也不用担心“只差一个程序员”了。</p>
-<p>LAMP的技术栈<br>MEAN的技术栈</p>
-<p>作者提出全栈工程师或者说工程师的前景：</p>
-<ul>
-<li>一专多长</li>
-<li>解决问题而不是醉心技术</li>
-</ul>
-<p>其实全栈工程师，跟我在taobao十年里面看到的工程师可能是不相符合的。很多淘宝的大型系统，需要非常专业的工程师进行很多的优化才可以实现。</p>
-<h2 id="如何成为全栈工程师"><a href="#如何成为全栈工程师" class="headerlink" title="如何成为全栈工程师"></a>如何成为全栈工程师</h2><p>我们都是普通人，“一万小时定律”是绕不过去的。所以要成为有竞争力的专业人员，必须要投入大量的时间。</p>
-<p>对于招聘来说，要的不仅仅是满足要求，很多时候非常希望候选人能够超出预期。你必须要有一些额外的亮点，也就是竞争力才行。</p>
-<p>对于成为全栈工程师这件事情，作者提供了一些建议：</p>
-<ul>
-<li>围绕商业目标：转型是每时每刻都存在的，每个人，不仅仅是公司，都应该围绕商业目标。商业目标是稳定的，比技术更为稳定。<ul>
-<li>对于直接制作产品，给用户使用的团队，就需要对外关注如何提高产品质量、降低产品成本；对内应该关注如何优化流程、减少错误率、如果团队输出的结果是公司内其他部门需要的原材料，就要关注下游的需求，研究如何更好地输出结果，如何在流程上使得输出产品的过程更加顺畅。</li>
-<li>关注用户体验<ul>
-<li>不爽的地方不要习惯，而是要去改变。<ul>
-<li>专注目标，以目标的维度去思考，不要让别人费事的去猜。</li>
-<li>做自己会用的产品</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h2 id="从学生到工程师"><a href="#从学生到工程师" class="headerlink" title="从学生到工程师"></a>从学生到工程师</h2><p>本章主要论述了从学生进行校园招聘到入职实习后作者的一些感悟，对于未毕业的学生还是可以一看的。已经工作的同学，就略过吧~~</p>
-<h2 id="野生程序员的故事"><a href="#野生程序员的故事" class="headerlink" title="野生程序员的故事"></a>野生程序员的故事</h2><blockquote>
-<p>这一章是这本书争议比较大的地方，甚至在csdn上面也引起了广泛的讨论。主要的争议点在于作者的“野生程序员”观点，引起了小公司技术者的反弹。</p>
-</blockquote>
-<p>除了对野生程序员的讨论，本章中另一有益的讨论是针对大公司和创业公司。<br>大公司可以给你的：</p>
-<ul>
-<li>较小的风险</li>
-<li>技术最佳实践</li>
-<li>垂直专精的技能</li>
-<li>服务海量用户的经验</li>
-<li>软技能</li>
-<li>人脉</li>
-<li>心态</li>
-</ul>
-<p>由此而见，作者本人是比较喜欢大公司的。不过根据《黑客与画家》中的观点，大公司会让你的公司没有可放大性与可衡量性。究竟如何选择，就是仁者见仁，智者见智了。</p>
-<h2 id="工程师事业指南"><a href="#工程师事业指南" class="headerlink" title="工程师事业指南"></a>工程师事业指南</h2><p>对技术人员而言，职业生涯的发展非常重要。《您就是极客》中提出了对软件工程师而言最重要的三点：技术、成长和声望。</p>
-<p>为啥架构师那么火？就是因为他看起来对所有的问题都知道答案。如果你是团队中这样的角色，那么可以说你非常重要。所以首先对你来说就是成为那个什么都懂得家伙。</p>
-<p>其次对你来说重要的是积累你的作品集。作品集其实是想别人（老板、潜在老板、志同道合者）的展示窗口。github显然是程序员最重要的作品集之一。而对于高逼格的设计师来说，dribble则是更好的选择。同时github提供的静态页面托管服务对于不想费力租赁机器搭建网站的人来说，也是一个很好的选择。</p>
-<h2 id="全栈工程师眼中的HTTP"><a href="#全栈工程师眼中的HTTP" class="headerlink" title="全栈工程师眼中的HTTP"></a>全栈工程师眼中的HTTP</h2><p>http协议是web开发绕不开的关键点，但是前后台对其理解都有不同。<br>Http版本，现存最多的还是http1.1，而大部分的浏览器和服务器server都已经支持http/2了。<br>从前端的角度来看，有很多http的优化方式:</p>
-<ul>
-<li>减少请求</li>
-<li>合并同域请求</li>
-<li>减少同域内请求以规避达到同域并发上线</li>
-<li>传输内容缩减</li>
-<li>雪碧图</li>
-<li>代码、html gzip压缩</li>
-<li>静态资源单独部署</li>
-<li>各类缓存（cdn、浏览器缓存）</li>
-</ul>
-<p>而从后台来看则是另外的一种场景：</p>
-<ul>
-<li>关注服务器最大连接数</li>
-<li>关注服务器网络模型</li>
-<li>必须防范DDos攻击</li>
-</ul>
-<p>BigPipe：提供针对一次http请求，服务器返回多次的结果，从而规避过多的建立连接过程。事实上大数据时候，http server本来就会分块传输。</p>
-<h2 id="高性能网站的关键：缓存"><a href="#高性能网站的关键：缓存" class="headerlink" title="高性能网站的关键：缓存"></a>高性能网站的关键：缓存</h2><p> 本章主要是从基本概念的维度介绍了一下缓存，从服务器缓存到浏览器缓存两大门类。<br>服务器缓存则分为：</p>
-<ul>
-<li>数据库缓存（读多写少的场景）</li>
-<li>memcache：闻名的web缓存，支持分布式，但不支持无痛扩展。</li>
-<li>文件缓存</li>
-<li>静态化：叫缓存可能不准确了，更多是加速。</li>
-</ul>
-<p>浏览器缓存：</p>
-<ul>
-<li>expires：设置过期时间，无须交互</li>
-<li>last-modified：需要和服务器简单交互一次，304</li>
-<li>cache-control：新的倒计时式的缓存</li>
-</ul>
-<p>作者推荐的浏览器缓存最佳实践：</p>
-<ul>
-<li>对于动态生成的HTML页面使用Https头：Cache-control：no-cache</li>
-<li>对于静态HTML页面使用HTTPS头：Last-modified</li>
-<li>其他文件类型设置Expires头，并在文件内容修改时，更改Query String(现在的前端构建都是通过修改文件名的方式了。)。</li>
-</ul>
-<h2 id="大前端"><a href="#大前端" class="headerlink" title="大前端"></a>大前端</h2><p>作者在本章提出了大前端的概念，这也是最近在前端业界被提的比较多的一点。<br>比较有参考价值的是作者提出的前端知识体系：<br>初级工程师：</p>
-<ul>
-<li>对浏览器兼容性的了解</li>
-<li>对HTML/CSS/JavaScript语法和原理的理解</li>
-<li>对编辑器和插件的熟悉程度</li>
-<li>对调试工具的了解程度</li>
-<li>对版本管理软件的熟悉和应用经验</li>
-<li>对前端库/框架的使用</li>
-<li>标准/规范</li>
-</ul>
-<p>中级工程师：</p>
-<ul>
-<li>对代码质量、代码规范的理解</li>
-<li>对Javascript单元测试的熟悉</li>
-<li>对性能优化的应用和理解</li>
-<li>对SEO的应用和理解</li>
-<li>代码部署</li>
-<li>移动web</li>
-</ul>
-<p>高级工程师：</p>
-<ul>
-<li>代码架构</li>
-<li>安全</li>
-<li>对自动化测试的理解</li>
-</ul>
-<p>一家之言，不过大家需要的可以自行对照参考。</p>
-<h2 id="向移动端转型"><a href="#向移动端转型" class="headerlink" title="向移动端转型"></a>向移动端转型</h2><p>移动端转型是大势所趋，因为大家在手机上花费的浏览时间越来越长了。<br>移动端可以参与的主要有：</p>
-<ul>
-<li>IOS原生App</li>
-<li>Android原生App</li>
-<li>Windows Phone原生App</li>
-<li>Web App</li>
-<li>混合模式App（最近热的发烫的reactor）</li>
-</ul>
-<p>本章在讨论移动端的同时也强调了一个观点：</p>
-<blockquote>
-<p>让市场认可你的能力，而不是让老板认可，因为老板会变，老板的标准不一致，而市场是一致的。</p>
-</blockquote>
-<h2 id="持续集成"><a href="#持续集成" class="headerlink" title="持续集成"></a>持续集成</h2><p>对于服务端和前端开发而言，由于没有客户端和移动app端的集成开发环境，比较难打通包括版本控制、包管理、依赖关系、持续集成在内的流程。</p>
-<p>版本控制软件中，SVN与GIT难解难分。本质上是集中管理å分布式代码管理之争。这里不展开，但是提供一些版本控制的最佳实践：</p>
-<ul>
-<li>鼓励频繁的提交</li>
-<li>确定分支流程：feature分支和bug修复分支是必须的</li>
-<li>定义主干原则：主干必须可以随时上线</li>
-<li>不要把逻辑修改和代码格式化混在一起</li>
-<li>不想干的代码分开提交</li>
-<li>保持工作代码库干净：适当的ignore</li>
-</ul>
-<p>包管理中，node的npm做的非常出色。经历过java的maven那一套的都能理解npm做的有多好，多简单。同时作者还推介了bower作为新的包管理工具，这适用于有很多前端版本js库的情况。</p>
-<p>最后本章讨论了构建工具：</p>
-<ul>
-<li>首先必须有良好架构</li>
-<li>具备合适的分离粒度，区分全局、局部组件</li>
-<li>最小知识原则：组件和对象不应暴露细节</li>
-<li>DRY：特殊功能不应存在多个副本</li>
-<li>最小化预先设计：选择器这类组件，必须留下自定义空间，不限死排列</li>
-<li>一致且可执行的命名规则</li>
-<li>完成了良好架构，接下来就是grunt、gulp等javascript构建工具的登场</li>
-</ul>
-<h2 id="理解编程语言"><a href="#理解编程语言" class="headerlink" title="理解编程语言"></a>理解编程语言</h2><p>本章更多是以一种白话的方式老生常谈了程序界经常讨论的问题：是语言重要还是对算法和系统的理解更重要。<br>当然最终作者没有也无法给出答案，这个只能读者自己来思考了。</p>
-<h2 id="全栈游乐场"><a href="#全栈游乐场" class="headerlink" title="全栈游乐场"></a>全栈游乐场</h2><p>全栈工程师的游乐场是VPS，随着阿里云、腾讯云、AWS的大力推广，现在获取VPS的成本也越来越低了。<br>获取自己的VPS并搭建自己网站最大的好处就在于它可以给你一览网站的全貌，而不再是局限在自己的技术栈中。<br>作者在本章也给出了使用VPS的一般入门，有兴趣的同学可以关注下。</p>
-<h2 id="软件设计方法"><a href="#软件设计方法" class="headerlink" title="软件设计方法"></a>软件设计方法</h2><p>本章作者主要介绍了常见的设计模式，比较有料的是介绍了Web开发中的MVC这种架构模式。同时也列举了一些不同语言中常见的MVC框架：</p>
-<ul>
-<li>Javascript mvc framework：AngularJS、backbone.js</li>
-<li>Php：CakePHP、Yii、Codeigniter</li>
-<li>Objective-C: Cocoa</li>
-<li>Ruby mvc framework：Ruby on Rails</li>
-<li>Nodejs：Sail.js Total.js Express</li>
-</ul>
-<h2 id="高效工程师"><a href="#高效工程师" class="headerlink" title="高效工程师"></a>高效工程师</h2><p>效率在现在快节奏的职场中越来越重要。对于工程师来说，必须做到：</p>
-<ul>
-<li>不断学习</li>
-<li>阅读英文资料</li>
-<li>加入技术社区</li>
-<li>善用搜索引擎</li>
-<li>时间管理</li>
-<li>时间管理四象限：要忙，但是不要瞎忙</li>
-<li>消除重复的工作：善用脚本，善用工具</li>
-<li>给自己留出专注的时间</li>
-<li>番茄工作法</li>
-<li>跨界思考</li>
-<li>智商头脑风暴</li>
-</ul>
-<h2 id="学习设计"><a href="#学习设计" class="headerlink" title="学习设计"></a>学习设计</h2><p>对工程师来说，了解设计，对设计有感觉非常的重要。<br>作者这里推荐了一本《写给大家看的设计书》，着重强调了设计的四大基本理论：</p>
-<ul>
-<li>亲密性</li>
-<li>对齐</li>
-<li>重复</li>
-<li>对比</li>
-</ul>
-<p>对这些理论的理解能够让我们在coding的同时，也能停下来看看自己的产品究竟做的如何。</p>
-<h2 id="全栈思维"><a href="#全栈思维" class="headerlink" title="全栈思维"></a>全栈思维</h2><blockquote>
-<p>一个人的价值，体现在他能够承担的责任。</p>
-</blockquote>
-<p>市场越成熟，这句话应该就越对。<br>同时作者强调了沟通能力在全栈能力中的重要作用：</p>
-<ul>
-<li>针对目标听众</li>
-<li>诉诸对方的利益</li>
-<li>找到方法</li>
-<li>金字塔原则：任何事情都可以归纳出一个中心论点。</li>
-<li>向上表达自己的想法:</li>
-<li>立场足够简单，围绕这一立场沟通</li>
-</ul>
-<h2 id="书单汇总"><a href="#书单汇总" class="headerlink" title="书单汇总"></a>书单汇总</h2><p>《专业主义》<br>《重来》<br>《精益创业》<br>《写给大家看的设计书》<br>《打造facebook》<br>《您就是极客》<br>《代码整洁之道》<br>《精益创业》<br>《黑客与画家》<br>《卓有成效的管理者》<br>《编程的本质》<br>《图解HTTP》<br>《高性能网站建设进阶指南》<br>《从0到1：开启商业与未来的秘密》<br>《代码的未来》<br>《禅与摩托车维修艺术》<br>《只是为了好玩：Linux之父林纳斯自传》<br>《卓有成效的程序员》<br>《软件随想录》<br>《金字塔原理》<br>《卓有成效的管理者》<br>《安静：内向性格的竞争力》</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2239,7 +2109,7 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">51</span>
+              <span class="site-state-item-count">52</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2247,7 +2117,7 @@ mw690/67ad48bbjw1f7wf79n2xzj21j40pc124.jpg" alt=""></p>
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-count">20</span>
                 <span class="site-state-item-name">分类</span>
               
             </div>
