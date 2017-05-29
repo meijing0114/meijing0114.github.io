@@ -1,0 +1,749 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="前面两节主要是对redis的基础知识的梳理，这一篇更多是作者对常见的应用场景的罗列和分析，一共囊括了如下五个应用场景：
+
+进行用户注册和登录的全流程
+保持用户在线的功能
+获取用户在线的好友
+通过IP地址查询访客所在地址
+搜索中常见的auto-complete功能
+
+进行用户注册和登录用户注册和登录的功能，常见的模块一般有三个：
+
+用户注册
+用户登录
+忘记密码
+安全防护
+
+用户注册这三个模块都有各自">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《redis入门指南》进阶场景之用户注册和登录与在线保持">
+<meta property="og:url" content="http://meijing0114.com/2017/05/29/redis003/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="前面两节主要是对redis的基础知识的梳理，这一篇更多是作者对常见的应用场景的罗列和分析，一共囊括了如下五个应用场景：
+
+进行用户注册和登录的全流程
+保持用户在线的功能
+获取用户在线的好友
+通过IP地址查询访客所在地址
+搜索中常见的auto-complete功能
+
+进行用户注册和登录用户注册和登录的功能，常见的模块一般有三个：
+
+用户注册
+用户登录
+忘记密码
+安全防护
+
+用户注册这三个模块都有各自">
+<meta property="og:updated_time" content="2017-05-29T05:33:06.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《redis入门指南》进阶场景之用户注册和登录与在线保持">
+<meta name="twitter:description" content="前面两节主要是对redis的基础知识的梳理，这一篇更多是作者对常见的应用场景的罗列和分析，一共囊括了如下五个应用场景：
+
+进行用户注册和登录的全流程
+保持用户在线的功能
+获取用户在线的好友
+通过IP地址查询访客所在地址
+搜索中常见的auto-complete功能
+
+进行用户注册和登录用户注册和登录的功能，常见的模块一般有三个：
+
+用户注册
+用户登录
+忘记密码
+安全防护
+
+用户注册这三个模块都有各自">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2017/05/29/redis003/"/>
+
+  <title> 《redis入门指南》进阶场景之用户注册和登录与在线保持 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《redis入门指南》进阶场景之用户注册和登录与在线保持
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-05-29T13:31:07+08:00" content="May 29 2017">
+              May 29 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/存储/" itemprop="url" rel="index">
+                    <span itemprop="name">存储</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/05/29/redis003/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/05/29/redis003/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前面两节主要是对redis的基础知识的梳理，这一篇更多是作者对常见的应用场景的罗列和分析，一共囊括了如下五个应用场景：</p>
+<ul>
+<li>进行用户注册和登录的全流程</li>
+<li>保持用户在线的功能</li>
+<li>获取用户在线的好友</li>
+<li>通过IP地址查询访客所在地址</li>
+<li>搜索中常见的auto-complete功能</li>
+</ul>
+<h2 id="进行用户注册和登录"><a href="#进行用户注册和登录" class="headerlink" title="进行用户注册和登录"></a>进行用户注册和登录</h2><p>用户注册和登录的功能，常见的模块一般有三个：</p>
+<ul>
+<li>用户注册</li>
+<li>用户登录</li>
+<li>忘记密码</li>
+<li>安全防护</li>
+</ul>
+<h3 id="用户注册"><a href="#用户注册" class="headerlink" title="用户注册"></a>用户注册</h3><p>这三个模块都有各自涉及到的技术点。首先是<strong>用户注册</strong>模块，要满足用户注册的需求，首先明确用户信息存储所需要的数据结构。一般而言，一个基本的用户注册，需要如下的字段：</p>
+<ul>
+<li>用户名</li>
+<li>邮箱</li>
+<li>密码</li>
+<li>注册时间</li>
+<li>手机等其他需要额外标注的信息</li>
+<li>可扩展的字段（你不知道之后业务的形态发展，如果你不想连表查询的话）</li>
+</ul>
+<p>那么在这种需求之下，redis中的哈希类型来存储用户的基本信息是非常适合的，从存储优势上面来讲，使用哈希类型的存储能够让每个用户的非必填字段不占用多余的内存。那么每次创建用户的时候，只需要在业务层保证用户必填的字段都存在，然后插入新用户的信息即可：<br><code>HSET user:$userid userName $userName email $email password $password registerTime $registerTime ...</code></p>
+<p>与此同时，为了保证用户注册的唯一性，我们将用户的邮箱作为独一无二的存在，每次新用户注册的时候，只需要使用<code>HEXISTS user:$userid email $email</code>就可以判断出用户是否注册过。这样做的好处是显而易见的，很多热门的产品，都会进行账号的抢注。那么在抢注的过程中，一个高效的，用户是否已经注册的服务是非常有必要的。否则一旦过载，会使得所有的注册用户都被拒之门外，这对于产品的伤害性无疑是巨大的。</p>
+<p>再者，就像每一个web安全的教程里都会说的，密码不能被明文存储。这点无论是对mysql还是redis来存储密码都是毫无疑问的。常见的方式是对密码使用不可逆的单向加密算法，比如Md5算法（应该说是一种摘要的算法），同时在生成最终存储的密码时还需要一个由服务端控制的对应每个用户的盐来避免可能的Rainbow table的攻击。这个盐一般会写在服务端的代码配置或是在用户表中增加一个字段进行单独的存储。但是对这个盐的维护成本较高， 而且没有必要。</p>
+<p>所以更好的方式其实是使用bcrypt算法，他主要有几个不错的优势：</p>
+<ul>
+<li>它的算法是渐进式的，会随着你尝试的次数增加而增加计算的时间，也就是说如果有人用brute-force攻击的话，那么他就必须具备大量的资源，也就是大量的肉鸡来尝试；</li>
+<li>它使用了blowfish算法来对密码进行哈希，这样做的优势在于加密的每一步都完全取决于salt和用户的密码，攻击者很难在没有两者的情况下进行模拟；</li>
+<li>它是单向的加密算法；</li>
+<li>可配置的round参数，round为5的情况下，一个6位的密码破解需要数年的时间；</li>
+<li>无需存储salt，算法本身会把salt加入到最终生成的值中，这就省去了对salt的单独处理</li>
+</ul>
+<p>关于bcrypt，有几篇不错的post推荐：</p>
+<ul>
+<li>bcrypt中的盐：<a href="https://stackoverflow.com/questions/277044/do-i-need-to-store-the-salt-with-bcrypt" target="_blank" rel="external">https://stackoverflow.com/questions/277044/do-i-need-to-store-the-salt-with-bcrypt</a></li>
+<li>加密中的盐和胡椒：<a href="https://stackoverflow.com/questions/16891729/best-practices-salting-peppering-passwords/16896216#16896216" target="_blank" rel="external">https://stackoverflow.com/questions/16891729/best-practices-salting-peppering-passwords/16896216#16896216</a></li>
+<li>哈希md5和加密crypt有啥不同：<a href="https://stackoverflow.com/questions/4948322/fundamental-difference-between-hashing-and-encryption-algorithms/4948393#4948393" target="_blank" rel="external">https://stackoverflow.com/questions/4948322/fundamental-difference-between-hashing-and-encryption-algorithms/4948393#4948393</a></li>
+<li>php如何使用bcrypt：<a href="https://stackoverflow.com/questions/4795385/how-do-you-use-bcrypt-for-hashing-passwords-in-php" target="_blank" rel="external">https://stackoverflow.com/questions/4795385/how-do-you-use-bcrypt-for-hashing-passwords-in-php</a></li>
+</ul>
+<p>由此，我们就解决了用户注册中最大头的用户信息存储、用户注册校验，以及用户密码加密的三个部分。接下来继续进入到用户登录与忘记密码模块。</p>
+<h3 id="用户登录与忘记密码"><a href="#用户登录与忘记密码" class="headerlink" title="用户登录与忘记密码"></a>用户登录与忘记密码</h3><p>对于每个用户，我们需要用用户id进行关联，这个用户id同时也可能关联了其他的业务相关的存储。这些存储并不一定是redis或是mysql，但是必须要有这么一个表示保证业务的连通性。所以我们单独保存了邮箱与用户id的映射关系。而每当用户登陆的时候，我们就可以：</p>
+<ul>
+<li>通过邮箱，根据映射获取用户的id</li>
+<li>与redis中存储的哈希数据对比邮箱和密码</li>
+</ul>
+<p>如果验证通过，那么用户登录成功，通过相应的方式保持用户的在线状态。这里简略的说两种方式，后文会详述：</p>
+<ul>
+<li>浏览器cookie存储，通过cookie保存用户的登录标识</li>
+<li>后端保持登录，服务器session保持用户的登录状态</li>
+</ul>
+<p>另外一个常见的场景就是与邮件相关的，比如忘记密码，比如校验邮箱的有效性。这些功能都需要异步的发送邮件，同时在用户进行相应的链接操作之后，修改特定的状态。我们以修改密码为例，一旦用户发出了修改密码的请求，那么需要做如下几件事情：</p>
+<ul>
+<li>邮箱有效，发送修改密码的邮件；</li>
+<li>在发送的邮件中的修改密码的链接中，生成随机的验证码，并且设置固定的有效期为一个小时（expire命令）；</li>
+<li>提供校验验证码的服务，如果用户在一个小时之内点击跳转，并且验证码校验通过，提供修改密码的页面；</li>
+</ul>
+<p>与此同时需要注意的是，必须对用户此类涉及到邮箱的服务，进行访问频率限制，从而防止大量无效的邮箱发送请求。</p>
+<h2 id="用户在线保持"><a href="#用户在线保持" class="headerlink" title="用户在线保持"></a>用户在线保持</h2><p>用户在线保持的方案有很多，上文中也提到了，主要是分成两个流派。<br>第一个流派就是使用前端的存储来记录用户的状态，包括但不限于cookie、端的本地存储等等。每次用户请求的时候，都会带上这个客户端的标识，而服务端提供相应的校验机制。这么做的好处是服务端实现比较简单，只需要做两件事：</p>
+<ul>
+<li>在用户登录的时候，种上有一定时间期限的标识</li>
+<li>用户请求的时候，对于此类标识进行校验</li>
+</ul>
+<p>但是不可避免的，使用客户端存储用户标识会有一定的安全风险，其中的风险在于：</p>
+<ul>
+<li>cookie可能会被xss攻击获得，从而破解了用户的登录身份</li>
+<li>一些不应该暴露给用户的信息，通过本地存储的方式暴露给用户了，存在潜在的安全风险。</li>
+</ul>
+<p>因此，第二个流派就是服务端的登录态保持。这个登录态保持由来已久，之前最经典就是服务端的session。其依赖于一个sessionid（一般也是存储在cookie中的）作为key，然后将用户的登录信息存储在服务端。存储在服务端的方式有很多，redis作为服务端内存存储的佼佼者，当然是一个不错的方式。</p>
+<p>首先我们使用一个散列来存储sessionid与已登录用户之间的映射。要检查一个用户是否登录，需要根据给定的sessionid来查找与之对应的用户，并在他已经登录的情况下，返回用户的ID。<br><code>hget login: $sessionid</code></p>
+<p>而比较复杂的情况出现在用户的登录态刷新上，每当用户浏览页面的时候，我们都对用户存储在登录散列里面的信息进行更新，并将用户的sessionid和当前时间戳添加到记录最近登录用户的有序集合中。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">hset login: $sessionid $user</div><div class="line">zadd recent: $sessionid time()</div></pre></td></tr></table></figure></p>
+<p>一般而言，单台redis的存储容量有限，并且为了不占用不必要的内存，我们肯定需要对用户的登录状态进行清理。假定产品设计只需要同时保持100万个用户在线，那么我们可以通过定时脚本的方式，在存储超限的情况下，找到最旧的sessionid，将其清理。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">while</div><div class="line">    size = redis.zcard(&apos;recent:&apos;)</div><div class="line">    if size &lt;= LIMIT</div><div class="line">        time.sleep(1)</div><div class="line">        continue</div><div class="line">    end_index = min(size - LIMIT ,100 ) //每次不要删除太多</div><div class="line">    sessionids = redis.zrange(&apos;recent:&apos;,0,end_index-1)</div><div class="line">    for sessionid in sessionids:</div><div class="line">        session_key = &apos;delete:&apos;+sessionid</div><div class="line">        multi</div><div class="line">        delete session_key</div><div class="line">        hdel login: session_key</div><div class="line">        zrem recent: session_key</div><div class="line">        exec</div></pre></td></tr></table></figure></p>
+<p>在实际运行时，每秒最多可以清理60000多个令牌，完全够用了。</p>
+<p>本文主要对redis在登录注册、登录态保持方面的应用进行了探讨，同时也结合了一些我的实际使用与开发的经验。有人说redis的使用非黑即白，需要摒弃关系型数据库。但是在实际的工程中，颇为不可行，很多系统仍然依赖于关系型数据库存储的方方面面，这点在后文中也会有所体现。接下来的一文，会对用户的好友列表拉取、auto-complete实现、以及ip地址查询访客等功能进行更进一步的讨论。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/06/architect002/" rel="next" title="小而美的邀请码设计实现方案">
+                <i class="fa fa-chevron-left"></i> 小而美的邀请码设计实现方案
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/05/29/redis003/"
+           data-title="《redis入门指南》进阶场景之用户注册和登录与在线保持" data-url="http://meijing0114.com/2017/05/29/redis003/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">52</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#进行用户注册和登录"><span class="nav-number">1.</span> <span class="nav-text">进行用户注册和登录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#用户注册"><span class="nav-number">1.1.</span> <span class="nav-text">用户注册</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用户登录与忘记密码"><span class="nav-number">1.2.</span> <span class="nav-text">用户登录与忘记密码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#用户在线保持"><span class="nav-number">2.</span> <span class="nav-text">用户在线保持</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
