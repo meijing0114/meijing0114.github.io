@@ -250,6 +250,160 @@
             
               
                 
+                <a class="post-title-link" href="/2017/07/23/redis004/" itemprop="url">
+                  《redis入门指南》进阶场景之用户的好友列表拉取、auto-complete实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-07-23T22:38:25+08:00" content="Jul 23 2017">
+              Jul 23 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/存储/" itemprop="url" rel="index">
+                    <span itemprop="name">存储</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/07/23/redis004/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/23/redis004/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>上文中介绍了如何使用redis实现用户的注册，以及登陆的在线状态保持。而使用redis另外常见的应用，还有好友列表的维护与拉取，以及搜索中的auto-complete的实现。需要注意的时候，redis并非这些需求的唯一实现，只是在很多情况下，是性能最为突出的实现方式。接下来，我们就看看在这两种场景中，redis如何使用强大的数据接口和易用的api，发挥作用。</p>
+<h2 id="用户好友列表拉取"><a href="#用户好友列表拉取" class="headerlink" title="用户好友列表拉取"></a>用户好友列表拉取</h2><p>使用redis一个非常典型的场景就是对好友列表的维护。现在社交类的产品越来越多，以QQ为鼻祖，微博为发展的又一高潮，其中对于好友列表的维护始终是一个很大的技术点。对于QQ来说，本地的维护加上与server的定时更新，即可完成任务。但是对于微博这类单纯的没有客户端的web应用而言，在服务端对于关系链的高效存储，就显得十分有挑战了。</p>
+<p><img src="http://wx1.sinaimg.cn/mw690/67ad48bbgy1fhu7466pibj20zk0np0vh.jpg" alt="Alt text"></p>
+<p>我们首先来看看这个方案要解决哪些问题：</p>
+<ol>
+<li>要解决对用户好友列表的维护，每个人都想看到自己有哪些自己关注的人，以及关注自己的人；</li>
+<li>要解决给出两个用户，验证关注关系的问题</li>
+<li>要解决能够方便的建立和去除好友关系的问题</li>
+</ol>
+<p>对于每个用户而言，他必须维护至少两个集合，第一个集合就是followerSet，第二个集合就是followingSet。分别存储他关注的和他被关注的好友的userid。这两个集合自己的key都是由这个用户自己的userid规则拼装而成。</p>
+<p>有了这两个集合之后，对于其关注者和被关注的列表拉取的问题，就可以直接通过：<br><code>SMEMBERS selfuserid-followerSet</code>和<code>SMEMBERS selfuserid-followingSet</code>来解决。当拉取列表的时候，一个很现实的问题是对拉取的用户进行排序。根据新浪微博现有的做法，也只是支持实时的按照关注时间来排序，如果需要其他时间来排序的话，结果会有几个小时的延时。也就是为了支持这个新的排序特性，他们使用了异步的脚本，来专门产生了其他排序类型的集合。考虑到用户使用其他排序类型的场景比较小，这也是能够接受的一种做法。</p>
+<p>同时在拉取的时候也需要支持到分页，这时候就可以使用之前的SORT命令，<code>SORT selfuserid-followerSet BY selfuserid:*-&gt;followtime DESC LIMIT 0 10</code>，我们使用一个散列<code>selfuserid:userid</code>来保存用户和关注用户之间的关注时间、是否密友等信息，而在排序的时候，也能够利用这个时间来实现排序。而像刚刚说的其他排序字段，也可以通过定时脚本的方式，写入到这个哈希中，从而完成排序的功能。这里一个潜在的问题是SORT命令的性能，一般而言，这个命令的性能是log(N+MlogM)，N是总数，M是要取出的数量。如果实在是N和M太大导致了性能的瓶颈，那么可以考虑使用store对结果进行短暂的存储来保证性能。</p>
+<p>完成了对好友列表的拉取之后，接下来我们要着眼的就是用户的好友关系的变更。以用户关注为例，当A用户关注了B用户之后，需要进行如下的几个操作：</p>
+<ul>
+<li>将A用户加入到B用户的followerSet中</li>
+<li>将A用户加入到B用户的follower哈希表中，注明被关注时间等信息用以排序</li>
+<li>将B用户加入到A用户的followingSet中</li>
+<li>将B用户加入到A用户的following哈希表中，注明关注时间等信息用以排序</li>
+</ul>
+<p>为了保证数据的一致性，可以使用redis的事务，将四种操作合在一起：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">redis-&gt;multi</div><div class="line">-&gt;sadd(B:followerSet A)</div><div class="line">-&gt;sadd(A:followingSet B)</div><div class="line">-&gt;hset(B:A,followertime,time)</div><div class="line">-&gt;hset(A:B,followingtime,time)</div><div class="line">-&gt;exec()</div></pre></td></tr></table></figure>
+<p>通过这样的结构设计，我们就能够满足基本的好友关系的存储和各类拉取、添加、删除的需求，同时也能够在一定程度上提升访问的性能。</p>
+<h2 id="实现auto-complete"><a href="#实现auto-complete" class="headerlink" title="实现auto-complete"></a>实现auto-complete</h2><p>另一种很常见的web站点的需求，是对用户搜索的内容进行auto-complete。 传统的使用数据的方案，往往依赖了数据库的like能力，效率十分的低下。而利用redis的数据结构，我们能够很高效的存储并且索引到需要自动完成的内容。</p>
+<p><img src="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fhu7402ajuj20la0c1ab0.jpg" alt="Alt text"></p>
+<p>假定我们需要搜索的内容是网站所有的用户名，那么首先我们需要处理每个用户名的组成前缀。比如说用户名teddy，那么就需要分别的存储t、te和ted和tedd。这里只需要O(N)的遍历，即可拿到所有的前缀。</p>
+<p>创建一个有序集合auto-complete-set，首先将每个标签名的所有前缀作为元素，同时将它们的分数作为0.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">ZADD auto-complete-set t 0</div><div class="line">ZADD auto-complete-set te 0</div><div class="line">ZADD auto-complete-set ted 0</div><div class="line">ZADD auto-complete-set tedd 0</div></pre></td></tr></table></figure>
+<p>同时为了区分用户名本身，也在后面增加<code>*</code>之后将其存储有序集合:<br><code>ZADD auto-complete-set teddy* 0</code></p>
+<p>由于所有的集合中的元素分数都是相同的，所以该有序集合键中的元素就相当于全部按照字典书序排序了。使用有序集合，在利用其排序特性的同时，也能保证元素的唯一性。当用户输入t的那时候，就会按照如下的流程获取要提示出来的用户：</p>
+<ul>
+<li>获取t的排名 <code>ZRANK auto-complete-set t</code>，在这里返回的是0</li>
+<li>获取t之后的N个元素，当N=100的时候，就是<code>ZRANGE auto-complete-set 1 101</code>，这里N的大小跟要auto-complete的元素的平均长度和需要返回的auto-complete结果直接相关，可以根据自己实际的业务情况灵活的调整。</li>
+<li>遍历返回的结果，找出其中以<em>结尾，而且以t开头的元素，此时将`</em>`去掉就是我们需要的结果了。</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>曾经复杂的算法实现，在redis强大的数据结构面前变成了风轻云淡。不论是对好友列表的维护，还是对auto-compete功能的实现，都显示出了redis的轻盈和强劲。所以在redis特性了解的同时，无时无刻不要了解redis对应数据结构的应用场景，只有这样才能做到用时游刃有余。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/05/29/redis003/" itemprop="url">
                   《redis入门指南》进阶场景之用户注册和登录与在线保持
                 </a>
@@ -1717,157 +1871,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/01/php004/" itemprop="url">
-                  关于php的共享内存的使用和研究之深入剖析swoole table
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-02-01T18:14:26+08:00" content="Feb 1 2017">
-              Feb 1 2017
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/php/" itemprop="url" rel="index">
-                    <span itemprop="name">php</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/02/01/php004/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/01/php004/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。</p>
-<p>首先来看一下swooletable中用来存储的基本数据结构swTableRow：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">typedef struct _swTableRow</div><div class="line">&#123;</div><div class="line">    sw_atomic_t lock;// 原子锁，所谓的效率更高的行锁，这个要等下看看了。</div><div class="line">    /**</div><div class="line">     * 1:used, 0:empty</div><div class="line">     */</div><div class="line">    uint8_t active;//是否启用状态</div><div class="line">    /**</div><div class="line">     * next slot</div><div class="line">     */</div><div class="line">    struct _swTableRow *next;//链表结构</div><div class="line">    /**</div><div class="line">     * Hash Key</div><div class="line">     */</div><div class="line">    char key[SW_TABLE_KEY_SIZE];//大小64，意味着单哈希key的长度</div><div class="line">    char data[0];//真实数据</div><div class="line">&#125; swTableRow;</div></pre></td></tr></table></figure>
-<p>然后是用来遍历行的索引数据结构<code>swTable_iterator</code>:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">    uint32_t absolute_index;</div><div class="line">    uint32_t collision_index;</div><div class="line">    swTableRow *row;</div><div class="line">&#125; swTable_iterator;</div></pre></td></tr></table></figure>
-<p>然后是包含了多行内容的swTable:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">    swHashMap *columns;// 一个table，包含多列中的列信息</div><div class="line">    uint16_t column_num;</div><div class="line">    swLock lock;</div><div class="line">    uint32_t size;</div><div class="line">    uint32_t mask;</div><div class="line">    uint32_t item_size;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * total rows that in active state(shm)</div><div class="line">     */</div><div class="line">    sw_atomic_t row_num;</div><div class="line"></div><div class="line">    swTableRow **rows;// 一列包含多行，所以是个二维的数组</div><div class="line">    swMemoryPool *pool;</div><div class="line"></div><div class="line">    uint32_t compress_threshold;</div><div class="line"></div><div class="line">    swTable_iterator *iterator;</div><div class="line"></div><div class="line">    void *memory;</div><div class="line">&#125; swTable;</div></pre></td></tr></table></figure>
-<p>用来存储swooletable中每一列信息的swTableColumn:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">   uint8_t type; // 结构类型，可选是int、浮点、字符串</div><div class="line">   uint32_t size; // 声明的大小，</div><div class="line"></div><div class="line">   swString* name;</div><div class="line">   uint16_t index;</div><div class="line">&#125; swTableColumn;</div><div class="line"></div><div class="line">// 此结构体即为执行$_swooleTable-&gt;column(&apos;ip&apos;,\swoole_table::TYPE_STRING, 64)时设置结构体中内容</div></pre></td></tr></table></figure>
-<p>几个对外暴露的api如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">swTable* swTable_new(uint32_t rows_size);</div><div class="line">int swTable_create(swTable *table);</div><div class="line">void swTable_free(swTable *table);</div><div class="line">int swTableColumn_add(swTable *table, char *name, int len, int type, int size);</div><div class="line">swTableRow* swTableRow_set(swTable *table, char *key, int keylen, sw_atomic_t **rowlock);</div><div class="line">swTableRow* swTableRow_get(swTable *table, char *key, int keylen, sw_atomic_t **rowlock);</div></pre></td></tr></table></figure>
-<p>先来看看创建swooletable的时候会发生什么：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">swTable* swTable_new(uint32_t rows_size)</div><div class="line">&#123;</div><div class="line">    // 隐含限制，单个swoole table 最大128M，还是挺狠的</div><div class="line">    if (rows_size &gt;= 0x80000000)</div><div class="line">    &#123;</div><div class="line">        rows_size = 0x80000000;</div><div class="line">    &#125;</div><div class="line">    // 16进制转换，这应该也是文档里面说的，创建需要2的倍数的原因，比较好处理一些</div><div class="line">    else</div><div class="line">    &#123;</div><div class="line">        uint32_t i = 10;</div><div class="line">        while ((1U &lt;&lt; i) &lt; rows_size)</div><div class="line">        &#123;</div><div class="line">            i++;</div><div class="line">        &#125;</div><div class="line">        rows_size = 1 &lt;&lt; i;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 统一申请内存</div><div class="line">    swTable *table = SwooleG.memory_pool-&gt;alloc(SwooleG.memory_pool, sizeof(swTable));</div><div class="line">    if (table == NULL)</div><div class="line">    &#123;</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 给table创建锁，独一无二</div><div class="line">    if (swMutex_create(&amp;table-&gt;lock, 1) &lt; 0)</div><div class="line">    &#123;</div><div class="line">        swWarn(&quot;mutex create failed.&quot;);</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 预创建迭代器</div><div class="line">    table-&gt;iterator = sw_malloc(sizeof(swTable_iterator));</div><div class="line">    if (!table-&gt;iterator)</div><div class="line">    &#123;</div><div class="line">        swWarn(&quot;malloc failed.&quot;);</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    // 预创建存储列信息的哈希表，这里同样隐含了，最多32列的限制条件，同时制定了析构函数</div><div class="line">    table-&gt;columns = swHashMap_new(SW_HASHMAP_INIT_BUCKET_N, (swHashMap_dtor)swTableColumn_free);</div><div class="line">    if (!table-&gt;columns)</div><div class="line">    &#123;</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 结构体变量初始化</div><div class="line">    table-&gt;size = rows_size;</div><div class="line">    table-&gt;mask = rows_size - 1;</div><div class="line"></div><div class="line">    bzero(table-&gt;iterator, sizeof(swTable_iterator));</div><div class="line">    table-&gt;memory = NULL;</div><div class="line">    return table;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>我个人比较关注关于锁的这一块，所以看了下<code>swMutex_create</code>方法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">int swMutex_create(swLock *lock, int use_in_process)</div><div class="line">&#123;</div><div class="line">    int ret;</div><div class="line">    bzero(lock, sizeof(swLock));</div><div class="line">    lock-&gt;type = SW_MUTEX;</div><div class="line">    pthread_mutexattr_init(&amp;lock-&gt;object.mutex.attr);</div><div class="line">    if (use_in_process == 1)</div><div class="line">    &#123;</div><div class="line">        pthread_mutexattr_setpshared(&amp;lock-&gt;object.mutex.attr, PTHREAD_PROCESS_SHARED);</div><div class="line">    &#125;</div><div class="line">    if ((ret = pthread_mutex_init(&amp;lock-&gt;object.mutex._lock, &amp;lock-&gt;object.mutex.attr)) &lt; 0)</div><div class="line">    &#123;</div><div class="line">        return SW_ERR;</div><div class="line">    &#125;</div><div class="line">    lock-&gt;lock = swMutex_lock;</div><div class="line">    lock-&gt;unlock = swMutex_unlock;</div><div class="line">    lock-&gt;trylock = swMutex_trylock;</div><div class="line">    lock-&gt;free = swMutex_free;</div><div class="line">    return SW_OK;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这里使用了posix thread中的用于线程同步的mutex函数来创建和初始化互斥锁。参照<a href="http://blog.sina.com.cn/s/blog_4176c2800100tabf.html" target="_blank" rel="external">http://blog.sina.com.cn/s/blog_4176c2800100tabf.html</a> 中的说明，这里swoole应该创建的是<code>PTHREAD_MUTEX_TIMED_NP</code> 普通锁，当一个线程加锁以后，其余请求锁的线程将形成一个等待队列，并在解锁后按优先级获得锁。这种锁策略保证了资源分配的公平性。</p>
-<p>同时创建锁也给出了一个参数<code>use_in_process</code>, 如果是在进程间使用，那么意味着锁在进程间共享，这也就对应了swooletable的第一种使用方式：在server启动之前创建，否则就是我们上文中的使用方式：在每个进程中单独的使用。</p>
-<p>注意，这里swoole table使用了互斥锁，这是阻塞的，当某线程无法获取互斥量时，该线程会被直接挂起，该线程不再消耗CPU时间，当其他线程释放互斥量后，操作系统会激活那个被挂起的线程，让其投入运行。由于table之间加锁的频率比较低，所以使用互斥锁是划算的。</p>
-<p>再看下指定了swooletable中的列信息之后，进行<code>swTable_create</code>时发生了什么：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">int swTable_create(swTable *table)</div><div class="line">&#123;</div><div class="line">    // 数据初始化</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 真正申请了共享内存，计算出了最终需要的大小</div><div class="line">    void *memory = sw_shm_malloc(memory_size);</div><div class="line">    if (memory == NULL)</div><div class="line">    &#123;</div><div class="line">        return SW_ERR;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 变量初始化</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>最后看一下我们最关注的，对于行内容的get、set、del：</p>
-<p>先看get方法，每次get，都更新一下自旋锁<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">swTableRow* swTableRow_get(swTable *table, char *key, int keylen, sw_atomic_t **rowlock)</div><div class="line">&#123;</div><div class="line">    //参数校验</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 根据哈希算法获取相应的行</div><div class="line">    swTableRow *row = swTable_hash(table, key, keylen);</div><div class="line">    // 获取行中存储的初始的原子锁</div><div class="line">    sw_atomic_t *lock = &amp;row-&gt;lock;</div><div class="line">    // 对应swSpinLock_create方法，其中调用pthread_spin_init进行自旋锁初始化</div><div class="line">    sw_spinlock(lock);</div><div class="line">    // 自旋锁赋值</div><div class="line">    *rowlock = lock;</div><div class="line"></div><div class="line">    // 遍历table，找对应的列中的行</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>再看set方法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div></pre></td><td class="code"><pre><div class="line">swTableRow* swTableRow_set(swTable *table, char *key, int keylen, sw_atomic_t **rowlock)</div><div class="line">&#123;</div><div class="line">    //参数校验</div><div class="line">    ...</div><div class="line"></div><div class="line">    // 更新自旋锁</div><div class="line">    swTableRow *row = swTable_hash(table, key, keylen);</div><div class="line">    sw_atomic_t *lock = &amp;row-&gt;lock;</div><div class="line">    sw_spinlock(lock);</div><div class="line">    *rowlock = lock;</div><div class="line"></div><div class="line">    if (row-&gt;active)</div><div class="line">    &#123;</div><div class="line">        for (;;)</div><div class="line">        &#123;</div><div class="line">            if (strncmp(row-&gt;key, key, keylen) == 0)</div><div class="line">            &#123;</div><div class="line">                break;</div><div class="line">            &#125;</div><div class="line">            else if (row-&gt;next == NULL)</div><div class="line">            &#123;</div><div class="line">                //!!! 锁住table</div><div class="line">                table-&gt;lock.lock(&amp;table-&gt;lock);</div><div class="line">                swTableRow *new_row = table-&gt;pool-&gt;alloc(table-&gt;pool, 0);</div><div class="line">                // !!! 创建完成，解锁table</div><div class="line">                table-&gt;lock.unlock(&amp;table-&gt;lock);</div><div class="line"></div><div class="line">                if (!new_row)</div><div class="line">                &#123;</div><div class="line">                    return NULL;</div><div class="line">                &#125;</div><div class="line">                //add row_num</div><div class="line">                bzero(new_row, sizeof(swTableRow));</div><div class="line">                // 多线程全局变量自加，确保行数全局唯一，对应__sync_fetch_and_add方法！！</div><div class="line">                sw_atomic_fetch_add(&amp;(table-&gt;row_num), 1);</div><div class="line">                row-&gt;next = new_row;</div><div class="line">                row = new_row;</div><div class="line">                break;</div><div class="line">            &#125;</div><div class="line">            else</div><div class="line">            &#123;</div><div class="line">                row = row-&gt;next;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    else</div><div class="line">    &#123;</div><div class="line">        // 多线程全局变量自加，确保行数全局唯一，对应__sync_fetch_and_add方法！！</div><div class="line">        sw_atomic_fetch_add(&amp;(table-&gt;row_num), 1);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    memcpy(row-&gt;key, key, keylen);</div><div class="line">    row-&gt;active = 1;</div><div class="line">    return row;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>del方法也比较类似的，这里就不讲了，仔细看看还是很有意思。核心点在于：</p>
-<ul>
-<li>对互斥锁、自旋锁的灵活使用</li>
-<li>对多线程下的全局变量处理</li>
-<li>对共享内存的把控与操作</li>
-<li>对内存的分配与正确回收</li>
-</ul>
-<p>swoole的源码的确有很多可取之处，涉及到了很多系统和存储的基本的只是，非常值得学习。<br>那么，关于php使用本机存储系列，也就到此为止吧！</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1913,7 +1916,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">52</span>
+              <span class="site-state-item-count">53</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1930,7 +1933,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

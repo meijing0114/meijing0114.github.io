@@ -250,6 +250,295 @@
             
               
                 
+                <a class="post-title-link" href="/2014/11/23/mysql反模式1/" itemprop="url">
+                  mysql反模式1
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-11-23T20:23:12+08:00" content="Nov 23 2014">
+              Nov 23 2014
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据库/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/11/23/mysql反模式1/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2014/11/23/mysql反模式1/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="mysql反模式1"><a href="#mysql反模式1" class="headerlink" title="mysql反模式1"></a>mysql反模式1</h1><p>之前由于业务设计数据库的需要，网络搜索时搜到了mysql反模式这本书的章节片段，读来觉得非常有收获。因此特意买来深入读了一下，收获颇多，在此分享一下。</p>
+<p>在这本书中，深入剖析了数据库编程中的常见错误，并且十分坦诚的指出，noSQL不是万能药，cache也不是，你应该首先对SQL有更加深入的认识。在我看来，它给人带来最大的启发有两点：第一点是它灵活的结合了很多应用场景，提出了非常实用且有效的解决方案，让你拿来即用，实在是比较惊喜。</p>
+<p>第二点是它看似罗嗦繁复地指出了很多对数据库认识的常见谬误或是那些我们觉得众人皆知的注意点。但是要意识到，很多编程时的习惯或注意点在我们谈论的时候可能很清楚，但是真正到项目实践的时候却往往模棱两可。这是因为我们对这些注意点的理解并不透彻，只知道该这么做，但是不这么做了有什么不好，做了又有哪些好处，往往是说不太清楚。因此这种书很多时候厘清了这些灰色地带，明确且逻辑清晰的说明哪些数据库使用方法就是错误的。在熟知了来龙去脉之后，我们在编程时也自然会加倍小心，防止为后续运维带来大坑。</p>
+<p>很多人对SQL的学习都是因为项目所需自学，而不是像其他编程语言那样从头开始。在写完了一些基本的SQL语句之后，一个很自然的问题就出现了：到底什么样的SQL语句才是高性能的？这本书尝试回答了一些这方面的问题，但是更多的还是需要我们自己去考虑和实践。</p>
+<p>所谓反模式是指一种试图解决问题的方法，但是通常会同时引发别的问题。</p>
+<p>此书在结构上分成四个部分，</p>
+<p>第一部分是逻辑数据库设计反模式：这部分指出了在开始编码前，如何决定数据库里存储什么信息，以及最佳的数据组织方式和内在关联方式是什么。也就是如何设计数据库的表、字段和关系。</p>
+<p>第二部分是物理数据库设计反模式，在知道了需要存储哪些数据后，就需要更高效的数据管理，包含了如何选择数据类型、定义表和索引。</p>
+<p>第三部分是查询反模式，主要是说明获取数据时要注意的反模式。</p>
+<p>第四部分是应用程序开发反模式，SQL肯定是与多种编程语言构建的应用程序结合然后加以用用。在应用程序中使用SQL的方式有好有坏，这部分内容描述了一些常见错误。</p>
+<p>##第一部分：逻辑型数据库设计反模式</p>
+<p>###第二章：乱穿马路：<br>很多时候程序员会使用逗号分隔的列表来避免在多对多的关系中创建交叉表，这是一种常见的反模式。</p>
+<p>本章的目标是能够存储多值属性，假定有一张Products，产品表，其中对应多个联系人。同时每个联系人也会对应多个产品。这就构成了一种多对多的关系。</p>
+<blockquote>
+<p>反模式：格式化的逗号分割列表 contacts: ‘tom,lily,jack’</p>
+</blockquote>
+<p>通过逗号分隔将多个联系人信息写入产品表，这可能会在性能和数据完整性上都带来问题：</p>
+<ul>
+<li>查询指定账号的产品时：只能通过正则匹配的方式，无法享受索引的性能优势</li>
+<li>查询指定产品的账号及相关信息时：在与账号表做连接查询时，逗号分隔的* 账号列表会带来很大的不便</li>
+<li>聚合查询时：无法使用聚合函数，它们不适用于逗号分隔的列表</li>
+<li>更新指定产品的账号时：账号列表无法保证顺序，更新账号列表被分裂成先选取后更新的两部操作。</li>
+<li>验证输入合法性：字符串的存储弱化了类型校验，容易引入非法输入</li>
+<li>选择合适的分隔符：使用何种分隔符也是问题</li>
+<li>长度限制：总不能无限可控的扩展账号列表所属字段的长度吧？</li>
+</ul>
+<p>尽管有上述的诸多问题，但是逗号分隔的解决方案也可能在如下场景适用：</p>
+<ul>
+<li>应用程序需要逗号分隔这种存储格式</li>
+<li>没有必要获取列表单独项</li>
+<li>但是其他场景下，就需要寻求新的解决方案： 创建交叉表(一张表有指向另两张表的外键时)</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE Contacts (</div><div class="line">    product_id BIGINT UNSIGNED NOT NULL,</div><div class="line">    account_id BIGINT UNSIGNED NOT NULL,</div><div class="line">    PRIMARY KEY (product_id , account_id),</div><div class="line">    FOREIGN KEY (product_id) REFERENCES Products(product_id),</div><div class="line">    FOREIGN KEY (account_id) REFERENCES Acounts(account_id)</div><div class="line">)</div></pre></td></tr></table></figure>
+<p> 新的设计下，考虑之前的应用场景：</p>
+<p>通过账号查询产品和反过来查询：简单地联结查询，更好的使用了索引<br>聚合查询：交叉表中描述了足够的关系，统计变得相对简单了。还可以进行复杂统计，比如查询相关账号最多的产品：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">SELECT c.product_id, c.accounts_per_product </div><div class="line">FROM (</div><div class="line">     SELECT product_id, COUNT(*) AS accounts_per_product</div><div class="line">     FROM contacts </div><div class="line">     GROUP BY product_id</div><div class="line">) AS c</div><div class="line">HAVING c.accounts_per_product = MAX(c.accounts_per_product)</div></pre></td></tr></table></figure>
+<p>更新指定产品的相关联系人：一条语句，插入或删除即可</p>
+<ul>
+<li>验证产品ID：使用SQL数据类型和外键约束</li>
+<li>选择分隔符：不需要分隔符了</li>
+<li>列表长度：无限制</li>
+<li>其他好处：许多数据库中，声明某一列为外键会隐式地为该列创建索引。也可以在交叉表中轻松加入更多的描述产品与联系人之间关系的字段。<br>一般情况下，每个值都应该存储在各自的行与列中。</li>
+</ul>
+<p>###第三章：单纯的树：<br>如何针对不同的应用场景设计出封层的存储与查询结构？对于树形结构的设计一旦需求考虑不清楚，就是牵一发动全身的事。</p>
+<p>树形结构常见于各类组织架构、分层管理相关的模型设计中。本章的目标是高效的分层存储与查询。层级数据中，很可能需要查询与整个集合或其子集相关的特定对象，比如：</p>
+<ul>
+<li>组织架构图：职员与经理的关系</li>
+<li>线程化讨论：标识回复评论的评论链</li>
+<li>反模式：总是依赖父节点</li>
+</ul>
+<p>常见的解决方案是增加parent_id字段，来描述子节点与父节点之间的关系。这样的设计称为邻接表。这种方式有其便利和局限的地方，下述实例中便可看到：</p>
+<p>使用邻接表查询树：非常明显的短板在于它无法查询一个节点的所有后代。parent_id只描述了两层的关系，但是树的特性就是它可以任意深的扩展。当你查询的时候，有多深，就要扩展多少个联结查询。这一方面很笨拙，另一方面数据库也不支持无限深度。另一种获取数据的方式是先查询所有行，然后在应用程序中拼树。这种大量的数据复制，效率同样也很低，同时增加了程序的复杂性。<br>使用邻接表维护树：有一些操作，邻接表是非常简单地：</p>
+<ul>
+<li>增加叶子结点</li>
+<li>修改节点位置或子树的位置</li>
+<li>但是删除比较复杂，尤其是删除子树的时候必须遍历所有后代节点。</li>
+</ul>
+<p>如果说快速的读取一个给定节点的直接父子节点，以及插入新节点是你程序对分层数据的全部操作，那么邻接表可以很好地工作。注意不要过度设计，而是考虑产品的实际需求，并不是每个地方都需要meta，都需要可扩展性。</p>
+<p>总而言之，使用邻接表常常会出现多步数据库操作才能完成一次逻辑操作的情况，这样就会有很多额外的代码，而其实数据库设计本身就能做的简单高效。这也是大多数时候，追求优雅、高效的数据库设计的原因。</p>
+<p>解决方案：使用其他树模型</p>
+<p>包括 路径枚举、嵌套集和闭包表在内的三种模型，看上去比邻接表复杂很多，但是的确能够使得树的某些操作变得更简单。</p>
+<h4 id="路径枚举"><a href="#路径枚举" class="headerlink" title="路径枚举"></a>路径枚举</h4><p>通过将所有祖先的信息联合成一个字符串存储，解决邻接表获取给定节点的所有祖先开销很大的问题。比如’1/4/6/7’ 就表示节点7到根节点之间的路径。</p>
+<p>在查询节点的祖先时只需要：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">SELECT *</div><div class="line">FROM Comments AS c</div><div class="line">WHERE ‘1/4/6/7’ LIKE c.path || ‘%’</div></pre></td></tr></table></figure>
+<p>这会匹配到路径为’1/4/6/%’,’1/4/%’ 以及 ‘1/%’的节点，即为7的祖先。</p>
+<p>查询给定节点的后代也是一样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">SELECT *</div><div class="line">FROM Comments AS c</div><div class="line">WHERE c.path LIKE ‘1/4/‘ || ‘%’</div></pre></td></tr></table></figure>
+<p>即可匹配到’1/4/6’,’1/4/5’ 等后代节点。</p>
+<p>在这两个查询的基础上，可以完成诸如计算一棵子树上节点的值得总和、子树上节点的数量这类计算。 </p>
+<p>同样，插入节点也很简单，只需要复制其父节点的路径，并加上当前节点即可。可以使用LAST_INSERT_ID()函数获得刚刚插入的那条ID。</p>
+<p>尽管路径枚举获取子树、层级和路径简单，但是路径枚举也存在其局限性：</p>
+<p>数据库不能保证路径格式总正确或路径中节点确实存在<br>依赖于程序的逻辑代码维护路径的字符串，验证字符串正确的开销很大<br>无论将varchar设为多大，总不能支持其无限扩展。<br>还是那句话，按需选择。</p>
+<h4 id="嵌套集"><a href="#嵌套集" class="headerlink" title="嵌套集"></a>嵌套集</h4><p>这种解决方案存储子孙节点的相关信息，而不是节点的直接祖先。nsleft和nsright</p>
+<p>nsleft：小于该节点的所有后代的ID</p>
+<p>nsright：大于该节点的所有后代ID</p>
+<p>comment_id: 节点id</p>
+<p>确定三者的简单方法是深度优先遍历进行分配。逐层深入是依次递增分配nsleft，返回时依次递增分配nsright。</p>
+<p>分配完成后，就可以通过搜索那些节点的ID在节点4的nsleft和nsright的范围之间来获取这个节点及其所有后代：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">SELECT c2.*</div><div class="line">FROM Comments AS c1</div><div class="line">  JOIN Comments as c2</div><div class="line">    ON c2.nsleft BETWEEN c1.nsleft and c1.nsright</div><div class="line">WHERE c1.comment_id=4</div></pre></td></tr></table></figure>
+<p> 反过来，通过搜索节点6在哪些节点的nsleft和nsright之间就可以找到节点6的所有祖先：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">SELECT c2.*</div><div class="line">FROM Comments AS c1</div><div class="line">  JOIN Comments AS c2</div><div class="line">    ON c1.nsleft BETWEEN c2.nsleft and c2.nsright</div><div class="line">WHERE c1.comment_id=6;</div></pre></td></tr></table></figure>
+<p>使用嵌套集设计的主要优势是，当你想要删除一个非叶子结点时，它的后代会自动地代替被删除的节点，成为其直接祖先节点的直接后代。当删除一个节点造成数值不连续时，并不会对树的结构产生任何影响。</p>
+<p>但是嵌套集的问题在于，对树进行操作，比如插入和移动节点会复杂很多。每次都要更新整棵树。</p>
+<p>如果简单快速地查询是整个程序中最重要的部分，那么嵌套集是最佳选择  – 比操作单独节点要方便快捷。然后，嵌套集的插入和移动节点是比较复杂的，因为需要重新分配左右值。</p>
+<h4 id="闭包表"><a href="#闭包表" class="headerlink" title="闭包表"></a>闭包表</h4><p> 简单而优雅的解决方案，记录了树中所有节点间的关系，而不仅仅只有那些直接的父子关系。</p>
+<p>额外设计一张TreePath表，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE TreePaths (</div><div class="line">    ancestor BIGINT UNSIGNED NOT NULL,</div><div class="line">    descendant BIGINT UNSIGNED NOT NULL,</div><div class="line">    PRIMARY KEY (ancestor,descendant),</div><div class="line">    FOREIGN KEY (ancestor) REFERENCES Comments(comment_id),</div><div class="line">    FOREIGN KEY (descendant) REFERENCES Comments(comment_id)</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>将所有祖先后代关系，都描述在此表中，同时增加一行指向自己。</p>
+<p>通过这张表获取祖先和后代比使用嵌套集更加直接。比如评论4的后代，只需要搜索祖先是评论4的即可：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">SELECT c.*</div><div class="line">FROM Comments AS c</div><div class="line">    JOIN TreePaths AS t ON c.comment_id=t.descendant</div><div class="line">WHERE t.ancestor = 4;</div></pre></td></tr></table></figure>
+<p>获取祖先也是一样。</p>
+<p>而插入新叶子节点，比如节点5的后代，则需要首先插入一条自己到自己的关系，然后搜索TreePath中后代是节点5的节点，再增加关系。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">INSERT INTO TreePaths (ancestor, descendant)</div><div class="line">    SELECT t.ancestor,8</div><div class="line">    FROM TreePaths AS t</div><div class="line">    WHERE t.descendant = 5</div><div class="line">  UNION ALL </div><div class="line">    SELECT 8,8</div></pre></td></tr></table></figure>
+<p>要删除叶子节点以及删除完整子树也是遵循同样地原则。必须清除所有的关系。</p>
+<p>要从一个地方移动一棵子树到另一个地方，需要分成几步：</p>
+<p>首先断开这棵子树及其祖先的关系：找到这棵子树的顶点，删除它所有子节点和它所有祖先节点的关系，以将节点6从节点4下移动到节点3为例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">DELETE FROM TreePaths </div><div class="line">WHERE descendant IN (SELECT descendant        </div><div class="line">         FROM TreePaths </div><div class="line">         WHERE ancestor = 6) </div><div class="line">    AND ancestor IN (SELECT ancestor </div><div class="line">         FROM TreePaths </div><div class="line">         WHERE descendant = 6 </div><div class="line">             AND ancestor != descendant);</div></pre></td></tr></table></figure>
+<p>查询节点6的祖先（不包括自身的关系），以及节点6的后代，然后断开其关系。</p>
+<p>然后将这颗孤立的树及它的祖先建立关系，可以使用CROSS JOIN语句来创建一个新节点及其祖先和这课孤立的树中所有节点的笛卡尔积来建立所有需要的关系。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">INSERT INTO TreePaths (ancestor descendant)</div><div class="line">     SELECT supertree.ancestor, subtree.descendant</div><div class="line">     FROM TreePaths AS super tree</div><div class="line">          CROSS JOIN TreePaths AS subtree</div><div class="line">     WHERE super tree.descendant = 3</div><div class="line">         AND subtree.ancestor = 6;</div></pre></td></tr></table></figure>
+<p>闭包表的设计比嵌套集更加直接，两者都能快捷地查询给定节点的祖先和后代，但是闭包表能更加简单地维护分层信息。这两个设计都比使用邻接表或者路径枚举更方便的查询给定节点的直接后代和父代。</p>
+<p>同时，可以通过添加path_length字段来优化闭包表，从而能够更加方便的查询直接父亲节点或子节点：哪些长度为1的，肯定是直接的父子节点。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">设计</th>
+<th style="text-align:right">表</th>
+<th style="text-align:center">查询子</th>
+<th style="text-align:right">查询树</th>
+<th style="text-align:right">插入</th>
+<th style="text-align:left">删除</th>
+<th style="text-align:left">引用完整性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">邻接表</td>
+<td style="text-align:right">1</td>
+<td style="text-align:center">简单</td>
+<td style="text-align:right">困难</td>
+<td style="text-align:right">简单</td>
+<td style="text-align:left">简单</td>
+<td style="text-align:left">是</td>
+</tr>
+<tr>
+<td style="text-align:left">递归查询</td>
+<td style="text-align:right">1</td>
+<td style="text-align:center">简单</td>
+<td style="text-align:right">简单</td>
+<td style="text-align:right">简单</td>
+<td style="text-align:left">简单</td>
+<td style="text-align:left">是</td>
+</tr>
+<tr>
+<td style="text-align:left">枚举路径</td>
+<td style="text-align:right">1</td>
+<td style="text-align:center">简单</td>
+<td style="text-align:right">简单</td>
+<td style="text-align:right">简单</td>
+<td style="text-align:left">简单</td>
+<td style="text-align:left">否</td>
+</tr>
+<tr>
+<td style="text-align:left">嵌套集</td>
+<td style="text-align:right">1</td>
+<td style="text-align:center">困难</td>
+<td style="text-align:right">简单</td>
+<td style="text-align:right">困难</td>
+<td style="text-align:left">困难</td>
+<td style="text-align:left">否</td>
+</tr>
+<tr>
+<td style="text-align:left">闭包集</td>
+<td style="text-align:right">2</td>
+<td style="text-align:center">简单</td>
+<td style="text-align:right">简单</td>
+<td style="text-align:right">简单</td>
+<td style="text-align:left">简单</td>
+<td style="text-align:left">是</td>
+</tr>
+</tbody>
+</table>
+<p> 邻接表是最方便的设计，很多开发者都了解</p>
+<ul>
+<li>如果数据库支持WITH或CONECT BY PRIOR的递归查询，那么邻接表查询能更高效</li>
+<li>枚举路径能很直观地展示祖先到后代直接的路径，但是不能确保引用完整性，比较脆弱，数据也比较冗余。</li>
+<li>嵌套很聪明，但是太聪明了，只适用于查询性能要求很高的场合。</li>
+<li>闭包表最通用，也允许一个节点属于多棵树，使用空间换了时间。<br>一个分层数据结构包含了数据项和它们之间的关系，需要合理的设计两者的模型来配合自己的工作。</li>
+</ul>
+<p>下一节将继续介绍逻辑数据库反模式的其他内容。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2014/11/23/崇明团建随感/" itemprop="url">
                   崇明团建随感
                 </a>
@@ -565,7 +854,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">52</span>
+              <span class="site-state-item-count">53</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -582,7 +871,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

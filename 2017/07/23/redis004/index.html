@@ -1,0 +1,675 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="redis," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="meijing0114的博客" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="上文中介绍了如何使用redis实现用户的注册，以及登陆的在线状态保持。而使用redis另外常见的应用，还有好友列表的维护与拉取，以及搜索中的auto-complete的实现。需要注意的时候，redis并非这些需求的唯一实现，只是在很多情况下，是性能最为突出的实现方式。接下来，我们就看看在这两种场景中，redis如何使用强大的数据接口和易用的api，发挥作用。
+用户好友列表拉取使用redis一个非常">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《redis入门指南》进阶场景之用户的好友列表拉取、auto-complete实现">
+<meta property="og:url" content="http://meijing0114.com/2017/07/23/redis004/index.html">
+<meta property="og:site_name" content="meijing0114的博客">
+<meta property="og:description" content="上文中介绍了如何使用redis实现用户的注册，以及登陆的在线状态保持。而使用redis另外常见的应用，还有好友列表的维护与拉取，以及搜索中的auto-complete的实现。需要注意的时候，redis并非这些需求的唯一实现，只是在很多情况下，是性能最为突出的实现方式。接下来，我们就看看在这两种场景中，redis如何使用强大的数据接口和易用的api，发挥作用。
+用户好友列表拉取使用redis一个非常">
+<meta property="og:image" content="http://wx1.sinaimg.cn/mw690/67ad48bbgy1fhu7466pibj20zk0np0vh.jpg">
+<meta property="og:image" content="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fhu7402ajuj20la0c1ab0.jpg">
+<meta property="og:updated_time" content="2017-07-23T14:41:27.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《redis入门指南》进阶场景之用户的好友列表拉取、auto-complete实现">
+<meta name="twitter:description" content="上文中介绍了如何使用redis实现用户的注册，以及登陆的在线状态保持。而使用redis另外常见的应用，还有好友列表的维护与拉取，以及搜索中的auto-complete的实现。需要注意的时候，redis并非这些需求的唯一实现，只是在很多情况下，是性能最为突出的实现方式。接下来，我们就看看在这两种场景中，redis如何使用强大的数据接口和易用的api，发挥作用。
+用户好友列表拉取使用redis一个非常">
+<meta name="twitter:image" content="http://wx1.sinaimg.cn/mw690/67ad48bbgy1fhu7466pibj20zk0np0vh.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://meijing0114.com/2017/07/23/redis004/"/>
+
+  <title> 《redis入门指南》进阶场景之用户的好友列表拉取、auto-complete实现 | meijing0114的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?a5a4534386a17bda81a3d4f5669e4b7b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">meijing0114的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《redis入门指南》进阶场景之用户的好友列表拉取、auto-complete实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-07-23T22:38:25+08:00" content="Jul 23 2017">
+              Jul 23 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/存储/" itemprop="url" rel="index">
+                    <span itemprop="name">存储</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/07/23/redis004/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/23/redis004/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上文中介绍了如何使用redis实现用户的注册，以及登陆的在线状态保持。而使用redis另外常见的应用，还有好友列表的维护与拉取，以及搜索中的auto-complete的实现。需要注意的时候，redis并非这些需求的唯一实现，只是在很多情况下，是性能最为突出的实现方式。接下来，我们就看看在这两种场景中，redis如何使用强大的数据接口和易用的api，发挥作用。</p>
+<h2 id="用户好友列表拉取"><a href="#用户好友列表拉取" class="headerlink" title="用户好友列表拉取"></a>用户好友列表拉取</h2><p>使用redis一个非常典型的场景就是对好友列表的维护。现在社交类的产品越来越多，以QQ为鼻祖，微博为发展的又一高潮，其中对于好友列表的维护始终是一个很大的技术点。对于QQ来说，本地的维护加上与server的定时更新，即可完成任务。但是对于微博这类单纯的没有客户端的web应用而言，在服务端对于关系链的高效存储，就显得十分有挑战了。</p>
+<p><img src="http://wx1.sinaimg.cn/mw690/67ad48bbgy1fhu7466pibj20zk0np0vh.jpg" alt="Alt text"></p>
+<p>我们首先来看看这个方案要解决哪些问题：</p>
+<ol>
+<li>要解决对用户好友列表的维护，每个人都想看到自己有哪些自己关注的人，以及关注自己的人；</li>
+<li>要解决给出两个用户，验证关注关系的问题</li>
+<li>要解决能够方便的建立和去除好友关系的问题</li>
+</ol>
+<p>对于每个用户而言，他必须维护至少两个集合，第一个集合就是followerSet，第二个集合就是followingSet。分别存储他关注的和他被关注的好友的userid。这两个集合自己的key都是由这个用户自己的userid规则拼装而成。</p>
+<p>有了这两个集合之后，对于其关注者和被关注的列表拉取的问题，就可以直接通过：<br><code>SMEMBERS selfuserid-followerSet</code>和<code>SMEMBERS selfuserid-followingSet</code>来解决。当拉取列表的时候，一个很现实的问题是对拉取的用户进行排序。根据新浪微博现有的做法，也只是支持实时的按照关注时间来排序，如果需要其他时间来排序的话，结果会有几个小时的延时。也就是为了支持这个新的排序特性，他们使用了异步的脚本，来专门产生了其他排序类型的集合。考虑到用户使用其他排序类型的场景比较小，这也是能够接受的一种做法。</p>
+<p>同时在拉取的时候也需要支持到分页，这时候就可以使用之前的SORT命令，<code>SORT selfuserid-followerSet BY selfuserid:*-&gt;followtime DESC LIMIT 0 10</code>，我们使用一个散列<code>selfuserid:userid</code>来保存用户和关注用户之间的关注时间、是否密友等信息，而在排序的时候，也能够利用这个时间来实现排序。而像刚刚说的其他排序字段，也可以通过定时脚本的方式，写入到这个哈希中，从而完成排序的功能。这里一个潜在的问题是SORT命令的性能，一般而言，这个命令的性能是log(N+MlogM)，N是总数，M是要取出的数量。如果实在是N和M太大导致了性能的瓶颈，那么可以考虑使用store对结果进行短暂的存储来保证性能。</p>
+<p>完成了对好友列表的拉取之后，接下来我们要着眼的就是用户的好友关系的变更。以用户关注为例，当A用户关注了B用户之后，需要进行如下的几个操作：</p>
+<ul>
+<li>将A用户加入到B用户的followerSet中</li>
+<li>将A用户加入到B用户的follower哈希表中，注明被关注时间等信息用以排序</li>
+<li>将B用户加入到A用户的followingSet中</li>
+<li>将B用户加入到A用户的following哈希表中，注明关注时间等信息用以排序</li>
+</ul>
+<p>为了保证数据的一致性，可以使用redis的事务，将四种操作合在一起：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">redis-&gt;multi</div><div class="line">-&gt;sadd(B:followerSet A)</div><div class="line">-&gt;sadd(A:followingSet B)</div><div class="line">-&gt;hset(B:A,followertime,time)</div><div class="line">-&gt;hset(A:B,followingtime,time)</div><div class="line">-&gt;exec()</div></pre></td></tr></table></figure>
+<p>通过这样的结构设计，我们就能够满足基本的好友关系的存储和各类拉取、添加、删除的需求，同时也能够在一定程度上提升访问的性能。</p>
+<h2 id="实现auto-complete"><a href="#实现auto-complete" class="headerlink" title="实现auto-complete"></a>实现auto-complete</h2><p>另一种很常见的web站点的需求，是对用户搜索的内容进行auto-complete。 传统的使用数据的方案，往往依赖了数据库的like能力，效率十分的低下。而利用redis的数据结构，我们能够很高效的存储并且索引到需要自动完成的内容。</p>
+<p><img src="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fhu7402ajuj20la0c1ab0.jpg" alt="Alt text"></p>
+<p>假定我们需要搜索的内容是网站所有的用户名，那么首先我们需要处理每个用户名的组成前缀。比如说用户名teddy，那么就需要分别的存储t、te和ted和tedd。这里只需要O(N)的遍历，即可拿到所有的前缀。</p>
+<p>创建一个有序集合auto-complete-set，首先将每个标签名的所有前缀作为元素，同时将它们的分数作为0.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">ZADD auto-complete-set t 0</div><div class="line">ZADD auto-complete-set te 0</div><div class="line">ZADD auto-complete-set ted 0</div><div class="line">ZADD auto-complete-set tedd 0</div></pre></td></tr></table></figure>
+<p>同时为了区分用户名本身，也在后面增加<code>*</code>之后将其存储有序集合:<br><code>ZADD auto-complete-set teddy* 0</code></p>
+<p>由于所有的集合中的元素分数都是相同的，所以该有序集合键中的元素就相当于全部按照字典书序排序了。使用有序集合，在利用其排序特性的同时，也能保证元素的唯一性。当用户输入t的那时候，就会按照如下的流程获取要提示出来的用户：</p>
+<ul>
+<li>获取t的排名 <code>ZRANK auto-complete-set t</code>，在这里返回的是0</li>
+<li>获取t之后的N个元素，当N=100的时候，就是<code>ZRANGE auto-complete-set 1 101</code>，这里N的大小跟要auto-complete的元素的平均长度和需要返回的auto-complete结果直接相关，可以根据自己实际的业务情况灵活的调整。</li>
+<li>遍历返回的结果，找出其中以<em>结尾，而且以t开头的元素，此时将`</em>`去掉就是我们需要的结果了。</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>曾经复杂的算法实现，在redis强大的数据结构面前变成了风轻云淡。不论是对好友列表的维护，还是对auto-compete功能的实现，都显示出了redis的轻盈和强劲。所以在redis特性了解的同时，无时无刻不要了解redis对应数据结构的应用场景，只有这样才能做到用时游刃有余。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/redis/" rel="tag">#redis</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/29/redis003/" rel="next" title="《redis入门指南》进阶场景之用户注册和登录与在线保持">
+                <i class="fa fa-chevron-left"></i> 《redis入门指南》进阶场景之用户注册和登录与在线保持
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/07/23/redis004/"
+           data-title="《redis入门指南》进阶场景之用户的好友列表拉取、auto-complete实现" data-url="http://meijing0114.com/2017/07/23/redis004/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="meijing0114" />
+          <p class="site-author-name" itemprop="name">meijing0114</p>
+          <p class="site-description motion-element" itemprop="description">记录科技与生活</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">53</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#用户好友列表拉取"><span class="nav-number">1.</span> <span class="nav-text">用户好友列表拉取</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现auto-complete"><span class="nav-number">2.</span> <span class="nav-text">实现auto-complete</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#结语"><span class="nav-number">3.</span> <span class="nav-text">结语</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">meijing0114</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"meijing0114"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
