@@ -89,7 +89,7 @@
 <meta name="description" content="记录科技与生活">
 <meta property="og:type" content="website">
 <meta property="og:title" content="meijing0114的博客">
-<meta property="og:url" content="http://meijing0114.com/index.html">
+<meta property="og:url" content="http://meijing0114.me/index.html">
 <meta property="og:site_name" content="meijing0114的博客">
 <meta property="og:description" content="记录科技与生活">
 <meta name="twitter:card" content="summary">
@@ -115,7 +115,7 @@
 
 
 
-  <link rel="canonical" href="http://meijing0114.com/"/>
+  <link rel="canonical" href="http://meijing0114.me/"/>
 
   <title> meijing0114的博客 </title>
 </head>
@@ -228,6 +228,143 @@
           <div id="content" class="content">
             
   <section id="posts" class="posts-expand">
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/10/07/redis005/" itemprop="url">
+                  使用redis构建分布式的锁
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-10-07T15:13:50+08:00" content="Oct 7 2017">
+              Oct 7 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index">
+                    <span itemprop="name">redis</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/10/07/redis005/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/10/07/redis005/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>redis除了在存储方面能够发挥很多作用之外，还可以帮助我们很好的搭建应用组件，通过这些组件进而帮助我们更好的实现业务需求。一个分布式的锁，在很是业务场景中都必不可少。</p>
+<p>在用户访问并发大的情况下，多个进程或线程经常同时竞争一个资源。如果都是在本机的资源，那么通过操作系统的一些锁接口，就可以实现。但是很多系统往往是分布式的部署，这时候，使用一个简洁、高效的分布式锁实现方案，就显得迫在眉睫了。</p>
+<h2 id="redis本身的锁"><a href="#redis本身的锁" class="headerlink" title="redis本身的锁"></a>redis本身的锁</h2><p>redis本身就常常被用作资源的存储，一个很常见的场景就是电商网站的秒杀。一次促销当中，低价或者特价的商品往往是很少的，而参与的用户确实相当之多。如何在这种情况下，能够尽量公平的实现先到先得，并且保证程序不出错，是一个比较大的考验。</p>
+<p>redis本身也是有锁的，这个之前也介绍过，它有几个方面的特性可以保证这一点。第一种就是诸如<code>setnx</code>这样的命令，可以保证对资源的单次读取不受到其他client的干扰，但是由于只能使用一次，一旦占用，就需要重新置空，这会引入额外的并发问题，所以应用的局限性比较大。</p>
+<p>第二种则是redis的乐观锁与事务的结合。也就是<code>watch</code>命令和<code>multi</code>命令的结合。通过监控必须的资源key，比如仓储数目<code>storage</code>是否变化，再使用<code>multi</code>将可能造成资源竞争的操作包起来，来避免资源竞争。方案很好，但是问题在于这类乐观锁的设计，需要client侧自己实现重试。而重试次数一旦过多，就会很影响client侧的性能。</p>
+<p>第三种则是使用lua脚本，将涉及到竞争操作的命令全部包起来，不过这个实现成本有点高，一般都是在特别大的性能瓶颈，以及比较固定很久不变的业务逻辑的情况下，再使用lua脚本的方式。</p>
+<h2 id="使用redis构建分布式锁"><a href="#使用redis构建分布式锁" class="headerlink" title="使用redis构建分布式锁"></a>使用redis构建分布式锁</h2><p>那么既然没有原生支持的合适方案，就非常有必要在redis的协助之下，实现我们自己的分布式锁的方案。这种方案一定要：</p>
+<ul>
+<li>性能足够高，否则没意义；</li>
+<li>使用足够简单，否则影响client侧的接入；</li>
+</ul>
+<p>而想要正确的实现加锁的功能，必须避免以下的情况：</p>
+<ul>
+<li>持有锁的进程必须知晓它当前持有锁的状态，避免错误的释放其他进程的锁；</li>
+<li>持有锁的进程崩溃的情况下，必须有兜底方案，防止其他进程无谓的等待；</li>
+<li>一个进程的锁过期后，多个进程同时尝试获取，必须有且只有一个获取成功；</li>
+</ul>
+<p>要实现第一点呢，就必须对锁加锁，让进程。</p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><h2 id="性能对比"><a href="#性能对比" class="headerlink" title="性能对比"></a>性能对比</h2><h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
     
       
 
@@ -1743,136 +1880,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/19/travel002/" itemprop="url">
-                  新西兰-那片上帝自留地
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-02-19T22:54:00+08:00" content="Feb 19 2017">
-              Feb 19 2017
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/旅行/" itemprop="url" rel="index">
-                    <span itemprop="name">旅行</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/02/19/travel002/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/19/travel002/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>新西兰的热，这两年尤甚。第一次知道新西兰，当然是大名鼎鼎的彼得杰克逊的指环王和霍比特人。总觉得此景只应天上有，人间能得几回闻。也怪不得人家都说，新西兰是上帝的自留地和后花园。再加上去年的时候，黄磊夫妇应邀去新西兰度了蜜月，看了下行程亮点颇多，于是就有了属于我们的新西兰蜜月十二日之旅。</p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-f908867579c85ea3.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="阿贝尔塔斯曼国家公园"></p>
-<p>十二日的行程，近乎十个城市，超过十二种体验。新西兰让我看到了地球的另一面。在中国如此大人口密度的经验不提，在欧洲也未曾见过如此大气磅礴而又多变的自然景观。一个狭长之岛屿，西海岸看日落，东海岸观鲸，北岛毛利文化神秘诱人，南岛森林公园流连忘返。给我印象最深的，则是前往米尔福德峡湾的94号公路。尽管这里号称新西兰最危险的公路之一，但它同时也是新西兰最美的公路。整条公路从丘陵地带起步，逐步深入深林与大山的中心，雨洗刷着山谷与行车，让人总觉得误入神仙居所。而一条条临时积雨而成的瀑布，就如同山神的护卫，两两成对，守护峡湾。最令人震撼的，就是独行穿过一条三公里的隧道，汽车在其中摸索，只有灯光照亮前路。而刚一出隧道，就可见广阔的天地郁郁葱葱，仿佛世外桃源一般，心情豁然开朗。</p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-b97d59d16d9c8fd1.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="凯库拉观鲸"></p>
-<p>当然了，景色固然是令人心旷神怡，但在这里，更打动我的是他们各种非同寻常的体验。这里没有排长队的参观建筑，也没有上车睡觉，下车拍照的紧迫感[ 旅行团除外:) ]。而是更多的体验至上主义。如果你体力充沛，可以参与森林公园的五日徒步+皮划艇穿越，在林中与鸟儿相伴而眠绝对是难忘的体验。如果你只想散心，那么两个小时的hiking就能让你不太疲惫的同时饱览美景，不虚此行。而如果你爱好极限运动，那你可来对地方了！无论是跳伞、开飞机、滑翔伞，还是蹦极、360度快艇旋转、溪降，总有一款适合你。就算你是宅男属性附身，那直升机饱览震撼冰川，流浪者号巡游峡湾，皇后镇的世界级spa，凯库拉观鲸，还有让你酒酣耳热的葡萄酒之旅足以让你直呼过瘾。凡此种种，不一而足。当我在丛林里随向导穿行徒步冰川时，当我手控飞机直飞蓝天时，还有纵马在指环王拍摄地的山水之间时，心里总有一句“太tm过瘾啦！”。或许这就是新西兰能给你的，独一无二的体验。</p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-2375bf328aa20b61.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="山中自驾，偶遇红灯"></p>
-<p>如此纷繁多样的风景，没有自驾的交通方式，很多都难以到达。由于这里是右舵驾驶，租车前的我不免忐忑不已。而刚拿到车的时候，除了犯下“转弯打雨刮”的低级错误之外，还未改掉自己国内开车的痼疾：不按规则让行。国内转弯和变道，是个无穷无尽的博弈，你快一点，对方就要让你一点，每次下中环我都要屏气凝神，生怕有人插我一脚。不过新西兰规则明确，人人按规则而行，不同优先级行驶规则的严格执行，反倒让我格格不入了。尽管刚开始收到了不少白眼，不过习惯之后，倒觉得更为轻松容易，因为无人破坏，所以可以一路畅行，所谓欲速而不达。<br>有人说自驾旅途冗长无趣，但我却颇为喜欢。行驶在山中雨中，桥上岸上，海边崖边。过一个个湾，看一片片海，翻一座座山，心开始和旅途融为一体。开始谈论平日里不会讨论的话题，开始陷入回忆。有时想到之前的幼稚会心一笑，有时看到眼前的美景阵阵惊叹，秒杀一片菲林。到著名景点的签到赶路固然重要，但与雨中弥漫雾气，溪流湍湍的山谷不期而遇，更是令人难以忘怀！停下休息片刻，听听鸟语，伸伸懒腰，再满怀精神的向目的地进发，这让旅途更为丰富立体，而心灵，似乎也在过程中获得了些许的宁静。</p>
-<p><img src="http://upload-images.jianshu.io/upload_images/96723-55298803a072111a.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="找到心中宁静"></p>
-<p>作为一个移民国家，殖民国家，拥有原住民的国家，注定是多元与包容的。同时也是极富开创精神的。老子心中的理想社会是“小国寡民”，我并未深入读过，不敢说新西兰是否与他心中所想一致。但的的确确我看到了很多单纯的快乐。比如拥有指环王这一巨大旅游资源的格林诺奇，镇民坚决不肯开掘隧道，只怕一旦落成，接踵而至的旅游大巴破坏小镇宁静。又比如获评9+分的b&amp;b店主太太，对每个宾客都宾至如归，享受交流带来的快乐。似乎你遇到的很多人，都有棱有角，确是非常的发人深思。尽管不可避免的，文化认同、政治正确问题在这个有过殖民、征服、原住民的国家时有发生，但看得到其社会的一种努力的包容，至少在原住民的处理上，这里应该是比北美更好一些的。</p>
-<p>在旅途的开始，心里会有紧张与期待并存，总觉得要达到两个人最好的蜜月预期。但随着旅程的渐入佳境，我们似已沉醉其中，从此心中无论如何，都有了这么一块给自己宁静的保留地。</p>
-<p>附新西兰行程游记：<a href="http://bbs.qyer.com/thread-2671678-1.html" target="_blank" rel="external">中土世界–新西兰蜜月旅行南岛自驾十二日大环岛环游直播~</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1918,7 +1925,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">54</span>
+              <span class="site-state-item-count">55</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1979,7 +1986,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

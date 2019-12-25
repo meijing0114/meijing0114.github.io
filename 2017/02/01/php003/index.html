@@ -90,13 +90,13 @@
 加锁肯定是想到的第一选择，对于每次共享内存的时候，先获取一个锁，只有获取成功了之后才允许进行读和写，这应该是最简单的方案，但是同步锁对性能的损耗也是比较大的。APC的user data cache的存储机制对数据要求严格正确，锁比较多，它">
 <meta property="og:type" content="article">
 <meta property="og:title" content="关于php的共享内存的使用和研究之外部存储">
-<meta property="og:url" content="http://meijing0114.com/2017/02/01/php003/index.html">
+<meta property="og:url" content="http://meijing0114.me/2017/02/01/php003/index.html">
 <meta property="og:site_name" content="meijing0114的博客">
 <meta property="og:description" content="上文中提到了针对php的共享内存方案的尝试，最终发现它并不适用于我的场景，如果想要兼容多进程或多线程并发读写的情况下可靠，一定要有适当的机制来保证资源的唯一性。
 加锁肯定是想到的第一选择，对于每次共享内存的时候，先获取一个锁，只有获取成功了之后才允许进行读和写，这应该是最简单的方案，但是同步锁对性能的损耗也是比较大的。APC的user data cache的存储机制对数据要求严格正确，锁比较多，它">
 <meta property="og:image" content="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fcb4h630hgj20nk09amxi.jpg">
 <meta property="og:image" content="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fcb4h6ukbnj21dq00ua9z.jpg">
-<meta property="og:updated_time" content="2017-02-01T10:01:52.000Z">
+<meta property="og:updated_time" content="2019-11-09T04:36:18.738Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="关于php的共享内存的使用和研究之外部存储">
 <meta name="twitter:description" content="上文中提到了针对php的共享内存方案的尝试，最终发现它并不适用于我的场景，如果想要兼容多进程或多线程并发读写的情况下可靠，一定要有适当的机制来保证资源的唯一性。
@@ -122,7 +122,7 @@
 
 
 
-  <link rel="canonical" href="http://meijing0114.com/2017/02/01/php003/"/>
+  <link rel="canonical" href="http://meijing0114.me/2017/02/01/php003/"/>
 
   <title> 关于php的共享内存的使用和研究之外部存储 | meijing0114的博客 </title>
 </head>
@@ -446,7 +446,7 @@
   <div class="comments" id="comments">
     
       <div class="ds-thread" data-thread-key="2017/02/01/php003/"
-           data-title="关于php的共享内存的使用和研究之外部存储" data-url="http://meijing0114.com/2017/02/01/php003/">
+           data-title="关于php的共享内存的使用和研究之外部存储" data-url="http://meijing0114.me/2017/02/01/php003/">
       </div>
     
   </div>
@@ -491,7 +491,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">54</span>
+              <span class="site-state-item-count">55</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -563,7 +563,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

@@ -91,12 +91,12 @@
 1234567891011121314151617typedef struct _swTableRow&amp;#123;    sw_atomic_t lock;// 原子锁，所谓的效率更高的行锁，这个要等下看">
 <meta property="og:type" content="article">
 <meta property="og:title" content="关于php的共享内存的使用和研究之深入剖析swoole table">
-<meta property="og:url" content="http://meijing0114.com/2017/02/01/php004/index.html">
+<meta property="og:url" content="http://meijing0114.me/2017/02/01/php004/index.html">
 <meta property="og:site_name" content="meijing0114的博客">
 <meta property="og:description" content="话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。
 首先来看一下swooletable中用来存储的基本数据结构swTableRow：
 1234567891011121314151617typedef struct _swTableRow&amp;#123;    sw_atomic_t lock;// 原子锁，所谓的效率更高的行锁，这个要等下看">
-<meta property="og:updated_time" content="2017-02-01T10:16:06.000Z">
+<meta property="og:updated_time" content="2019-11-09T04:36:18.738Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="关于php的共享内存的使用和研究之深入剖析swoole table">
 <meta name="twitter:description" content="话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。
@@ -122,7 +122,7 @@
 
 
 
-  <link rel="canonical" href="http://meijing0114.com/2017/02/01/php004/"/>
+  <link rel="canonical" href="http://meijing0114.me/2017/02/01/php004/"/>
 
   <title> 关于php的共享内存的使用和研究之深入剖析swoole table | meijing0114的博客 </title>
 </head>
@@ -423,7 +423,7 @@
   <div class="comments" id="comments">
     
       <div class="ds-thread" data-thread-key="2017/02/01/php004/"
-           data-title="关于php的共享内存的使用和研究之深入剖析swoole table" data-url="http://meijing0114.com/2017/02/01/php004/">
+           data-title="关于php的共享内存的使用和研究之深入剖析swoole table" data-url="http://meijing0114.me/2017/02/01/php004/">
       </div>
     
   </div>
@@ -468,7 +468,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">54</span>
+              <span class="site-state-item-count">55</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -540,7 +540,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

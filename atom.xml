@@ -4,9 +4,9 @@
   
   <link href="/atom.xml" rel="self"/>
   
-  <link href="http://meijing0114.com/"/>
-  <updated>2017-08-05T15:03:47.000Z</updated>
-  <id>http://meijing0114.com/</id>
+  <link href="http://meijing0114.me/"/>
+  <updated>2019-11-09T04:36:18.740Z</updated>
+  <id>http://meijing0114.me/</id>
   
   <author>
     <name>meijing0114</name>
@@ -16,11 +16,49 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>使用redis构建分布式的锁</title>
+    <link href="http://meijing0114.me/2017/10/07/redis005/"/>
+    <id>http://meijing0114.me/2017/10/07/redis005/</id>
+    <published>2017-10-07T07:13:50.000Z</published>
+    <updated>2019-11-09T04:36:18.740Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>redis除了在存储方面能够发挥很多作用之外，还可以帮助我们很好的搭建应用组件，通过这些组件进而帮助我们更好的实现业务需求。一个分布式的锁，在很是业务场景中都必不可少。</p>
+<p>在用户访问并发大的情况下，多个进程或线程经常同时竞争一个资源。如果都是在本机的资源，那么通过操作系统的一些锁接口，就可以实现。但是很多系统往往是分布式的部署，这时候，使用一个简洁、高效的分布式锁实现方案，就显得迫在眉睫了。</p>
+<h2 id="redis本身的锁"><a href="#redis本身的锁" class="headerlink" title="redis本身的锁"></a>redis本身的锁</h2><p>redis本身就常常被用作资源的存储，一个很常见的场景就是电商网站的秒杀。一次促销当中，低价或者特价的商品往往是很少的，而参与的用户确实相当之多。如何在这种情况下，能够尽量公平的实现先到先得，并且保证程序不出错，是一个比较大的考验。</p>
+<p>redis本身也是有锁的，这个之前也介绍过，它有几个方面的特性可以保证这一点。第一种就是诸如<code>setnx</code>这样的命令，可以保证对资源的单次读取不受到其他client的干扰，但是由于只能使用一次，一旦占用，就需要重新置空，这会引入额外的并发问题，所以应用的局限性比较大。</p>
+<p>第二种则是redis的乐观锁与事务的结合。也就是<code>watch</code>命令和<code>multi</code>命令的结合。通过监控必须的资源key，比如仓储数目<code>storage</code>是否变化，再使用<code>multi</code>将可能造成资源竞争的操作包起来，来避免资源竞争。方案很好，但是问题在于这类乐观锁的设计，需要client侧自己实现重试。而重试次数一旦过多，就会很影响client侧的性能。</p>
+<p>第三种则是使用lua脚本，将涉及到竞争操作的命令全部包起来，不过这个实现成本有点高，一般都是在特别大的性能瓶颈，以及比较固定很久不变的业务逻辑的情况下，再使用lua脚本的方式。</p>
+<h2 id="使用redis构建分布式锁"><a href="#使用redis构建分布式锁" class="headerlink" title="使用redis构建分布式锁"></a>使用redis构建分布式锁</h2><p>那么既然没有原生支持的合适方案，就非常有必要在redis的协助之下，实现我们自己的分布式锁的方案。这种方案一定要：</p>
+<ul>
+<li>性能足够高，否则没意义；</li>
+<li>使用足够简单，否则影响client侧的接入；</li>
+</ul>
+<p>而想要正确的实现加锁的功能，必须避免以下的情况：</p>
+<ul>
+<li>持有锁的进程必须知晓它当前持有锁的状态，避免错误的释放其他进程的锁；</li>
+<li>持有锁的进程崩溃的情况下，必须有兜底方案，防止其他进程无谓的等待；</li>
+<li>一个进程的锁过期后，多个进程同时尝试获取，必须有且只有一个获取成功；</li>
+</ul>
+<p>要实现第一点呢，就必须对锁加锁，让进程。</p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><h2 id="性能对比"><a href="#性能对比" class="headerlink" title="性能对比"></a>性能对比</h2><h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;引言&quot;&gt;&lt;a href=&quot;#引言&quot; class=&quot;headerlink&quot; title=&quot;引言&quot;&gt;&lt;/a&gt;引言&lt;/h2&gt;&lt;p&gt;redis除了在存储方面能够发挥很多作用之外，还可以帮助我们很好的搭建应用组件，通过这些组件进而帮助我们更好的实现业务需求。一个分布式的锁，
+    
+    </summary>
+    
+      <category term="redis" scheme="http://meijing0114.me/categories/redis/"/>
+    
+    
+  </entry>
+  
+  <entry>
     <title>时刻反照，照亮前路 - 读《我的应许之地：以色列的荣耀与悲情》</title>
-    <link href="http://meijing0114.com/2017/08/05/book016/"/>
-    <id>http://meijing0114.com/2017/08/05/book016/</id>
+    <link href="http://meijing0114.me/2017/08/05/book016/"/>
+    <id>http://meijing0114.me/2017/08/05/book016/</id>
     <published>2017-08-05T15:02:11.000Z</published>
-    <updated>2017-08-05T15:03:47.000Z</updated>
+    <updated>2019-11-09T04:36:18.735Z</updated>
     
     <content type="html"><![CDATA[<p>就我个人而言，我对犹太人和以色列的态度一直伴有好感和同情的态度。从媒体的影响下认为犹太人都很聪明，因为他们有斯皮尔伯格，爱因斯坦这样的杰出代表。而二战时候犹太人遭受的苦难又让我对他们倍加同情。同时以色列作为一个屹立中东不倒，科技及其发达的国家，是很令人钦佩的。但我似乎从来没有仔细的想过，以色列究竟是如何被建立的，甚至什么时候被建立的，以及它在这些年都经历了什么。我脑中搜寻半天，所得到的只是巴以冲突、犹太人定居点、加沙地带、skype公司，沙龙和阿拉法特这些很零散的新闻点，一次偶然的机会，读到了这本《我的应许之地：以色列的荣耀与悲情》，我想，阅读它绝对值得你付出的时间。</p>
 <p>在我合上这本书的时候，不对，准确的说是用手指划过微信读书app的最后一页的时候，不禁问自己一个问题？以色列国家的建立是正义的么？</p>
@@ -49,17 +87,17 @@
     
     </summary>
     
-      <category term="书评影评" scheme="http://meijing0114.com/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
+      <category term="书评影评" scheme="http://meijing0114.me/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
     
     
   </entry>
   
   <entry>
     <title>《redis入门指南》进阶场景之用户的好友列表拉取、auto-complete实现</title>
-    <link href="http://meijing0114.com/2017/07/23/redis004/"/>
-    <id>http://meijing0114.com/2017/07/23/redis004/</id>
+    <link href="http://meijing0114.me/2017/07/23/redis004/"/>
+    <id>http://meijing0114.me/2017/07/23/redis004/</id>
     <published>2017-07-23T14:38:25.000Z</published>
-    <updated>2017-07-23T14:41:27.000Z</updated>
+    <updated>2019-11-09T04:36:18.739Z</updated>
     
     <content type="html"><![CDATA[<p>上文中介绍了如何使用redis实现用户的注册，以及登陆的在线状态保持。而使用redis另外常见的应用，还有好友列表的维护与拉取，以及搜索中的auto-complete的实现。需要注意的时候，redis并非这些需求的唯一实现，只是在很多情况下，是性能最为突出的实现方式。接下来，我们就看看在这两种场景中，redis如何使用强大的数据接口和易用的api，发挥作用。</p>
 <h2 id="用户好友列表拉取"><a href="#用户好友列表拉取" class="headerlink" title="用户好友列表拉取"></a>用户好友列表拉取</h2><p>使用redis一个非常典型的场景就是对好友列表的维护。现在社交类的产品越来越多，以QQ为鼻祖，微博为发展的又一高潮，其中对于好友列表的维护始终是一个很大的技术点。对于QQ来说，本地的维护加上与server的定时更新，即可完成任务。但是对于微博这类单纯的没有客户端的web应用而言，在服务端对于关系链的高效存储，就显得十分有挑战了。</p>
@@ -104,19 +142,19 @@
     
     </summary>
     
-      <category term="存储" scheme="http://meijing0114.com/categories/%E5%AD%98%E5%82%A8/"/>
+      <category term="存储" scheme="http://meijing0114.me/categories/%E5%AD%98%E5%82%A8/"/>
     
     
-      <category term="redis" scheme="http://meijing0114.com/tags/redis/"/>
+      <category term="redis" scheme="http://meijing0114.me/tags/redis/"/>
     
   </entry>
   
   <entry>
     <title>《redis入门指南》进阶场景之用户注册和登录与在线保持</title>
-    <link href="http://meijing0114.com/2017/05/29/redis003/"/>
-    <id>http://meijing0114.com/2017/05/29/redis003/</id>
+    <link href="http://meijing0114.me/2017/05/29/redis003/"/>
+    <id>http://meijing0114.me/2017/05/29/redis003/</id>
     <published>2017-05-29T05:31:07.000Z</published>
-    <updated>2017-05-29T05:33:06.000Z</updated>
+    <updated>2019-11-09T04:36:18.739Z</updated>
     
     <content type="html"><![CDATA[<p>前面两节主要是对redis的基础知识的梳理，这一篇更多是作者对常见的应用场景的罗列和分析，一共囊括了如下五个应用场景：</p>
 <ul>
@@ -207,17 +245,17 @@
     
     </summary>
     
-      <category term="存储" scheme="http://meijing0114.com/categories/%E5%AD%98%E5%82%A8/"/>
+      <category term="存储" scheme="http://meijing0114.me/categories/%E5%AD%98%E5%82%A8/"/>
     
     
   </entry>
   
   <entry>
     <title>小而美的邀请码设计实现方案</title>
-    <link href="http://meijing0114.com/2017/05/06/architect002/"/>
-    <id>http://meijing0114.com/2017/05/06/architect002/</id>
+    <link href="http://meijing0114.me/2017/05/06/architect002/"/>
+    <id>http://meijing0114.me/2017/05/06/architect002/</id>
     <published>2017-05-06T14:35:30.000Z</published>
-    <updated>2017-05-06T14:39:02.000Z</updated>
+    <updated>2019-11-09T04:36:18.729Z</updated>
     
     <content type="html"><![CDATA[<p>互联网公司推出新产品的时候，经常使用邀请码作为一种运营手段，在一定的时间内，只有具有邀请资格的用户，才能参与到早期产品的体验中去。<br>这么做，一方面为了体现产品体验的稀缺性，鼓励用户抢购，造成供不应求的舆论影响。这点小米做的尤为突出，效果也是相当不错的。另一方面，先让一部分比较有热情的早期种子用户进来，也能够充分的对产品的易用性和体验流程进行早期的验证，方便手机用户的反馈之后迭代修改。·</p>
 <p>我们首先来看看根据需求邀请码服务需要提供出哪些接口：</p>
@@ -257,17 +295,17 @@
     
     </summary>
     
-      <category term="设计方案" scheme="http://meijing0114.com/categories/%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%A1%88/"/>
+      <category term="设计方案" scheme="http://meijing0114.me/categories/%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%A1%88/"/>
     
     
   </entry>
   
   <entry>
     <title>从头替换一个2000万pv的站点，需要注意些什么？</title>
-    <link href="http://meijing0114.com/2017/04/29/architect001/"/>
-    <id>http://meijing0114.com/2017/04/29/architect001/</id>
+    <link href="http://meijing0114.me/2017/04/29/architect001/"/>
+    <id>http://meijing0114.me/2017/04/29/architect001/</id>
     <published>2017-04-29T09:20:57.000Z</published>
-    <updated>2017-04-29T09:21:42.000Z</updated>
+    <updated>2019-11-09T04:36:18.729Z</updated>
     
     <content type="html"><![CDATA[<h2 id="正确的评估你需要多少台机器"><a href="#正确的评估你需要多少台机器" class="headerlink" title="正确的评估你需要多少台机器"></a>正确的评估你需要多少台机器</h2><p>现有一个网站pv在2000万左右，最高峰值的访问是五分钟一百万，相当于每秒3000左右，现有部署十六台web后台机器，每台每秒二百多，考虑到机器上另有差不多访问量级的服务在，暂时无压力。</p>
 <p>这个量级的访问对静态资源一定要使用CDN了，在正确使用CDN的前提之下，两台QPS在2k左右的静态资源服务器不会成为瓶颈。</p>
@@ -337,17 +375,17 @@
     
     </summary>
     
-      <category term="架构" scheme="http://meijing0114.com/categories/%E6%9E%B6%E6%9E%84/"/>
+      <category term="架构" scheme="http://meijing0114.me/categories/%E6%9E%B6%E6%9E%84/"/>
     
     
   </entry>
   
   <entry>
     <title>《redis入门指南》之事务、缓存、排序、消息通知与空间节约</title>
-    <link href="http://meijing0114.com/2017/04/15/redis002/"/>
-    <id>http://meijing0114.com/2017/04/15/redis002/</id>
+    <link href="http://meijing0114.me/2017/04/15/redis002/"/>
+    <id>http://meijing0114.me/2017/04/15/redis002/</id>
     <published>2017-04-15T06:58:20.000Z</published>
-    <updated>2017-04-15T07:00:17.000Z</updated>
+    <updated>2019-11-09T04:36:18.739Z</updated>
     
     <content type="html"><![CDATA[<h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><p>在我固有的印象中，事务是属于sql数据库才专有的特权，不过随着no-sql数据库的逐步成熟，这点确实有所变哈。</p>
 <p>redis的事务功能，简单、直观，并且能够在实际的业务中发挥作用。一般的事务用法有两种：</p>
@@ -399,17 +437,17 @@
     
     </summary>
     
-      <category term="存储" scheme="http://meijing0114.com/categories/%E5%AD%98%E5%82%A8/"/>
+      <category term="存储" scheme="http://meijing0114.me/categories/%E5%AD%98%E5%82%A8/"/>
     
     
   </entry>
   
   <entry>
     <title>《Redis入门指南》之基本的数据结构</title>
-    <link href="http://meijing0114.com/2017/04/11/redis001/"/>
-    <id>http://meijing0114.com/2017/04/11/redis001/</id>
+    <link href="http://meijing0114.me/2017/04/11/redis001/"/>
+    <id>http://meijing0114.me/2017/04/11/redis001/</id>
     <published>2017-04-11T13:44:10.000Z</published>
-    <updated>2017-04-11T13:52:51.000Z</updated>
+    <updated>2019-11-09T04:36:18.739Z</updated>
     
     <content type="html"><![CDATA[<p>《redis入门指南》这本书入门不错，值得推荐，每一章都有些干活。这里分别加以总结，并增加了自己的一些理解。</p>
 <h2 id="常见数据结构"><a href="#常见数据结构" class="headerlink" title="常见数据结构"></a>常见数据结构</h2><h3 id="字符串类型"><a href="#字符串类型" class="headerlink" title="字符串类型"></a>字符串类型</h3><p>这是最常见的key-value的结构，但是现在的no-sql远不止于此：</p>
@@ -468,19 +506,19 @@
     
     </summary>
     
-      <category term="redis" scheme="http://meijing0114.com/categories/redis/"/>
+      <category term="redis" scheme="http://meijing0114.me/categories/redis/"/>
     
     
-      <category term="存储" scheme="http://meijing0114.com/tags/%E5%AD%98%E5%82%A8/"/>
+      <category term="存储" scheme="http://meijing0114.me/tags/%E5%AD%98%E5%82%A8/"/>
     
   </entry>
   
   <entry>
     <title>读《途客圈创业记-不疯魔，不成活》</title>
-    <link href="http://meijing0114.com/2017/03/12/book015/"/>
-    <id>http://meijing0114.com/2017/03/12/book015/</id>
+    <link href="http://meijing0114.me/2017/03/12/book015/"/>
+    <id>http://meijing0114.me/2017/03/12/book015/</id>
     <published>2017-03-12T11:47:23.000Z</published>
-    <updated>2017-03-12T11:58:22.000Z</updated>
+    <updated>2019-11-09T04:36:18.735Z</updated>
     
     <content type="html"><![CDATA[<p><img src="https://img1.doubanio.com/lpic/s28482679.jpg" alt=""></p>
 <p>创业维艰，这句话我们听来似轻描淡写，但对本书作者而言，体会不可谓不深不痛。从字里行间，都可见他对“途客圈”这个产品、团队和公司的感情。幸好他是一个技术人员，理性的分析和还原，以及对技术的追求让本书有很多值得借鉴的干货。</p>
@@ -539,17 +577,17 @@
     
     </summary>
     
-      <category term="书评影评" scheme="http://meijing0114.com/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
+      <category term="书评影评" scheme="http://meijing0114.me/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
     
     
   </entry>
   
   <entry>
     <title>读《精进，如何成为一个很厉害的人》</title>
-    <link href="http://meijing0114.com/2017/02/26/book014/"/>
-    <id>http://meijing0114.com/2017/02/26/book014/</id>
+    <link href="http://meijing0114.me/2017/02/26/book014/"/>
+    <id>http://meijing0114.me/2017/02/26/book014/</id>
     <published>2017-02-26T07:10:32.000Z</published>
-    <updated>2017-02-26T09:00:31.000Z</updated>
+    <updated>2019-11-09T04:36:18.735Z</updated>
     
     <content type="html"><![CDATA[<p>其实开始对这本书带着不好的期待，主要原因是看到了一篇短评，说其充斥着鸡汤，而且作者并不够“成功”来分享“成为很厉害的人”的经验云云。不过，抱着姑且一看的心态，我还是抱着这本书，读了三周左右。读的过程中，我处处警醒，时时提防，生怕落入鸡汤俗套，现今想来，实为可笑，鸡汤无毒，只是看何时何人来饮。你看，我读完之后，加了些佐料，还想为诸君呈上。<br><img src="https://img3.doubanio.com/lpic/s28588315.jpg" alt=""></p>
 <p>第一章讲述时间，确实有一些非常实用的技巧。比如人往往有大志，也有当前要面对的小障碍。尽管大志让人心潮澎湃，但是遇到眼前要完成的作业时，却时常拖延症泛滥。如果能切换视角，那么就能更加获得前进动力，且不被眼前困难烦扰。又比如时间的快与慢结合，将所做事情按照不同的价值分为四种，那些“半衰期”长的自然要多做，而“一时爽”的不如少做。而我也据此，分析了一下自己每周，尤其是周末空闲时间所做事情的安排，发现时常自己不是在生活，而是在被生活。很多诸如做饭之类的杂事不知不觉之间占据大部分时间，而真正想做的却是一拖再拖，这点尤其值得反思。那些无产出的事，的确应该快刀斩乱麻，而把真正的精力留给半衰期长，能带来长久满足或效益的事情之上。</p>
@@ -645,19 +683,19 @@
     
     </summary>
     
-      <category term="书评影评" scheme="http://meijing0114.com/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
+      <category term="书评影评" scheme="http://meijing0114.me/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
     
     
-      <category term="个人成长" scheme="http://meijing0114.com/tags/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/"/>
+      <category term="个人成长" scheme="http://meijing0114.me/tags/%E4%B8%AA%E4%BA%BA%E6%88%90%E9%95%BF/"/>
     
   </entry>
   
   <entry>
     <title>新西兰-那片上帝自留地</title>
-    <link href="http://meijing0114.com/2017/02/19/travel002/"/>
-    <id>http://meijing0114.com/2017/02/19/travel002/</id>
+    <link href="http://meijing0114.me/2017/02/19/travel002/"/>
+    <id>http://meijing0114.me/2017/02/19/travel002/</id>
     <published>2017-02-19T14:54:00.000Z</published>
-    <updated>2017-02-19T14:54:36.000Z</updated>
+    <updated>2019-11-09T04:36:18.741Z</updated>
     
     <content type="html"><![CDATA[<p>新西兰的热，这两年尤甚。第一次知道新西兰，当然是大名鼎鼎的彼得杰克逊的指环王和霍比特人。总觉得此景只应天上有，人间能得几回闻。也怪不得人家都说，新西兰是上帝的自留地和后花园。再加上去年的时候，黄磊夫妇应邀去新西兰度了蜜月，看了下行程亮点颇多，于是就有了属于我们的新西兰蜜月十二日之旅。</p>
 <p><img src="http://upload-images.jianshu.io/upload_images/96723-f908867579c85ea3.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="阿贝尔塔斯曼国家公园"></p>
@@ -678,17 +716,17 @@
     
     </summary>
     
-      <category term="旅行" scheme="http://meijing0114.com/categories/%E6%97%85%E8%A1%8C/"/>
+      <category term="旅行" scheme="http://meijing0114.me/categories/%E6%97%85%E8%A1%8C/"/>
     
     
   </entry>
   
   <entry>
     <title>优秀伙伴在哪里？2016年度招聘心得</title>
-    <link href="http://meijing0114.com/2017/02/04/work001/"/>
-    <id>http://meijing0114.com/2017/02/04/work001/</id>
+    <link href="http://meijing0114.me/2017/02/04/work001/"/>
+    <id>http://meijing0114.me/2017/02/04/work001/</id>
     <published>2017-02-04T08:40:50.000Z</published>
-    <updated>2017-02-04T08:46:39.000Z</updated>
+    <updated>2019-11-09T04:36:18.741Z</updated>
     
     <content type="html"><![CDATA[<p>今年三月份第一次跳槽，随即承担起了部分团队的招聘工作，到现在为止，也是十个月的时间。起点面试了非常多的社招候选人，也作为校招宣讲嘉宾和一线面试官跟很多毕业生接触。其中有不少收获、感悟和反思，不吐不快。</p>
 <p><img src="http://wx1.sinaimg.cn/mw690/67ad48bbgy1fcej6gp67ij20gi0qogmb.jpg" alt=""></p>
@@ -716,19 +754,19 @@
     
     </summary>
     
-      <category term="职场修炼" scheme="http://meijing0114.com/categories/%E8%81%8C%E5%9C%BA%E4%BF%AE%E7%82%BC/"/>
+      <category term="职场修炼" scheme="http://meijing0114.me/categories/%E8%81%8C%E5%9C%BA%E4%BF%AE%E7%82%BC/"/>
     
     
-      <category term="招聘 职场" scheme="http://meijing0114.com/tags/%E6%8B%9B%E8%81%98-%E8%81%8C%E5%9C%BA/"/>
+      <category term="招聘 职场" scheme="http://meijing0114.me/tags/%E6%8B%9B%E8%81%98-%E8%81%8C%E5%9C%BA/"/>
     
   </entry>
   
   <entry>
     <title>关于php的共享内存的使用和研究之深入剖析swoole table</title>
-    <link href="http://meijing0114.com/2017/02/01/php004/"/>
-    <id>http://meijing0114.com/2017/02/01/php004/</id>
+    <link href="http://meijing0114.me/2017/02/01/php004/"/>
+    <id>http://meijing0114.me/2017/02/01/php004/</id>
     <published>2017-02-01T10:14:26.000Z</published>
-    <updated>2017-02-01T10:16:06.000Z</updated>
+    <updated>2019-11-09T04:36:18.738Z</updated>
     
     <content type="html"><![CDATA[<p>话说回来，究竟swoole的底层是怎么做到了使用行锁，来实现进程访问冲突解决与高性能的呢？这里确实值得研究一下。</p>
 <p>首先来看一下swooletable中用来存储的基本数据结构swTableRow：</p>
@@ -772,19 +810,19 @@
     
     </summary>
     
-      <category term="php" scheme="http://meijing0114.com/categories/php/"/>
+      <category term="php" scheme="http://meijing0114.me/categories/php/"/>
     
     
-      <category term="存储" scheme="http://meijing0114.com/tags/%E5%AD%98%E5%82%A8/"/>
+      <category term="存储" scheme="http://meijing0114.me/tags/%E5%AD%98%E5%82%A8/"/>
     
   </entry>
   
   <entry>
     <title>关于php的共享内存的使用和研究之外部存储</title>
-    <link href="http://meijing0114.com/2017/02/01/php003/"/>
-    <id>http://meijing0114.com/2017/02/01/php003/</id>
+    <link href="http://meijing0114.me/2017/02/01/php003/"/>
+    <id>http://meijing0114.me/2017/02/01/php003/</id>
     <published>2017-02-01T09:54:58.000Z</published>
-    <updated>2017-02-01T10:01:52.000Z</updated>
+    <updated>2019-11-09T04:36:18.738Z</updated>
     
     <content type="html"><![CDATA[<p>上文中提到了针对php的共享内存方案的尝试，最终发现它并不适用于我的场景，如果想要兼容多进程或多线程并发读写的情况下可靠，一定要有适当的机制来保证资源的唯一性。</p>
 <p>加锁肯定是想到的第一选择，对于每次共享内存的时候，先获取一个锁，只有获取成功了之后才允许进行读和写，这应该是最简单的方案，但是同步锁对性能的损耗也是比较大的。APC的user data cache的存储机制对数据要求严格正确，锁比较多，它的效率与本地的memcache相当。既然这样，不如把眼光投向业界，看看大牛们使用什么样的方案来解决这个问题。</p>
@@ -850,19 +888,19 @@
     
     </summary>
     
-      <category term="php" scheme="http://meijing0114.com/categories/php/"/>
+      <category term="php" scheme="http://meijing0114.me/categories/php/"/>
     
     
-      <category term="存储" scheme="http://meijing0114.com/tags/%E5%AD%98%E5%82%A8/"/>
+      <category term="存储" scheme="http://meijing0114.me/tags/%E5%AD%98%E5%82%A8/"/>
     
   </entry>
   
   <entry>
     <title>关于php的共享内存的使用和研究之由起</title>
-    <link href="http://meijing0114.com/2016/12/25/php002/"/>
-    <id>http://meijing0114.com/2016/12/25/php002/</id>
+    <link href="http://meijing0114.me/2016/12/25/php002/"/>
+    <id>http://meijing0114.me/2016/12/25/php002/</id>
     <published>2016-12-25T07:43:48.000Z</published>
-    <updated>2016-12-25T08:10:08.000Z</updated>
+    <updated>2019-11-09T04:36:18.738Z</updated>
     
     <content type="html"><![CDATA[<p>最近遇到一个场景，服务寻址的时候，需要请求远程的服务，获取一批可用的ip和端口地址及其权重。根据权重和随机算法选择最合适的一个服务地址，进行请求。由于服务地址在短时间之内不会发生变化，因此为了避免无限制的进行寻址的请求，有必要将地址缓存至本地。</p>
 <p>对于php而言，说到用户数据缓存本地，第一反应出来的就是APC。但是APC首先被创建出来是给php做内部缓存的，其次才是提供给用户态使用的。根据laruence在博客的说法，opcache出现了之后，对zend编译的opcode做了缓存，实际上解决了apc被创建出来想要解决的问题。因此现在APC已经处于不再更新维护的状态了。</p>
@@ -918,19 +956,19 @@
     
     </summary>
     
-      <category term="php" scheme="http://meijing0114.com/categories/php/"/>
+      <category term="php" scheme="http://meijing0114.me/categories/php/"/>
     
     
-      <category term="存储" scheme="http://meijing0114.com/tags/%E5%AD%98%E5%82%A8/"/>
+      <category term="存储" scheme="http://meijing0114.me/tags/%E5%AD%98%E5%82%A8/"/>
     
   </entry>
   
   <entry>
     <title>Nginx模块之echo</title>
-    <link href="http://meijing0114.com/2016/12/19/nginx001/"/>
-    <id>http://meijing0114.com/2016/12/19/nginx001/</id>
+    <link href="http://meijing0114.me/2016/12/19/nginx001/"/>
+    <id>http://meijing0114.me/2016/12/19/nginx001/</id>
     <published>2016-12-19T15:17:40.000Z</published>
-    <updated>2016-12-19T15:39:27.000Z</updated>
+    <updated>2019-11-09T04:36:18.737Z</updated>
     
     <content type="html"><![CDATA[<h2 id="选择nginx"><a href="#选择nginx" class="headerlink" title="选择nginx"></a>选择nginx</h2><p>Nginx性能为王：</p>
 <ul>
@@ -977,17 +1015,17 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
     
     </summary>
     
-      <category term="接入层" scheme="http://meijing0114.com/categories/%E6%8E%A5%E5%85%A5%E5%B1%82/"/>
+      <category term="接入层" scheme="http://meijing0114.me/categories/%E6%8E%A5%E5%85%A5%E5%B1%82/"/>
     
     
   </entry>
   
   <entry>
     <title>读《成为乔布斯》</title>
-    <link href="http://meijing0114.com/2016/11/26/book013/"/>
-    <id>http://meijing0114.com/2016/11/26/book013/</id>
+    <link href="http://meijing0114.me/2016/11/26/book013/"/>
+    <id>http://meijing0114.me/2016/11/26/book013/</id>
     <published>2016-11-26T04:01:36.000Z</published>
-    <updated>2016-11-26T04:02:28.000Z</updated>
+    <updated>2019-11-09T04:36:18.734Z</updated>
     
     <content type="html"><![CDATA[<p>《乔布斯传》的热潮似乎在慢慢的过去，人们已经逐渐淡忘了那位乔帮主，只是在每年苹果推出新产品的时候，会对tim cook 有一种矛盾的心情，既期待又担心他无法达到乔帮主的水准，愁煞了一帮果粉。</p>
 <p>我是在12年才开始接触苹果的产品，对乔布斯的了解同样也是差不多时间，如今五年左右过去，回过头看看这本《成为乔布斯》，能够得到很多不同的体悟。</p>
@@ -1043,19 +1081,19 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
     
     </summary>
     
-      <category term="书评影评" scheme="http://meijing0114.com/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
+      <category term="书评影评" scheme="http://meijing0114.me/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
     
     
-      <category term="读书" scheme="http://meijing0114.com/tags/%E8%AF%BB%E4%B9%A6/"/>
+      <category term="读书" scheme="http://meijing0114.me/tags/%E8%AF%BB%E4%B9%A6/"/>
     
   </entry>
   
   <entry>
     <title>山水游重庆</title>
-    <link href="http://meijing0114.com/2016/10/06/travel001/"/>
-    <id>http://meijing0114.com/2016/10/06/travel001/</id>
+    <link href="http://meijing0114.me/2016/10/06/travel001/"/>
+    <id>http://meijing0114.me/2016/10/06/travel001/</id>
     <published>2016-10-06T04:28:34.000Z</published>
-    <updated>2016-10-06T04:51:30.000Z</updated>
+    <updated>2019-11-09T04:36:18.741Z</updated>
     
     <content type="html"><![CDATA[<h2 id="山城的路"><a href="#山城的路" class="headerlink" title="山城的路"></a>山城的路</h2><p>去重庆之前，听到最多的一句就是不要在重庆使用高德导航，因为这个城市的路从不以常理出牌。咋听下来不以为然，但是因为要租车，所以还是有一些忐忑。第一天刚到酒店，便忙不迭的出门探路，顺便去人气火锅店打个尖。从导航来看，不过一公里直线距离，哪知道刚出门就直呼上当。这一公里是结结实实的跌宕起伏:出门先是一个大环路，然后就是五百米的爬坡，这还不算完，又经过了三百米的六十度登山运动，这才差不多到了终点。待气喘吁吁的登了上去，竟然已经可以俯瞰住处，不禁称奇。</p>
 <p>有了这么一出，却也还没免去第二天取车时的尴尬。大马路进入大名鼎鼎的洪崖洞，抬头一看，竟是十层。离着负一层的停车场差了一个人山人海的电梯。九牛二虎之力之后，终于到达负一层，一抬头竟又是大马路，令人啧啧称奇。所以呢，这座城市永远能给你惊喜，因为楼下有楼，路下有路。更妙的是，楼中有车，轻轨可以穿楼而过。楼中有路，长达二百米的大电梯让你扶层而上，甚至还要你留下两块的买路钱:)</p>
@@ -1090,17 +1128,17 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
     
     </summary>
     
-      <category term="旅行" scheme="http://meijing0114.com/categories/%E6%97%85%E8%A1%8C/"/>
+      <category term="旅行" scheme="http://meijing0114.me/categories/%E6%97%85%E8%A1%8C/"/>
     
     
   </entry>
   
   <entry>
     <title>编写可读代码的艺术</title>
-    <link href="http://meijing0114.com/2016/09/21/book012/"/>
-    <id>http://meijing0114.com/2016/09/21/book012/</id>
+    <link href="http://meijing0114.me/2016/09/21/book012/"/>
+    <id>http://meijing0114.me/2016/09/21/book012/</id>
     <published>2016-09-21T00:59:14.000Z</published>
-    <updated>2016-10-21T01:10:35.000Z</updated>
+    <updated>2019-11-09T04:36:18.734Z</updated>
     
     <content type="html"><![CDATA[<h2 id="代码应当易于理解"><a href="#代码应当易于理解" class="headerlink" title="代码应当易于理解"></a>代码应当易于理解</h2><h2 id="表面层次的改进"><a href="#表面层次的改进" class="headerlink" title="表面层次的改进"></a>表面层次的改进</h2><h3 id="把信息装到名字里"><a href="#把信息装到名字里" class="headerlink" title="把信息装到名字里"></a>把信息装到名字里</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwunkasj20l30dhwhr.jpg" alt=""></p>
 <p>把信息装入名字：</p>
@@ -1246,17 +1284,17 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
     
     </summary>
     
-      <category term="书评影评" scheme="http://meijing0114.com/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
+      <category term="书评影评" scheme="http://meijing0114.me/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
     
     
   </entry>
   
   <entry>
     <title>读阳明先生心学有感</title>
-    <link href="http://meijing0114.com/2016/09/01/book011/"/>
-    <id>http://meijing0114.com/2016/09/01/book011/</id>
+    <link href="http://meijing0114.me/2016/09/01/book011/"/>
+    <id>http://meijing0114.me/2016/09/01/book011/</id>
     <published>2016-09-01T00:58:30.000Z</published>
-    <updated>2016-09-17T08:35:39.000Z</updated>
+    <updated>2019-11-09T04:36:18.734Z</updated>
     
     <content type="html"><![CDATA[<h2 id="结缘，之前的感受"><a href="#结缘，之前的感受" class="headerlink" title="结缘，之前的感受"></a>结缘，之前的感受</h2><p>早先在看《明朝那些事》的时候，心里就一直对王阳明有了这么一个印象。书中的具体描述已然淡去，但作者对王阳明的心学的推崇，以及其弟子遍地开花，执掌明朝内阁大权的事实却是浓墨重彩的。当时对心学的唯一印象就是“知行合一”。尽管简单，但是让我很有好感。以致于很长的一段时间里，我并不以为它是儒学的一个分支，而是认为它是更入市，或者说更接地气的一种为人处世的方式。</p>
 <p>直到近日，心中烦恼颇多。烦恼并非来自于现实中的不顺利，反而是来自于生活中的倦怠与惯性，让我感到心力俱疲。在这种情况下，不自觉的想要去寻求一种答案，再加上之前对心学的这么一个良好的印象。所以才有了对这本《王阳明-最神奇的心学》的细读。</p>
@@ -1332,67 +1370,10 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
     
     </summary>
     
-      <category term="书评影评" scheme="http://meijing0114.com/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
+      <category term="书评影评" scheme="http://meijing0114.me/categories/%E4%B9%A6%E8%AF%84%E5%BD%B1%E8%AF%84/"/>
     
     
-      <category term="哲学 心学" scheme="http://meijing0114.com/tags/%E5%93%B2%E5%AD%A6-%E5%BF%83%E5%AD%A6/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>上海酒店之外滩茂悦</title>
-    <link href="http://meijing0114.com/2016/08/13/life001/"/>
-    <id>http://meijing0114.com/2016/08/13/life001/</id>
-    <published>2016-08-13T10:14:41.000Z</published>
-    <updated>2016-09-17T07:32:53.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>之前被同事安利，再加上自己之前也比较有兴趣。就去申请了一张招商银行的经典白金卡。算是真正的入坑了。这种卡带的福利还是相对不错的，比如有：</p>
-<ul>
-<li>每年送一次体检</li>
-<li>每年送一次口腔保健</li>
-<li>兑换航空公司里程</li>
-<li>每年6次机场贵宾厅</li>
-</ul>
-<p>不过还有一个很不错的权益，那就是每年四次的300块住五星级酒店的权益。看了一下上海的列表，本来打算去住佘山艾美+欢乐谷，但是却发现佘山艾美实在是太热门了。所以最后抱着一种进城的心态，住了外滩茂悦。</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f7wlob002ij20hs0vk470.jpg" alt=""></p>
-<h2 id="饮食"><a href="#饮食" class="headerlink" title="饮食"></a>饮食</h2><p>去酒店第一个体验的是膳食。提前预定了酒店靠窗的自助餐，下面分别打分：</p>
-<ul>
-<li>环境：4分</li>
-<li>口味：3分</li>
-<li>服务：4分</li>
-</ul>
-<p>总体来说其实有些差强人意，环境还算马马虎虎，但是口味实在是不敢恭维。作为280这个价位的自助来说的话，它的膳食的品类、新鲜度和味道都没有达到预期。</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f7wlrejxlrj216o1kwtlm.jpg" alt=""></p>
-<p>其中为数不多的亮点，一个是煲仔饭，还有一个是生蚝。煲仔饭的话做法比较广式，但是食材稍差了写。生蚝算是实打实的，毕竟没有那个新鲜度的话，一般也不能放出来让你生吃不是。</p>
-<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f7wlrd6aygj216o1kwdw1.jpg" alt=""></p>
-<p>环境的话，因为并不是直接临着外滩的，所以无法享受到无敌的江景。但是位置的安排还算合意。灯光和氛围也是中规中矩。</p>
-<p>服务的话其实比较差，除了引导之外，别的服务都有点形同虚设。收拾的服务员差点把我们没吃完的东西收掉，铁板烧的服务员也是有点爱理不理。看来在这块的服务质量有待提高啊。</p>
-<h2 id="房间"><a href="#房间" class="headerlink" title="房间"></a>房间</h2><p>房间的话，大小应该算是同类酒店里面的中等。先来说几个亮点，一个是浴室和房间的连接设计的很好：<br><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f7wlo8r5m9j21kw23uan4.jpg" alt=""></p>
-<p>还有一个就是落地窗的设计使得视野十分的开阔，同时电动窗的设计也很贴心，能够保证你一觉睡到天亮。</p>
-<p>但是吐槽的地方也不少，一个是开关老化，各种开关，都没有能够很顺畅的实现我想打开各种灯的想法。。反而是一直在不停的尝试，晚上起夜的时候非常的痛苦。电视的尺寸也是蛮小的，现在哪还有这种尺寸的电视。所以在硬件条件上，感觉房间是不够达标的。</p>
-<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f7wlo0ve7pj21kw16oti3.jpg" alt=""></p>
-<h2 id="环境与其他设施"><a href="#环境与其他设施" class="headerlink" title="环境与其他设施"></a>环境与其他设施</h2><p>另外体验的酒店设施，一个最大的亮点就是顶楼的“非常时髦酒吧”。据说是小时代的取景地，它的逼格、视野和酒品都是中等偏上的，不多说，先来看几张无敌的景色照片：</p>
-<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbjw1f7wm9kq49tj21kw0qr14n.jpg" alt=""></p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbjw1f7wm9mjmaij21kw1kw4ge.jpg" alt=""></p>
-<p>酒吧一进去就逼格满满，是由几千个酒瓶镶嵌在墙上组成的装饰，十分的震撼。有靠窗的位置，也有内侧的包间，可以满足不同喜好。而更加惊艳的是二楼，一个全开放式的天台设计，中间还有一个小泳池。一遍喝着鸡尾酒，一遍吹着风，同时看着外滩的无敌美景，这种感觉的确是一种很好的体验。怪不得进去的每个妹子都是不停的自拍。</p>
-<p>第二天早上，赶着点体验了一把泳池和水疗中心。泳池的条件没的说，不过就是池水比较浅。水疗中心里面的话，汗蒸湿蒸，温泉都是一应俱全的。这点上倒是十分的良心，值得推荐！</p>
-<p>除此之外，checkin和checkout都是被吐槽的，checkin的妹子错误告诉我关于早餐的信息，checkout的时候莫名的有一个外国人在错误的引导，不知所谓，差点停车票也没了，这点实在是有失水准。</p>
-<p>不过综合来看，胜在位置和顶楼的bar，为了这两点，还是可以来体验一下的。再次推荐招行，中秋还在酒店附送了一盒月饼，良心~~</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;之前被同事安利，再加上自己之前也比较有兴趣。就去申请了一张招商银行的经典白金卡。算是真正的入坑了。这种卡带的福利还是相对不错的，比如有：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;每年送一次体检&lt;/li&gt;
-&lt;li&gt;每年送一次口腔保健&lt;/li&gt;
-&lt;li&gt;兑换航空公司里程&lt;/li&gt;
-&lt;li&gt;每
-    
-    </summary>
-    
-      <category term="旅行与生活体验" scheme="http://meijing0114.com/categories/%E6%97%85%E8%A1%8C%E4%B8%8E%E7%94%9F%E6%B4%BB%E4%BD%93%E9%AA%8C/"/>
-    
+      <category term="哲学 心学" scheme="http://meijing0114.me/tags/%E5%93%B2%E5%AD%A6-%E5%BF%83%E5%AD%A6/"/>
     
   </entry>
   

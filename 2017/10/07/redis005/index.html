@@ -86,22 +86,22 @@
 
 
 
-<meta name="description" content="创业维艰，这句话我们听来似轻描淡写，但对本书作者而言，体会不可谓不深不痛。从字里行间，都可见他对“途客圈”这个产品、团队和公司的感情。幸好他是一个技术人员，理性的分析和还原，以及对技术的追求让本书有很多值得借鉴的干货。
-作者的背景并非互联网，而是很多人不知道的电信行业公司，七年时间，已经进入管理岗位。于此情况创业，风险不可谓不大。但怎么说呢，每个技术人员都有自己打造产品的梦，再加上一枪热爱，就让">
+<meta name="description" content="引言redis除了在存储方面能够发挥很多作用之外，还可以帮助我们很好的搭建应用组件，通过这些组件进而帮助我们更好的实现业务需求。一个分布式的锁，在很是业务场景中都必不可少。
+在用户访问并发大的情况下，多个进程或线程经常同时竞争一个资源。如果都是在本机的资源，那么通过操作系统的一些锁接口，就可以实现。但是很多系统往往是分布式的部署，这时候，使用一个简洁、高效的分布式锁实现方案，就显得迫在眉睫了。
+r">
 <meta property="og:type" content="article">
-<meta property="og:title" content="读《途客圈创业记-不疯魔，不成活》">
-<meta property="og:url" content="http://meijing0114.me/2017/03/12/book015/index.html">
+<meta property="og:title" content="使用redis构建分布式的锁">
+<meta property="og:url" content="http://meijing0114.me/2017/10/07/redis005/index.html">
 <meta property="og:site_name" content="meijing0114的博客">
-<meta property="og:description" content="创业维艰，这句话我们听来似轻描淡写，但对本书作者而言，体会不可谓不深不痛。从字里行间，都可见他对“途客圈”这个产品、团队和公司的感情。幸好他是一个技术人员，理性的分析和还原，以及对技术的追求让本书有很多值得借鉴的干货。
-作者的背景并非互联网，而是很多人不知道的电信行业公司，七年时间，已经进入管理岗位。于此情况创业，风险不可谓不大。但怎么说呢，每个技术人员都有自己打造产品的梦，再加上一枪热爱，就让">
-<meta property="og:image" content="https://img1.doubanio.com/lpic/s28482679.jpg">
-<meta property="og:image" content="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fdkata0zqwj20zk0g8gnn.jpg">
-<meta property="og:updated_time" content="2019-11-09T04:36:18.735Z">
+<meta property="og:description" content="引言redis除了在存储方面能够发挥很多作用之外，还可以帮助我们很好的搭建应用组件，通过这些组件进而帮助我们更好的实现业务需求。一个分布式的锁，在很是业务场景中都必不可少。
+在用户访问并发大的情况下，多个进程或线程经常同时竞争一个资源。如果都是在本机的资源，那么通过操作系统的一些锁接口，就可以实现。但是很多系统往往是分布式的部署，这时候，使用一个简洁、高效的分布式锁实现方案，就显得迫在眉睫了。
+r">
+<meta property="og:updated_time" content="2019-11-09T04:36:18.740Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="读《途客圈创业记-不疯魔，不成活》">
-<meta name="twitter:description" content="创业维艰，这句话我们听来似轻描淡写，但对本书作者而言，体会不可谓不深不痛。从字里行间，都可见他对“途客圈”这个产品、团队和公司的感情。幸好他是一个技术人员，理性的分析和还原，以及对技术的追求让本书有很多值得借鉴的干货。
-作者的背景并非互联网，而是很多人不知道的电信行业公司，七年时间，已经进入管理岗位。于此情况创业，风险不可谓不大。但怎么说呢，每个技术人员都有自己打造产品的梦，再加上一枪热爱，就让">
-<meta name="twitter:image" content="https://img1.doubanio.com/lpic/s28482679.jpg">
+<meta name="twitter:title" content="使用redis构建分布式的锁">
+<meta name="twitter:description" content="引言redis除了在存储方面能够发挥很多作用之外，还可以帮助我们很好的搭建应用组件，通过这些组件进而帮助我们更好的实现业务需求。一个分布式的锁，在很是业务场景中都必不可少。
+在用户访问并发大的情况下，多个进程或线程经常同时竞争一个资源。如果都是在本机的资源，那么通过操作系统的一些锁接口，就可以实现。但是很多系统往往是分布式的部署，这时候，使用一个简洁、高效的分布式锁实现方案，就显得迫在眉睫了。
+r">
 
 
 
@@ -122,9 +122,9 @@
 
 
 
-  <link rel="canonical" href="http://meijing0114.me/2017/03/12/book015/"/>
+  <link rel="canonical" href="http://meijing0114.me/2017/10/07/redis005/"/>
 
-  <title> 读《途客圈创业记-不疯魔，不成活》 | meijing0114的博客 </title>
+  <title> 使用redis构建分布式的锁 | meijing0114的博客 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -254,7 +254,7 @@
             
             
               
-                读《途客圈创业记-不疯魔，不成活》
+                使用redis构建分布式的锁
               
             
           </h1>
@@ -266,8 +266,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-03-12T19:47:23+08:00" content="Mar 12 2017">
-              Mar 12 2017
+            <time itemprop="dateCreated" datetime="2017-10-07T15:13:50+08:00" content="Oct 7 2017">
+              Oct 7 2017
             </time>
           </span>
 
@@ -280,8 +280,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/书评影评/" itemprop="url" rel="index">
-                    <span itemprop="name">书评影评</span>
+                  <a href="/categories/redis/" itemprop="url" rel="index">
+                    <span itemprop="name">redis</span>
                   </a>
                 </span>
 
@@ -296,8 +296,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2017/03/12/book015/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/12/book015/" itemprop="commentsCount"></span>
+                <a href="/2017/10/07/redis005/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/10/07/redis005/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -320,55 +320,25 @@
       
 
       
-        <p><img src="https://img1.doubanio.com/lpic/s28482679.jpg" alt=""></p>
-<p>创业维艰，这句话我们听来似轻描淡写，但对本书作者而言，体会不可谓不深不痛。从字里行间，都可见他对“途客圈”这个产品、团队和公司的感情。幸好他是一个技术人员，理性的分析和还原，以及对技术的追求让本书有很多值得借鉴的干货。</p>
-<p>作者的背景并非互联网，而是很多人不知道的电信行业公司，七年时间，已经进入管理岗位。于此情况创业，风险不可谓不大。但怎么说呢，每个技术人员都有自己打造产品的梦，再加上一枪热爱，就让他踏上了这条路。纵观他在途客圈的整个创业历程，跨度两年，开始于iWeekend创业周末的如履薄冰，结束于产品方向的不可调和矛盾。融资方面，从创始人个人出资，到顺利拿到了创新工场的50万融资，却未能更进一步，最终被世界邦并购结尾。而产品线从网站途客圈1.0的web站点开始，其中历经了旅行计划大赛、当地自助游项目尝试、旅行整理项目、欧铁项目、城市指南项目等多个不同的旅游领域的方向和尝试，变化不可谓不多，这也是被很多人诟病以及作者自己反思的重要一层：太过于分心。</p>
-<p>当你很快速的看完这本书的时候，的确会给你很多震撼，笔者自己也参加过一些小型的hackthon项目。一个项目从清晨开始时的大家潮气蓬勃，雄心万丈，到定下需求时的略有纠结，再到开发时的不断调整和产漏补缺，以及深夜攻坚时候的绞尽脑汁，最后出成品时候的纠结、忐忑和一份自信，其过程可以理解为一个微缩版的分娩过程。看着这么多优秀的人，不断的进行一个个项目的尝试，又不断的经历项目和公司变动的起起伏伏，有时辛苦完成的项目在不知情的讨论之下都可能会胎死腹中。不得不说，创业是一条血腥的路，也是一条不断挑战自我的路，对管理者和执行者要求极高的一条路。</p>
-<p>作为公司核心的创始人和CTO，最后又黯然退出，作者主观的判断不少。虽说最后有不断的反思，但仍有一叶障目之感。但是作者对技术视野和技术管理的认知，实在是让人获益匪浅。试想从项目一开始，仅仅是django和jquery ui的方式，随着项目不断的开展起来，新的技术人才的引进，新的技术框架的使用，这些变化往往对CTO的冲击很大，但是作者却能始终把握住技术之先。一方面不断的对员工进行技术培训，另一方面在技术选型上做到了提前量和前瞻性，并未出现技术赶不上产品的情况（产品要大发展，却被技术缠住手脚，实为技术人员之耻辱）。同时还能在自己的业余时间进行充分的技术尝试，优化团队的技术架构和建设流程工具，真的是令人钦佩不已。但正如作者自己所言，他的劣势在于技术人脉的缺失，也导致了他招人上的一些障碍。不过这并不妨碍他的技术上能够驱动公司前进。</p>
-<p>这本书并不鼓吹，都是十分坦诚的分享，负荆前行的创业路。既有拿到融资的欢欣雀跃，也有从头搭建工作环境的接地气，更有裁人的残酷。两年的时间，不长不短，互联网圈子也同样是风云变化，他们创业那时的我仍在象牙塔中封闭自己，却已有这么多人拼劲全力实现自己的理想。想想此时此刻，也必是如此。这也就不得不促使自己不断精进，蓄势而待发。我想这也是这本书能够带给我们最大的意义之一。</p>
-<p>只是可惜的是，产品方向的迷失，让他们始终没有找到成功的那把钥匙。但在技术管理上，作者的不少见解都让人受益匪浅：<br>技术合伙人应该具备的能力</p>
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>redis除了在存储方面能够发挥很多作用之外，还可以帮助我们很好的搭建应用组件，通过这些组件进而帮助我们更好的实现业务需求。一个分布式的锁，在很是业务场景中都必不可少。</p>
+<p>在用户访问并发大的情况下，多个进程或线程经常同时竞争一个资源。如果都是在本机的资源，那么通过操作系统的一些锁接口，就可以实现。但是很多系统往往是分布式的部署，这时候，使用一个简洁、高效的分布式锁实现方案，就显得迫在眉睫了。</p>
+<h2 id="redis本身的锁"><a href="#redis本身的锁" class="headerlink" title="redis本身的锁"></a>redis本身的锁</h2><p>redis本身就常常被用作资源的存储，一个很常见的场景就是电商网站的秒杀。一次促销当中，低价或者特价的商品往往是很少的，而参与的用户确实相当之多。如何在这种情况下，能够尽量公平的实现先到先得，并且保证程序不出错，是一个比较大的考验。</p>
+<p>redis本身也是有锁的，这个之前也介绍过，它有几个方面的特性可以保证这一点。第一种就是诸如<code>setnx</code>这样的命令，可以保证对资源的单次读取不受到其他client的干扰，但是由于只能使用一次，一旦占用，就需要重新置空，这会引入额外的并发问题，所以应用的局限性比较大。</p>
+<p>第二种则是redis的乐观锁与事务的结合。也就是<code>watch</code>命令和<code>multi</code>命令的结合。通过监控必须的资源key，比如仓储数目<code>storage</code>是否变化，再使用<code>multi</code>将可能造成资源竞争的操作包起来，来避免资源竞争。方案很好，但是问题在于这类乐观锁的设计，需要client侧自己实现重试。而重试次数一旦过多，就会很影响client侧的性能。</p>
+<p>第三种则是使用lua脚本，将涉及到竞争操作的命令全部包起来，不过这个实现成本有点高，一般都是在特别大的性能瓶颈，以及比较固定很久不变的业务逻辑的情况下，再使用lua脚本的方式。</p>
+<h2 id="使用redis构建分布式锁"><a href="#使用redis构建分布式锁" class="headerlink" title="使用redis构建分布式锁"></a>使用redis构建分布式锁</h2><p>那么既然没有原生支持的合适方案，就非常有必要在redis的协助之下，实现我们自己的分布式锁的方案。这种方案一定要：</p>
 <ul>
-<li>开发产品的能力<ul>
-<li>定义产品架构，进行留有余地的技术选型<ul>
-<li>实现层面，要能招到人</li>
-<li>技术层面，能够满足一定时间内的用户增长</li>
+<li>性能足够高，否则没意义；</li>
+<li>使用足够简单，否则影响client侧的接入；</li>
 </ul>
-</li>
-<li>自己写代码</li>
-<li>全栈，哪儿补哪儿，至少知道问谁</li>
+<p>而想要正确的实现加锁的功能，必须避免以下的情况：</p>
+<ul>
+<li>持有锁的进程必须知晓它当前持有锁的状态，避免错误的释放其他进程的锁；</li>
+<li>持有锁的进程崩溃的情况下，必须有兜底方案，防止其他进程无谓的等待；</li>
+<li>一个进程的锁过期后，多个进程同时尝试获取，必须有且只有一个获取成功；</li>
 </ul>
-</li>
-<li>组建团队的能力<ul>
-<li>打造技术人脉<ul>
-<li>不断强化自己各方面的能力，让别人信服</li>
-<li>愿意真心真意的帮助别人</li>
-<li>有困难的时候，寻求别人的帮助</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>领导团队的能力<ul>
-<li>关怀必不可少</li>
-<li>入职培训<ul>
-<li>公司历史、文化、团队、组织结构</li>
-<li>公司产品历史、现状、方向</li>
-<li>产品技术架构、方案选型、路线图、技术优势和挑战</li>
-<li>产品开发流程、内部工具使用</li>
-<li>重要组件讲解</li>
-<li>代码主线流程的白板演示和代码走查<br>*分享不能停</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>自我驱动的能力<ul>
-<li>必须让自己保持在技术前沿</li>
-</ul>
-</li>
-</ul>
-<p>大家有兴趣可以自己撸一遍看看，看自己是否具有这些能力呢？</p>
-<p>最后的最后，推荐大家关注作者的公众号：程序人生，干货非常之多，让人羞愧于自己的技术视野，程序员必备。</p>
-<p>ps: 我自己的公号：<br><img src="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fdkata0zqwj20zk0g8gnn.jpg" alt=""></p>
-
+<p>要实现第一点呢，就必须对锁加锁，让进程。</p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><h2 id="性能对比"><a href="#性能对比" class="headerlink" title="性能对比"></a>性能对比</h2><h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2>
       
     </div>
 
@@ -393,17 +363,13 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/02/26/book014/" rel="next" title="读《精进，如何成为一个很厉害的人》">
-                <i class="fa fa-chevron-left"></i> 读《精进，如何成为一个很厉害的人》
+              <a href="/2017/08/05/book016/" rel="next" title="时刻反照，照亮前路 - 读《我的应许之地：以色列的荣耀与悲情》">
+                <i class="fa fa-chevron-left"></i> 时刻反照，照亮前路 - 读《我的应许之地：以色列的荣耀与悲情》
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/04/11/redis001/" rel="prev" title="《Redis入门指南》之基本的数据结构">
-                《Redis入门指南》之基本的数据结构 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -432,8 +398,8 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2017/03/12/book015/"
-           data-title="读《途客圈创业记-不疯魔，不成活》" data-url="http://meijing0114.me/2017/03/12/book015/">
+      <div class="ds-thread" data-thread-key="2017/10/07/redis005/"
+           data-title="使用redis构建分布式的锁" data-url="http://meijing0114.me/2017/10/07/redis005/">
       </div>
     
   </div>
@@ -531,7 +497,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis本身的锁"><span class="nav-number">2.</span> <span class="nav-text">redis本身的锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用redis构建分布式锁"><span class="nav-number">3.</span> <span class="nav-text">使用redis构建分布式锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用场景"><span class="nav-number">4.</span> <span class="nav-text">应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#性能对比"><span class="nav-number">5.</span> <span class="nav-text">性能对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#小结"><span class="nav-number">6.</span> <span class="nav-text">小结</span></a></li></ol></div>
             
           </div>
         </section>
