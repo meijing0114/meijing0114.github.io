@@ -250,6 +250,545 @@
             
               
                 
+                <a class="post-title-link" href="/2017/04/11/redis001/" itemprop="url">
+                  《Redis入门指南》之基本的数据结构
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-11T21:44:10+08:00" content="Apr 11 2017">
+              Apr 11 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index">
+                    <span itemprop="name">redis</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/11/redis001/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/11/redis001/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>《redis入门指南》这本书入门不错，值得推荐，每一章都有些干活。这里分别加以总结，并增加了自己的一些理解。</p>
+<h2 id="常见数据结构"><a href="#常见数据结构" class="headerlink" title="常见数据结构"></a>常见数据结构</h2><h3 id="字符串类型"><a href="#字符串类型" class="headerlink" title="字符串类型"></a>字符串类型</h3><p>这是最常见的key-value的结构，但是现在的no-sql远不止于此：</p>
+<p>我们来看看四个使用字符串类型的场景：</p>
+<ul>
+<li>INCR num： 进行文章的访问pv统计；</li>
+<li>INCR num： 生成自增ID，类似于mysql的auto_increment；</li>
+<li>SET key value：存储序列化的json或其他数据结构；</li>
+<li>GETBIT key offset: 通过bit位来记录大批量用户的单个状态，如性别，方便快速读取和修改，占用空间小，性能高。必须采用预分配+用户id映射，避免不必要的内存消耗；</li>
+</ul>
+<h3 id="散列类型"><a href="#散列类型" class="headerlink" title="散列类型"></a>散列类型</h3><p>散列类型略微复杂一些，对应的是mysql中的列数据，但是有对比，才有伤害：</p>
+<p>假设双方都要存储一张Person表，具有如下的属性：</p>
+<ul>
+<li>性别</li>
+<li>身高</li>
+<li>拥有车的品牌</li>
+</ul>
+<p>这就尴尬了，不是每个人都有车，哪来品牌呢？mysql一定要有冗余的字段，但是redis的散列类型就不需要。<br><code>hset richwang sex male height 180 carbrand bmw</code><br><code>hset poolgeorage set male height 170</code></p>
+<p>我们再来看看散列常见的两个场景：</p>
+<ul>
+<li>HKEYS key | HVALS key | HLEN key : 不在使用结构化的数据来进行key-value存储，而是分字段更灵活的存储，方便单独的修改和更新，每次不需要全量json的更新</li>
+<li>HEXISTS key | HSETNX: 存储某一类映射关系，确保一一对应，比如person和身份证，一旦添加之后，无法用相同的身份证再次添加。</li>
+</ul>
+<p>再提一句，散列是redis中唯一支持数据类型嵌套的类型。</p>
+<h3 id="列表类型"><a href="#列表类型" class="headerlink" title="列表类型"></a>列表类型</h3><p>列表类型主要是进行数组的描述，一般常见的操作就是向列表两端添加元素，或者获得列表的某一个片段。</p>
+<p>从实现上来讲的话：双向链表实现，头尾插入非常方便，头尾获取也非常快，但是对中间元素的读取和写入都比较慢，所以在使用的时候也应该尤其注意这一点。</p>
+<p>另外还有一个值得注意的性能指标，LLEN命令会直接读取现成算好的长度，而不是像mysql那样<code>select count(*)</code>进行遍历数据表。</p>
+<p>下面来看看列表类型的场景，还是很多的：</p>
+<ul>
+<li>新鲜事Feeds，对于一个SNS而言，新鲜事的场景很多，用户每次打开，总是要拉取朋友的新鲜事。对于每个用户而言，使用一个列表存储用户能看到的动态十分方便。每次只要给出当前的index，就可以拉取其新鲜事，而且头尾存储，性能很高。</li>
+<li>日志记录：将日志记录到列表中，方便进行头尾查看。</li>
+<li>ID列表，通过固定顺序将id存储列表类型，使用 LRANGE numbers 0 2 进行分页读取，缺点在于已有顺序不太方便调整。结合活动中心的案例，如果是一枪头发布，使用这个方案没有问题，但是如果活动有上线下线的过程，那么最好还是不要使用这个。</li>
+<li>队列循环：RPOPLPUSH source destination，如果source和dest相同的话，那就是一个循环。非常适合进行url的监控，循环的同时还可以不断的加入新的网址。整个系统容易扩展，允许多个客户端同时处理队列；</li>
+<li>评论列表：如果评论一经发布不可修改，那么也比较适合序列化之后，存入列表，进行插入和拉取。</li>
+</ul>
+<h3 id="集合类型"><a href="#集合类型" class="headerlink" title="集合类型"></a>集合类型</h3><p>对于那些元素不可重复的场景，集合类型是必不可少的。很多时候在一些场景下，容易把集合和列表类型混用，所以最好对其两者特性都能够有所了解。集合的主要应用场景一个是不重复，另一个是集合之间的交集、并集、差集。</p>
+<p>一个非常常见的场景就是标签的存储。使用两个集合类型：<br>集合1：标签集合<br><code>SADD labels teacher students worker engineer</code><br>集合2：标签下属人群集合<br><code>SADD teacher tom ted lily</code></p>
+<p>通过这样的设计可以实现如下的几个功能特性：</p>
+<ul>
+<li>通过labels集合保存所有的不重复的标签，方便添加、拉取和删除</li>
+<li>不同的标签对应了不同的下属人群，那么标签之间非常常见的交集、并集、差集操作，都可以很方便的利用集合的SDIFF DINTER SUNION来实现</li>
+</ul>
+<p>针对第二种情况，如果是使用mysql存储的话，就会涉及到一个非常复杂的join的过程：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SELECT p.name FROM person_labels pl, person p, labels l WHERE pl.label_id=l.label_id AND (l.label_name IN (‘teacher’, ‘worker’)) AND p.person_id=pt.person_id GROUP BY p.person_id HAVING COUNT(p.person_id)=3;</div></pre></td></tr></table></figure></p>
+<p>所以在这种场景之下，redis的集合类型还是非常的实用的。</p>
+<h3 id="有序集合列表"><a href="#有序集合列表" class="headerlink" title="有序集合列表"></a>有序集合列表</h3><p>有序集合列表我个人感觉应该是为了互联网的榜单而生，它将每个元素都关联了一个分数。从上文中知道，redis中的列表类型使用了双向链表，获取开头和结尾的元素都是比较容易的，而有序集合则使用了散列表和跳跃表，其中跳跃表就是为了实现查找的log(N)效率而进行的实现。有了优点，不可避免的，它比列表类型更加费内存一些。</p>
+<p>我们来看一个文章按照点击量来排序的实例，新建一个有序集合<code>article:pageview</code>，其中存储的是<code>articleId</code>，而其score就是文章的点击量。<br>每有一篇文章增加了点击，我们就可以使用<code>ZINCRBY article:pageview 1 $articleId</code>，来进行对应的操作。<br>按照访问量来获取所有的文章列表，就可以直接使用<code>ZRANGE article:pageview 0 -1 withscores</code>  加以实现。</p>
+<p>另外一个比较常见的应用就是按照score归档数据，比如score定义为时间戳，那么就可以使用<code>ZREVRANGEBYSCORE articles 六月的timestamp 五月的timestamp limit 0 3</code> 这样就可以获得在六月和五月之间的前三篇文章了。</p>
+<p>同时有序集合也是支持一些集合的操作的。举一个例子，上海市教育局想看看黄浦区的教育水平如何，选取了大同中学和大境中学两个学校，分别对应了两个有序列表：datongScore和dajingScore，分别存储其每个学科的平均分。学科的id是完全一样的。那么想看看黄浦区的学科平均分，但是由于两个学校的考题难度不一样，又需要一定的加权处理的时候，这时候就需要执行：<br><code>ZINTERSCORE huangpuScore 2 datongScore dajingScore WEIGHTS 1 0.8</code></p>
+<p>再获取一下其中的结果：<br><code>ZRANGE huangpuScore 0 -1 WITHSCORES</code> 即可获得想要的结果。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/03/12/book015/" itemprop="url">
+                  读《途客圈创业记-不疯魔，不成活》
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-03-12T19:47:23+08:00" content="Mar 12 2017">
+              Mar 12 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/书评影评/" itemprop="url" rel="index">
+                    <span itemprop="name">书评影评</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/03/12/book015/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/12/book015/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="https://img1.doubanio.com/lpic/s28482679.jpg" alt=""></p>
+<p>创业维艰，这句话我们听来似轻描淡写，但对本书作者而言，体会不可谓不深不痛。从字里行间，都可见他对“途客圈”这个产品、团队和公司的感情。幸好他是一个技术人员，理性的分析和还原，以及对技术的追求让本书有很多值得借鉴的干货。</p>
+<p>作者的背景并非互联网，而是很多人不知道的电信行业公司，七年时间，已经进入管理岗位。于此情况创业，风险不可谓不大。但怎么说呢，每个技术人员都有自己打造产品的梦，再加上一枪热爱，就让他踏上了这条路。纵观他在途客圈的整个创业历程，跨度两年，开始于iWeekend创业周末的如履薄冰，结束于产品方向的不可调和矛盾。融资方面，从创始人个人出资，到顺利拿到了创新工场的50万融资，却未能更进一步，最终被世界邦并购结尾。而产品线从网站途客圈1.0的web站点开始，其中历经了旅行计划大赛、当地自助游项目尝试、旅行整理项目、欧铁项目、城市指南项目等多个不同的旅游领域的方向和尝试，变化不可谓不多，这也是被很多人诟病以及作者自己反思的重要一层：太过于分心。</p>
+<p>当你很快速的看完这本书的时候，的确会给你很多震撼，笔者自己也参加过一些小型的hackthon项目。一个项目从清晨开始时的大家潮气蓬勃，雄心万丈，到定下需求时的略有纠结，再到开发时的不断调整和产漏补缺，以及深夜攻坚时候的绞尽脑汁，最后出成品时候的纠结、忐忑和一份自信，其过程可以理解为一个微缩版的分娩过程。看着这么多优秀的人，不断的进行一个个项目的尝试，又不断的经历项目和公司变动的起起伏伏，有时辛苦完成的项目在不知情的讨论之下都可能会胎死腹中。不得不说，创业是一条血腥的路，也是一条不断挑战自我的路，对管理者和执行者要求极高的一条路。</p>
+<p>作为公司核心的创始人和CTO，最后又黯然退出，作者主观的判断不少。虽说最后有不断的反思，但仍有一叶障目之感。但是作者对技术视野和技术管理的认知，实在是让人获益匪浅。试想从项目一开始，仅仅是django和jquery ui的方式，随着项目不断的开展起来，新的技术人才的引进，新的技术框架的使用，这些变化往往对CTO的冲击很大，但是作者却能始终把握住技术之先。一方面不断的对员工进行技术培训，另一方面在技术选型上做到了提前量和前瞻性，并未出现技术赶不上产品的情况（产品要大发展，却被技术缠住手脚，实为技术人员之耻辱）。同时还能在自己的业余时间进行充分的技术尝试，优化团队的技术架构和建设流程工具，真的是令人钦佩不已。但正如作者自己所言，他的劣势在于技术人脉的缺失，也导致了他招人上的一些障碍。不过这并不妨碍他的技术上能够驱动公司前进。</p>
+<p>这本书并不鼓吹，都是十分坦诚的分享，负荆前行的创业路。既有拿到融资的欢欣雀跃，也有从头搭建工作环境的接地气，更有裁人的残酷。两年的时间，不长不短，互联网圈子也同样是风云变化，他们创业那时的我仍在象牙塔中封闭自己，却已有这么多人拼劲全力实现自己的理想。想想此时此刻，也必是如此。这也就不得不促使自己不断精进，蓄势而待发。我想这也是这本书能够带给我们最大的意义之一。</p>
+<p>只是可惜的是，产品方向的迷失，让他们始终没有找到成功的那把钥匙。但在技术管理上，作者的不少见解都让人受益匪浅：<br>技术合伙人应该具备的能力</p>
+<ul>
+<li>开发产品的能力<ul>
+<li>定义产品架构，进行留有余地的技术选型<ul>
+<li>实现层面，要能招到人</li>
+<li>技术层面，能够满足一定时间内的用户增长</li>
+</ul>
+</li>
+<li>自己写代码</li>
+<li>全栈，哪儿补哪儿，至少知道问谁</li>
+</ul>
+</li>
+<li>组建团队的能力<ul>
+<li>打造技术人脉<ul>
+<li>不断强化自己各方面的能力，让别人信服</li>
+<li>愿意真心真意的帮助别人</li>
+<li>有困难的时候，寻求别人的帮助</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>领导团队的能力<ul>
+<li>关怀必不可少</li>
+<li>入职培训<ul>
+<li>公司历史、文化、团队、组织结构</li>
+<li>公司产品历史、现状、方向</li>
+<li>产品技术架构、方案选型、路线图、技术优势和挑战</li>
+<li>产品开发流程、内部工具使用</li>
+<li>重要组件讲解</li>
+<li>代码主线流程的白板演示和代码走查<br>*分享不能停</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>自我驱动的能力<ul>
+<li>必须让自己保持在技术前沿</li>
+</ul>
+</li>
+</ul>
+<p>大家有兴趣可以自己撸一遍看看，看自己是否具有这些能力呢？</p>
+<p>最后的最后，推荐大家关注作者的公众号：程序人生，干货非常之多，让人羞愧于自己的技术视野，程序员必备。</p>
+<p>ps: 我自己的公号：<br><img src="http://wx4.sinaimg.cn/mw690/67ad48bbgy1fdkata0zqwj20zk0g8gnn.jpg" alt=""></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/02/26/book014/" itemprop="url">
+                  读《精进，如何成为一个很厉害的人》
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-02-26T15:10:32+08:00" content="Feb 26 2017">
+              Feb 26 2017
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/书评影评/" itemprop="url" rel="index">
+                    <span itemprop="name">书评影评</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/02/26/book014/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/26/book014/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>其实开始对这本书带着不好的期待，主要原因是看到了一篇短评，说其充斥着鸡汤，而且作者并不够“成功”来分享“成为很厉害的人”的经验云云。不过，抱着姑且一看的心态，我还是抱着这本书，读了三周左右。读的过程中，我处处警醒，时时提防，生怕落入鸡汤俗套，现今想来，实为可笑，鸡汤无毒，只是看何时何人来饮。你看，我读完之后，加了些佐料，还想为诸君呈上。<br><img src="https://img3.doubanio.com/lpic/s28588315.jpg" alt=""></p>
+<p>第一章讲述时间，确实有一些非常实用的技巧。比如人往往有大志，也有当前要面对的小障碍。尽管大志让人心潮澎湃，但是遇到眼前要完成的作业时，却时常拖延症泛滥。如果能切换视角，那么就能更加获得前进动力，且不被眼前困难烦扰。又比如时间的快与慢结合，将所做事情按照不同的价值分为四种，那些“半衰期”长的自然要多做，而“一时爽”的不如少做。而我也据此，分析了一下自己每周，尤其是周末空闲时间所做事情的安排，发现时常自己不是在生活，而是在被生活。很多诸如做饭之类的杂事不知不觉之间占据大部分时间，而真正想做的却是一拖再拖，这点尤其值得反思。那些无产出的事，的确应该快刀斩乱麻，而把真正的精力留给半衰期长，能带来长久满足或效益的事情之上。</p>
+<p>随后作者讲述如何“破心障”，身边的人，包括自己，在生活中难免迷惘。心中无大志，每日庸庸碌碌。为了破除心障，则必须给自己更高的标准。一个实用的技巧是回顾你最近的一周、一月、一年最有意义的事，如果找到了，那么你今后也可坚持做这样的事。笔者搜肠刮肚，却十分汗颜的未找到真正“有意义”标准的事。大家也可以仔细想想，一年过去你会为自己写什么样的故事？否则人生苦短，蹉跎无为。远古社会男征女织，烦恼在于无选择。而今社会，选择太多，所以必须经过精细化的思考，才能获得所需。说到这点，我和朋友都有一些体会：我们往往在一些重大的事情上随性随意，而在一些不那么重要的事情上无比纠结。比如买房这件事，从单价而言，在上海可以抵得上很多人数十年的收入，但看房时的我们却十分随意，很多时候并未投入与之相匹配的精力，而往往轻信中介或嘈杂的信息。个人反思之下，此时应该打起十二万分的精神，而非随波逐流。</p>
+<p>现在人人都知道行动大于语言，但对行动的理解却浮于表面。面对要做的时期，鸵鸟战术比比皆是，而浅尝辄止更是随处可见。究其原因，作者认为必须目标导向，而不是空空的寄托于意志力。而且行动之时，并不能一成不变，作者举了很好的制作陶器的例子。优秀的制陶者能够体察陶器在泥胎状态下的变化，并且随之而改变力度，做出佳品。这意味着两点，一是你要学习足够的pattern，能够识别陶器的变化，另一方面是你有足够多的技巧和解决方案。做成缺一不可。更为可贵的一点是，敢于颠覆现有的努力，只为更好的结果。要达到这点，没有点追求只怕是不行的。另一个实用的技巧是做事分层，先啃硬骨头，这能让你更轻松些，正如庖丁解牛一般。</p>
+<p>说到学习， 很多人非常擅长信息搬运工，包括我有的时候，往往懈怠。搬运到自己的笔记本中之后，就任其积灰。为了避免这一点，你必须做一些横向或纵向的对比，同时必须要输出，写作是一个不错的方式。而技能是更有说服力的表现。如果知识不能转化为技能，那么我认为这只是一种消遣。</p>
+<p>曾经有一个挺有名的论述：我们的知识体系是一个圆，圆越大，未知也就越多。我对此深以为然，所以我会关注很多，自己认为是兴趣广泛，但是看完作者的“向未知的无限逼近”，却意识到了贪多而不得。所以我对自己关注的领域进行了如下的梳理：</p>
+<ol>
+<li>社会新闻：网易</li>
+<li>搞笑gif：网易</li>
+<li>体育：网易</li>
+<li>电影资讯：微信公众号</li>
+<li>技术成长：微信公众号</li>
+<li>严肃新闻：界面</li>
+<li>互联网与科技：湾区日报</li>
+<li>其他随机领域：即刻小报 知乎日报</li>
+<li>国内外大新闻：网易</li>
+<li>建筑与艺术：壁下观播客</li>
+<li>朋友动态：朋友圈</li>
+<li>汽车：汽车之家app</li>
+<li>网文：起点</li>
+</ol>
+<p>天啊，共有十二个领域之多，我看的过来么！必须加以缩减：</p>
+<ul>
+<li>技术成长<ul>
+<li>osc china</li>
+<li>聊聊架构</li>
+<li>程序人生</li>
+<li>InfoQ</li>
+<li>掘金</li>
+</ul>
+</li>
+<li>互联网与科技<ul>
+<li>macTalk</li>
+<li>滴滴答答</li>
+<li>极客公园</li>
+<li>虎嗅</li>
+<li>大魔王</li>
+<li>二爷荐书</li>
+</ul>
+</li>
+<li>古今建筑与艺术<ul>
+<li>壁下观</li>
+<li>不定期纪录片</li>
+</ul>
+</li>
+<li>旅游<ul>
+<li>旅行家杂志</li>
+<li>feekr旅行</li>
+<li>稻草人旅行</li>
+<li>旅行雷达</li>
+<li>爱浪客</li>
+</ul>
+</li>
+<li>时尚服装<ul>
+<li>杜绍斐</li>
+<li>拒绝基本</li>
+</ul>
+</li>
+<li>严肃新闻<ul>
+<li>界面</li>
+<li>南方周末</li>
+<li>人物周刊</li>
+</ul>
+</li>
+</ul>
+<p>拼死拼活，终于缩到了六个，真是要人亲命，接下来会缩到五个以下，诸位不妨也试试，体会下酸爽。相信都会有所体会。</p>
+<p>科比说：你见过洛杉矶凌晨四点的太阳么？而我说，即使你看过也没用，因为你的优势根本不是打篮球。。智商是一个非常单一，不可预测，标签化，不规范的度量人的能力的标准（我这么说也可能是我不是此标准的受益者=:）。普通人当然也有自己的优势，而且是可以学习的。想到大二的时候有些同学因为花的时间多就被称为“编程天才”，不禁服了人们的“思想惰性”，把一切归为天才，那我就不用努力啦！木桶效应对大家荼毒甚多，高考的各科均衡确实是重大原因之一，而现在，你如果没有“长板”，只怕很难在大城市立足呀。这里推荐一个优势识别器：<a href="http://www.apesk.com/Advantage-detecting/index_hr.asp?hr_email=18670054561" target="_blank" rel="external">http://www.apesk.com/Advantage-detecting/index_hr.asp?hr_email=18670054561</a> 自己做了一下还是比较准，“专注”是我的优势，希望可以发扬光大！</p>
+<p>读至书的最后一章，其实我心里有点着急，因为我始终没有找到“如何成为一个很厉害的人”的答案。现代人嘛，功利心态无可厚非，但最后一章没找到答案，反而被作者问住了：</p>
+<blockquote>
+<p>一个现实的问题是：如果你与大多数人相比，没有什么特殊之处，那么为什么社会要给你超出平均水准的回报？</p>
+</blockquote>
+<p>愣了一下，作者接着说：</p>
+<blockquote>
+<p>在现实世界中思考理论问题，在理论世界中思考现实问题，从而构建自己的经验和知识体系</p>
+</blockquote>
+<p>我仔细想了想，刚开始的自己确实动机有所不纯，以为此书有黄金屋。不过虽然没有找到黄金，启示不少：</p>
+<ul>
+<li>厉害并非一个标准，财务自由也并非一切幸福的来源或前置条件，它更像一个专一价值观被滥用和宣扬的范例</li>
+<li>时间有快有慢，工作时快，家庭时慢，让你的生活更有节奏</li>
+<li>专注是品质，现在不是比谁的信息源多，而是比谁的过滤器好</li>
+<li>蛮牛一往无前却缺少回环，人生应该更有智慧</li>
+<li>行动不一定是意志力，要听从自己心底的声音，发现无趣中的有趣，看看《我在故宫修文物》呗</li>
+<li>找到你心中的“巴拿马”，带着梦想上路，且行且珍惜</li>
+</ul>
+<p>如果有一些触动你，不如，你也去看看？</p>
+<p>（附） 荐书<br>《为什么要读经典作品》<br>《哥德尔、爱舍尔、巴赫-集异璧之大成》<br>《创意的生成》<br>《每周快乐指南》<br>《无限的清单》<br>《禅与摩托车维修艺术》<br>《创业维艰》<br>《只是为了好玩》<br>《反叛的科学家》<br>《程序员修炼之道：从小工到专家》</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/02/19/travel002/" itemprop="url">
                   新西兰-那片上帝自留地
                 </a>
@@ -1301,590 +1840,6 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/06/travel001/" itemprop="url">
-                  山水游重庆
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-06T12:28:34+08:00" content="Oct 6 2016">
-              Oct 6 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/旅行/" itemprop="url" rel="index">
-                    <span itemprop="name">旅行</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/10/06/travel001/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/06/travel001/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="山城的路"><a href="#山城的路" class="headerlink" title="山城的路"></a>山城的路</h2><p>去重庆之前，听到最多的一句就是不要在重庆使用高德导航，因为这个城市的路从不以常理出牌。咋听下来不以为然，但是因为要租车，所以还是有一些忐忑。第一天刚到酒店，便忙不迭的出门探路，顺便去人气火锅店打个尖。从导航来看，不过一公里直线距离，哪知道刚出门就直呼上当。这一公里是结结实实的跌宕起伏:出门先是一个大环路，然后就是五百米的爬坡，这还不算完，又经过了三百米的六十度登山运动，这才差不多到了终点。待气喘吁吁的登了上去，竟然已经可以俯瞰住处，不禁称奇。</p>
-<p>有了这么一出，却也还没免去第二天取车时的尴尬。大马路进入大名鼎鼎的洪崖洞，抬头一看，竟是十层。离着负一层的停车场差了一个人山人海的电梯。九牛二虎之力之后，终于到达负一层，一抬头竟又是大马路，令人啧啧称奇。所以呢，这座城市永远能给你惊喜，因为楼下有楼，路下有路。更妙的是，楼中有车，轻轨可以穿楼而过。楼中有路，长达二百米的大电梯让你扶层而上，甚至还要你留下两块的买路钱:)</p>
-<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8ig5hdz6mj20zk0zkwle.jpg" alt=""></p>
-<p>不过不得不说的一点是，在通行方面，城市的设计者确实也随性了些。对我一个健康人而言，很多地方的通行已经是一种障碍了。洪崖洞从十层到一层，踩了十几只脚，挤了七八趟电梯，十分不便。山城的魅力虽然是在此，但也确实应当更加对出行的便利性加以考虑。</p>
-<p>山城两字，其实也不足以囊括重庆的精髓，因为地处嘉陵江和长江的两江交汇之处，重庆的水路也是十分的发达。朝天门码头赫赫有名，曾经在历史上承担着无比重要的地位。作为长江黄金水段的源头，碧绿的嘉陵江与浊黄的长江水在此交汇。顺水而下，遍览三峡。</p>
-<p>当然了，山城的交通是立体的，除去水路和陆路，更有别具一格的空路 – 长江索道。在《周渔的火车》《疯狂的石头中》，长江索道亮点十足，最喜得就是在雾蒙蒙的江面上，独坐索道，看雾中有山，雾中有水，心里却思考着远方的感觉。让人能够不由自主的从繁复的生活中抽出，思考着人生的意义。不过在旅游旺季，就没有这么好的待遇了，长达两小时的排队和骤至的暴雨都让人等待的心焦。拥挤的人群和登索道时的忙乱更是有些措手不及，说话间，五分钟的索道就到了终点。不免有些意犹未尽，不过留下点遗憾也好，至少下次来时，还有些心中未完成的事。</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8ig5gsa1uj20zk0zkdj8.jpg" alt=""></p>
-<p>路在脚下，除了用脚去丈量，开车也是一种不错的方式。自驾在重庆，是一种特别的体验。第一个体验就是眼见，重庆的人民感觉特别的随性，不止一次在内环高速或是跨县高速上看到有行人徒步，啧啧称奇。第二个体验就是脚踏，在山城开车，要求很高。尤其是高峰时段，开车排队在上山路上时，为了谨防溜车，脚始终要在刹车和油门之间进行无缝的切换。开了一会儿就要活动那么一下，就怕自己车还没上去，脚已经抽筋了。第三个体验就是路险，s弯、临水临山路、发夹弯、连续下坡都是家常便饭，尤其是当你拐弯拐到自己的右后上方的时候，不禁要感叹，以前古代人民真不容易。</p>
-<h2 id="山城的吃"><a href="#山城的吃" class="headerlink" title="山城的吃"></a>山城的吃</h2><p>每个来山城的人，都怀揣着一颗蠢蠢欲动的吃货心。不过往往发生最多的情况就是，这颗吃货心会迅速的在火锅的刺激下达到顶点，然后在肠胃和口腔的双重作用下，回归成“不吃辣椒我也可以活的很好”的认怂心态。对我来说，对重庆辣度的挑战，在第一天还没开始，就已经结束了。</p>
-<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f8ig5ih34lj20zk0zk7al.jpg" alt=""></p>
-<p>重庆菜能够放上台面来讲的，无非几样。民间的以小面、酸辣粉为首，讲究走入民间，越是平民化，越是环境一般性，越是巷子深，越是来的人络绎不绝。著名的胖妹小面，虽然不知是不是重庆小面二十强，称得上是这么的一个范例。尽管非常可惜的是店主十一休假去了，但是从环境来看，确实只是略好于路边摊，不过味道据吃过的人说，相当的“巴适”。</p>
-<p>用小面解决了早饭，中饭最好来一桌江湖菜。重庆的所谓江湖菜，我的理解，讲究一种取材。因地制宜，食材很关键。因为重庆靠山又临水，所以食材可以说十分丰富。南山上的泉水鸡，一鸡三吃，道道入味，尤其是主菜椒麻鸡，肉质细嫩，入味三分。另一个比较耳熟能详的江湖菜就是毛血旺，各种食材汇聚，鲜香一锅，令人垂涎不已。就是这么些不上大桌的菜，吃的很有味道，吃完酣畅淋漓，十分痛快！</p>
-<p>时间转到黄昏，整个城市起雾了，雾蒙蒙的江岸边，仔细那么一闻，还真有股老火锅的味道。现在重庆火锅主要就是两个流派，一个是新式火锅，处于特别高端的cbd或是商业街区，在口味、环境方面都做了不少的改良。还有就是所谓的“老火锅”，这些火锅店往往是酒香不怕巷子深，隐藏于不同的居民区、街区。其中有在地下室的，有在山头上的，还有在山洞里面的。家家都有那么几样经典：黄喉 牛肚 鸭肠，谁也不让谁。但是家家也都有自己的汤底独家秘方，往往那饕餮的食客们，就是闻着这么股夹杂着海椒、花椒和各式香料的味道作为导航，在一桌桌麻辣鲜香中大快朵颐。</p>
-<h2 id="文化自然双遗"><a href="#文化自然双遗" class="headerlink" title="文化自然双遗"></a>文化自然双遗</h2><p>一通山城的饮食三板斧之后，驱车一路向西，不出200公里，就是世界文化遗产，大足石刻。一路向东，也是200公里上下，就是世界自然遗产，武隆天坑。一文一武，既有自然界的鬼斧神工，也有宗教人文的源远流长。</p>
-<p>来了大足石刻，一圈下来，可以说是应接不暇。每一座石刻都有故事，每一处设置都有出处。雕刻家与修行者兢兢业业，为的是将他们心中的佛法留存和流传，为此殚精竭力。比如著名的九龙浴太子图，出处乃是释迦摩尼的降生故事：</p>
-<p>净饭王之妻摩耶夫人身怀有孕，出游兰毗尼园中，手攀树枝，太子悉达多从其右腋下降生。太子降生即能行走七步，步步生莲，并一手指天，一手指地说：天上地下，唯我独尊。时有九蛇至太子头顶，口吐香水，为太子洗浴，诸天护俱来守护。</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8ig5sxgouj21kw16otwi.jpg" alt=""></p>
-<p>这样的一个雕塑，体现了匠人的匠心独运，与自然水势相结合，引用山泉之水，为太子沐浴。正所谓因地制宜，顺势而为。而由于中国人认为蛇是邪恶的，所以故事在中国进行了进一步的演化，蛇变成了神龙。这种佛教的本地化，在佛教传入中国的过程中比比皆是。这种演化，是宗教在传播过程中遇到阻碍产生的自适应。便览大足石刻，你就能看到这种变化，从单纯的佛教主题石刻，到带有中国特色孝道的佛教石刻，再到佛、道、儒三者融合的石刻，看着这些石刻，就像是层叠的历史，完整的展现在你的面前，说真的，比大片还要过瘾。</p>
-<p> 大足石刻多不胜数，而且各个内涵深意，再提一个六道轮回图，这是第一次完整的看到所谓的六道轮回及其深意。其中必须要说的是左下角那个竹林猫鼠相戏图。</p>
-<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f8ig5jzf7zj21kw2dme81.jpg" alt=""></p>
-<p>猫于竹林下，看着竹上的老鼠，想吃却吃不到，心急如焚。老鼠在竹子上瑟瑟发抖，想求生却又无处可逃。正所谓：</p>
-<p>欲求不得，苦之本也<br>看完人文景观，不妨转战天坑地缝芙蓉洞。自然的鬼斧神工，在这里几乎全部集齐。既有天生三桥这样的峡谷，又有芙蓉洞这样的山体溶洞。古人云，天人合一，请看下图，确实很适合修炼:)</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8ig5g8kqmj20zk0zktfl.jpg" alt=""></p>
-<p>此地可以说在我第一次看到时，就觉得满足了我心中隐居的所有想象。深山之中，树影婆娑，一座小院，修生养性，尽管参观时人流滚滚，但站在庭院中心，一停一转，吸收天地灵气，确实又忘我之感。</p>
-<p>山城来也匆匆，去也匆匆，仍有不少魅力值得探寻，但留下遗憾，即是留下再访的理由。重庆，再见！</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/09/21/book012/" itemprop="url">
-                  编写可读代码的艺术
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-09-21T08:59:14+08:00" content="Sep 21 2016">
-              Sep 21 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/书评影评/" itemprop="url" rel="index">
-                    <span itemprop="name">书评影评</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/09/21/book012/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/21/book012/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="代码应当易于理解"><a href="#代码应当易于理解" class="headerlink" title="代码应当易于理解"></a>代码应当易于理解</h2><h2 id="表面层次的改进"><a href="#表面层次的改进" class="headerlink" title="表面层次的改进"></a>表面层次的改进</h2><h3 id="把信息装到名字里"><a href="#把信息装到名字里" class="headerlink" title="把信息装到名字里"></a>把信息装到名字里</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwunkasj20l30dhwhr.jpg" alt=""></p>
-<p>把信息装入名字：</p>
-<ul>
-<li>使用专业的词汇；</li>
-<li>避免泛泛的名字</li>
-<li>在适当的作用域使用适当的单词长短；</li>
-<li>通过后缀的方式增加额外的信息，比如单位，比如编码的描述；</li>
-<li>利用名字的格式来表达含义（通过使用下划线等区分类的变量）</li>
-<li>用具体代替抽象的名字</li>
-</ul>
-<h4 id="使用专业的词汇"><a href="#使用专业的词汇" class="headerlink" title="使用专业的词汇"></a>使用专业的词汇</h4><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwu2j9uj20kq0c341j.jpg" alt=""><br>清晰和精确比装可爱好。</p>
-<p>重灾区：get size</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def  GetPage(url)</div></pre></td></tr></table></figure>
-<p>换成FetchPage或DownloadPage会好很多</p>
-<p>size -&gt; height nums memoryBytes</p>
-<p>stop -&gt; kill resume pause</p>
-<p>find -&gt; search extract locate recover</p>
-<p>send -&gt; deliver dispatch annouce distribute route</p>
-<p>start -&gt; launch create begin open</p>
-<p>make -&gt; create setup build generate compose add new</p>
-<h4 id="避免泛泛的名字"><a href="#避免泛泛的名字" class="headerlink" title="避免泛泛的名字"></a>避免泛泛的名字</h4><p>比如retval tmp data ret<br>使用更具象的名字能够帮你清楚的定位错误。</p>
-<p>tmp的用武之地只在于经典的变量交换。</p>
-<p>循环迭代器索引：i j k 的大灾难，加上数组名前缀 mi ci di</p>
-<h4 id="具体的名字代替抽象的名字"><a href="#具体的名字代替抽象的名字" class="headerlink" title="具体的名字代替抽象的名字"></a>具体的名字代替抽象的名字</h4><p>在给变量、函数或其他元素命名时，描述的更具体而不是更抽象。<br><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f87vwxtmsdj20is0hx76m.jpg" alt=""><br>比如参数 –run_locally 本来是用来输出额外的调试信息</p>
-<ul>
-<li>新成员不知道干嘛的</li>
-<li>有时候远程也需要输出调试信息</li>
-<li>有时候本地性能测试，不想输出调试信息<br>其实更适合extra_logging</li>
-</ul>
-<p><img src="http://ww4.sinaimg.cn/mw690/67ad48bbgw1f87vwx38fgj20jo0ay403.jpg" alt=""><br><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f87vwwjq5lj20jk0c20v9.jpg" alt=""><br>为了更具体，需要<strong>为名字附带更多的信息</strong>。</p>
-<ul>
-<li>带单位的值: diff_ms max_kbsps size_mb</li>
-<li>附带其他重要属性 hex_id data_urlenc html_utf8 plaintext_password</li>
-</ul>
-<p><img src="http://ww2.sinaimg.cn/mw690/67ad48bbgw1f87vwvvukpj20lb0dg0vx.jpg" alt=""><br>那么一般<strong>名字应该有多长</strong>呢？</p>
-<ul>
-<li>小的作用域里可以使用短的名字，比如if for 甚至可以用单个字母</li>
-<li>不用担心长名字，现在都有自动补全了</li>
-<li>首字母缩写，经验原则是你还是否能理解这种缩写？比如QD就很好理解，WSD可能有点难，REC就更难了</li>
-<li>普遍的没问题 str-&gt;string cnt-&gt;count eval-&gt;evaluation doc-&gt;document</li>
-<li>丢掉没用的词 convert_to_string -&gt; to_string</li>
-</ul>
-<p>利用名字的格式来传递含义：<br>下划线 连字符和大小写。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">static const int kMaxOpenFiles = 100;//常量并非全大写，区分宏</div><div class="line">class LogReader &#123;// 类名驼峰</div><div class="line">  public:</div><div class="line">    void OpenFile(string local_file//变量名);</div><div class="line">  private:</div><div class="line">    int offset_;//类成员变量用下划线</div><div class="line">    DISALLOW_COPY_AND_ASSIGN(LogReader);</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>总结本章：把信息塞到名字里去。</p>
-<ul>
-<li>使用专业的单词——例如，不用Get，而用Fetch或者Download可能会更好，这由上下文决定。</li>
-<li>避免空泛的名字，像tmp和retval，除非使用它们有特殊的理由。</li>
-<li>使用具体的名字来更细致地描述事物——Server Can Start()这个名字就比CanListenOnPort更不清楚。</li>
-<li>给变量名带上重要的细节——例如，在值为毫秒的变量后面加上ms，或者在还需要转义的，未处理的变量前面加上raw_。</li>
-<li>为作用域大的名字采用更长的名字——不要用让人费解的一个或两个字母的名字来命名在几屏之间都可见的变量。对于只存在于几行之间的变量用短一点的名字更好。<br>有目的地使用大小写、下划线等 — 例如，你可以在类成员和局部变量后面加上”_”来区分它们。</li>
-</ul>
-<h3 id="不会误解的名字"><a href="#不会误解的名字" class="headerlink" title="不会误解的名字"></a>不会误解的名字</h3><p>关键原则：多问自己几遍，这个名字会被别人误解成其他的含义么？<br><img src="http://ww4.sinaimg.cn/mw690/67ad48bbgw1f8a7c2q9s7j20ld0e3ad1.jpg" alt=""></p>
-<p>例子：</p>
-<ul>
-<li>filter：需要明确是挑出来，还是过滤掉</li>
-<li>clip(text,length)：减掉length，还是剪出来length -&gt; truncate更好</li>
-<li>length-&gt;max_length-&gt;max_chars</li>
-<li>差一问题：max<em> min</em> 进行明确，不要使用limit</li>
-<li>first last表明范围，不要用start stop</li>
-</ul>
-<p>一些基本的实践：</p>
-<ul>
-<li>给bool命名,增加is has can should 这样的词</li>
-<li>与使用者的期望匹配：举出了STL里面有一个size的函数调用，其实O(N2)的操作</li>
-</ul>
-<h3 id="审美"><a href="#审美" class="headerlink" title="审美"></a>审美</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7c23twpj20mf0fggoo.jpg" alt=""><br>好的审美真的很重要。</p>
-<p><img src="http://ww3.sinaimg.cn/mw690/67ad48bbgw1f8a7c14eqkj20lo0dpwhq.jpg" alt=""><br>三条原则：</p>
-<ul>
-<li>使用一致的布局，让读者很快习惯这种风格；</li>
-<li>让相似的代码看起来相似；<ul>
-<li>并不一定局限于固定换行</li>
-<li>但要保持一种固定的顺序</li>
-</ul>
-</li>
-<li>把相关代码分组，形成代码块<ul>
-<li>按照逻辑分组分段，会更为清晰</li>
-</ul>
-</li>
-</ul>
-<p>让代码好看，有的时候也会涉及到一些对代码本身的改进，比如对方法的抽象。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">class Logger &#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">class Logger</div><div class="line">&#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>个人风格的一致性，一致的风格，比正确的风格更为重要。</p>
-<h3 id="该写什么样的注释"><a href="#该写什么样的注释" class="headerlink" title="该写什么样的注释"></a>该写什么样的注释</h3><p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7c0i74zj20lo0fw76u.jpg" alt=""></p>
-<p>关键思想：注释的目的是尽量帮助读者了解的和作者一样多</p>
-<h4 id="什么不需要注释"><a href="#什么不需要注释" class="headerlink" title="什么不需要注释"></a>什么不需要注释</h4><p>那些很明显的逻辑(能够被快速推断出来的逻辑)，或者是因为命名不准确做的多余注释，为了注释而注释。</p>
-<p><img src="http://ww1.sinaimg.cn/mw690/67ad48bbgw1f8a7bzou36j20k40humzr.jpg" alt=""></p>
-<p>明显的逻辑：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">// The class definition for Account</div><div class="line">class Account &#123;</div><div class="line">    public:</div><div class="line">    // Contructor</div><div class="line">    Account();</div><div class="line">    // set the profit member to a new value</div><div class="line">    void SetProfit (double profit);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>不好的名字：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// Realease the handle for this key, does not modify actual registry</div><div class="line">void DeleteRegistry(RegistryKey * key);</div></pre></td></tr></table></figure>
-<h4 id="记录你的思想"><a href="#记录你的思想" class="headerlink" title="记录你的思想"></a>记录你的思想</h4><p>加入导演评论：上帝视角</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">// 使用二叉树比哈希表处理这些数据快很多</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">// 这个类太乱了，谁写的，应该建立一个子类来处理它</div></pre></td></tr></table></figure>
-<p>加入特定的标记</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:right">标记</th>
-<th style="text-align:right">通常的事情</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:right">todo</td>
-<td style="text-align:right">未处理</td>
-</tr>
-<tr>
-<td style="text-align:right">FIXME</td>
-<td style="text-align:right">已知的无法运行的代码</td>
-</tr>
-<tr>
-<td style="text-align:right">HACK</td>
-<td style="text-align:right">为解决问题做的粗糙方案</td>
-</tr>
-<tr>
-<td style="text-align:right">XXX</td>
-<td style="text-align:right">危险！这里有重要问题</td>
-</tr>
-</tbody>
-</table>
-<p>给常量加注释：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">const CHAPTER_MAX = 500 // 后台能接受的最大为500，超过会有超时</div></pre></td></tr></table></figure>
-<h4 id="站在读者的角度"><a href="#站在读者的角度" class="headerlink" title="站在读者的角度"></a>站在读者的角度</h4><p>公布可能的陷阱：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">void SendEmail(string to, string subject ,string body);</div></pre></td></tr></table></figure>
-<p>这个调用有可能会花费整整一秒的时间，标注可能的超时时间。</p>
-<p>一些全局观:</p>
-<ul>
-<li>类之间如何交互</li>
-<li>数据如何在整个系统中流动</li>
-<li>入口点在哪里</li>
-</ul>
-<h4 id="注释会打断你的思绪么"><a href="#注释会打断你的思绪么" class="headerlink" title="注释会打断你的思绪么"></a>注释会打断你的思绪么</h4><p>其实很多时候会帮助你整理思绪。<br>把要实现的逻辑拆成几个不同的步骤，然后逐一时间，定义接口。</p>
-<h3 id="写出言简意赅的注释"><a href="#写出言简意赅的注释" class="headerlink" title="写出言简意赅的注释"></a>写出言简意赅的注释</h3><p>图1</p>
-<p>写出注释的关键一点在于：注释应该有很高的信息/空间率。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/09/01/book011/" itemprop="url">
-                  读阳明先生心学有感
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-09-01T08:58:30+08:00" content="Sep 1 2016">
-              Sep 1 2016
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/书评影评/" itemprop="url" rel="index">
-                    <span itemprop="name">书评影评</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/09/01/book011/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/01/book011/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="结缘，之前的感受"><a href="#结缘，之前的感受" class="headerlink" title="结缘，之前的感受"></a>结缘，之前的感受</h2><p>早先在看《明朝那些事》的时候，心里就一直对王阳明有了这么一个印象。书中的具体描述已然淡去，但作者对王阳明的心学的推崇，以及其弟子遍地开花，执掌明朝内阁大权的事实却是浓墨重彩的。当时对心学的唯一印象就是“知行合一”。尽管简单，但是让我很有好感。以致于很长的一段时间里，我并不以为它是儒学的一个分支，而是认为它是更入市，或者说更接地气的一种为人处世的方式。</p>
-<p>直到近日，心中烦恼颇多。烦恼并非来自于现实中的不顺利，反而是来自于生活中的倦怠与惯性，让我感到心力俱疲。在这种情况下，不自觉的想要去寻求一种答案，再加上之前对心学的这么一个良好的印象。所以才有了对这本《王阳明-最神奇的心学》的细读。</p>
-<p>不过说实话，刚开始读的时候有些患得患失。一方面担心这又是一本古文翻译而来的鸡汤（事实上书中不少篇幅确实如此），另一方面，接触了西方的那套自由思想体系之后，怕形成价值观上的冲突。不过读起来之后，倒是领悟了书中的一点：寻求本心而破除纷扰，你领悟的只是本心的，和你本来拥有的也并不冲突。这本二手书的优点在于，作者的诗词底子很好，很多心学的思想，他通过一些诗词的方式表示出来，非常能够加深你的理解。</p>
-<p>太阳底下没有新鲜事，春秋战国时代百家争鸣，看后来人所议论之事，无一不能从百家经典中找到验证，不禁让人神往那个思想碰撞的年代。王阳明之言，在我看来很多是一种回归，去掉宋代朱熹那种格物的思想，提出了知行合一的观点，更关注了人性本身。</p>
-<h2 id="阳明此人"><a href="#阳明此人" class="headerlink" title="阳明此人"></a>阳明此人</h2><p>王阳明一身跌宕起伏，有过少年天才得志，也有过官场为奸臣所害，更有的是龙场悟道与评定宁王之乱。更重要的是他将所行所悟，发扬光大，在他之后的明代内阁首辅，几乎大部分都受到了心学的影响。他的人生关键词可以总结为，阳明格竹 龙场悟道 宁王之乱 创立心学。 从人生轨迹和成就上来看，他是第一个实现立功立言立德的三不朽的神人。</p>
-<p>心学的核心思想是心即是理，反对格物致知，提倡知行合一。说到格物，维基百科中提到了一件很有趣的事，说王阳明小时候喜欢杨朱理学，相信天下之物皆有义理，所以他不断的格物，曾经两周的时间尝试去“格”竹子，结果一场大病，最后痛定思痛，再也不从外物出发，而是关注于自己的内心。</p>
-<p>史书说王阳明豪迈不羁而又十分有个性，而他自己也是表达了宁做狂人不做小人的心态：</p>
-<p>“乡愿以忠信廉洁见取于君子，以同流合污无忤于小人，故非之无举，刺之无刺。然究其心，乃知忠信廉洁所以媚君子也，同流合污所以媚小人也，其心已破坏矣，故不可与入尧舜之道。狂者志存古人，一切纷嚣俗染，举不足以累其心，真有凤凰翔于千仞之意，一克念即圣人矣。惟不克念，故阔略事情，而行常不掩。惟其不掩，故心尚未坏而庶可与裁”</p>
-<p>与其去做一个乡人赞赏的老好人，还不如做个狂人，更近本心，这里深得我心。因为我从小就被称为好人，循规蹈矩，不敢越雷池一步。长大后不自觉有逆反心理，常常心中所想与实际所做大相径庭。慢慢的学会贴近自己的本心，而不是以他人的眼光，定义自己的行为。</p>
-<p>还有一定要提的就是王阳明的军功，作为文人，他的作战水平相当之高。对兵法的理解也是入木三分的。明史中对他的军事才能，也是十分赞赏。宁王叛乱时，谣言满天飞。而他稳如泰山，调兵遣将，迷惑对手，几乎以一人之力，平定了宁王叛乱。当真文武双全。</p>
-<h2 id="精华，受到启发的地方"><a href="#精华，受到启发的地方" class="headerlink" title="精华，受到启发的地方"></a>精华，受到启发的地方</h2><p>本书将王阳明的心学主观的分成了如下的几个部分：</p>
-<ul>
-<li>磨砺</li>
-<li>立志</li>
-<li>行动</li>
-<li>态度</li>
-<li>智慧</li>
-<li>处世</li>
-</ul>
-<p>对于<strong>磨砺</strong>，王阳明所提倡的就是让能力在磨练中快速成长。</p>
-<blockquote>
-<p>人须在事上磨练做功夫，乃有益。若只好静，遇事便乱，终无长进</p>
-</blockquote>
-<p>很多时候，不管是工作还是生活，我们往往会进入一种舒适的区域。在这个区域之内，我们便不敢越雷池一步。生怕犯错，生怕打破现有的生活平衡。但是如果没有磨砺，就不会有进步，就不能突破自己。但是呢，人们改变自己的意愿，有的时候又没那么强烈，所以这个时候，重要的便是<strong>立志</strong>。</p>
-<p>因为“志不立，天下无可成之事”，有了决心和一个具体的目标，你会调动自己所有的能力，用尽方法去完成它。反过来，没有目标，那么努力了一段也很有可能停滞。古往今来，成大事的人往往有大志，比如张载：为天地立心，为生民立命，为往圣续绝学，为万世开太平。比如司马迁的写史书之志。但是作为我们一般人来说，是很难有这样的志向的，或许是因为际遇不足，或许是因为个人涵养不足。因此，我们正确的立志就更重要了。</p>
-<p>对我来说，利用科技改变大家的生活很重要，我也愿意为之奋斗，所以我给自己也立下了这样的志向。或许不大，但是如果能够完成，对我而言就是一种巨大的满足。</p>
-<p>但是立了志，如果不能正确的<strong>行动</strong>，仍是毫无用处。所以遇到该完成的时候时候，必须 “马上行动，一以贯之”。当然了，马上行动并不是鲁莽的行动，而是根据你的判断和思考所进行的行动。因为去尝试，永远好过于一直在等待。实践中的学习，永远好过纸上谈兵。如果面对该做的事情的时候，总是推脱说一切万事俱备了才去做，如此永远做不成。这种所谓等待万事俱备的推脱心态，必须加以警惕，区分到底是真的仍需时间，还是你的惰性所引起的拖延症又犯了。</p>
-<p>行动固然重要，不半途而废更是如此。米卢说，<strong>态度</strong>决定一切。行动中要自己做自己的贵人。陈胜吴广起事的时候，在鱼中放置陈胜为王的布条。这就是一种心理的安慰，只有去除了疑惑，坚定了信念，做事情才能一往无前。而当你真的要做的时候，记得努力到极致，否则的话，倒还不如不做了。而一件事，如果你真想想做，很多时候方法会源源不断，记得放下你的偏见，放下你曾经学过的不能，而是发动一切你可以发动的力量。<br>所谓</p>
-<blockquote>
-<p>瞽者善听，聋者善视，绝利一源，用师十倍，三返昼夜，用师万倍。</p>
-</blockquote>
-<p>关注在一点的时候，就能够水滴石穿。</p>
-<p>书中同样对<strong>智慧</strong>着墨很多，其中最得我心的就是“活在当下”。</p>
-<blockquote>
-<p>只存得此心常见在，便是学。过去未来事，思之何益？徒放心耳！</p>
-</blockquote>
-<p>这与《新世界，灵性的觉醒》中的观点何其相似。只有活在当下，你才能更好的体察当下。试着放弃其他无关的事情，花一个小时去全神贯注地做一件事。做时时刻留心、管住自己每一刻的感受。人的不快乐，很多时候来自于对事务的心猿意马，俗话说呢，就是吃着碗里的看着锅里的。而心猿意马时，及时地把自己拉回来，只要能够意识到自己的杂念就行。每天尝试冥想十分钟，完全的放飞自己的心灵，你会发现，之前让你十分苦恼的情绪，也就烟消云散了。</p>
-<p>前面都是些自己的修为，<strong>处世</strong>则着重去说与他人和社会的接触。</p>
-<blockquote>
-<p>山光物态弄春辉，莫为轻阴便拟归。纵使晴明无雨色，入云深处亦沾衣。</p>
-</blockquote>
-<p>俗话说，常在河边站哪有不湿鞋，所以遇人闲话，不妨置之一笑。遇人侮辱，只当是耳边风。</p>
-<blockquote>
-<p>天地生意，花草一般。何曾有善恶之分？子欲观花，则以花为善，以草为恶。如欲用草时，复以草为善</p>
-</blockquote>
-<p>改变你的心境，就在一瞬间。现在我的很多快乐，往往是建立在与他人比较的基础之上的，很多不快乐，同样也是如此，这正应了阳明先生所说：</p>
-<blockquote>
-<p>不知就自己心地良知良能上体认扩充，却去求知其所不知，求能其所不能，一味只是希高慕大，不知自己桀纣心地，动辄要做尧舜事业，如何做得？</p>
-</blockquote>
-<p>确实值得反思。</p>
-<p>诗中有云：</p>
-<blockquote>
-<p>钓罢归来不系船，江村月落正堪眠。纵然一夜风吹去，只在芦花浅水边。</p>
-</blockquote>
-<p>这种顺其自然的功夫，现在的我有些望尘莫及，但在世间纷纷扰扰之时，不妨给自己留下这么一扇窗，让自己的心灵透透气。</p>
-<h2 id="践行，我所认同的心学"><a href="#践行，我所认同的心学" class="headerlink" title="践行，我所认同的心学"></a>践行，我所认同的心学</h2><p>初读这本书，自以为还是有一些收获。对我的日常生活影响最大的不外乎以下几点：</p>
-<ul>
-<li>活在当下</li>
-<li>控制情绪，让情绪不侵入本心，而是本心静静的看着他们</li>
-<li>立志，必须让远大的志向催动自己前行</li>
-<li>用中学，掉书袋是万万不可的</li>
-<li>想到就去做，不要犹豫，不要让自己后悔</li>
-<li>专注的去做，但不是盲目的去做</li>
-<li>只有见遍了好东西，才能有自己好的产出</li>
-</ul>
-<p>对心学一些理解仍在与自己的生活验证，而心学中的观点有些也无法完全认同。但是这种体察本心的过程，确实让我多了那么一丢丢对自己的生活的控制和专注。不过一旦遇到比较棘手的事情的时候，还是很容易乱了方寸。比如近期家中的杂事，时常让自己如热锅上的蚂蚁，想做却又无可奈何，这种情况下，对自己心态的磨砺也就尤为重要了。越是此时，越要控制住情绪，越是放任，越容易掉入情绪的大坑，与君共勉！</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1930,7 +1885,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">55</span>
+              <span class="site-state-item-count">58</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1991,7 +1946,7 @@ curl &quot;http://testecho.qidian.com/main2&quot;</code></p>
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2019</span>
+  <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
